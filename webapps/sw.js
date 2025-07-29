@@ -67,7 +67,7 @@ self.addEventListener('notificationclick', event => {
       })
     );
   } else {
-    const urlToOpen = new URL('activity_tracker.html', self.location.origin).href;
+    const urlToOpen = new URL('activity_tracker.html', self.location.href).href;
 
     const promiseChain = clients.matchAll({
       type: 'window',
