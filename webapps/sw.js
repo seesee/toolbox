@@ -77,16 +77,17 @@ self.addEventListener('notificationclick', event => {
 
       for (let i = 0; i < windowClients.length; i++) {
         const windowClient = windowClients[i];
-        if (windowClient.url === urlToOpen) {
+        if (windowClient.url.split('#')[0] === urlToOpen) {
           matchingClient = windowClient;
           break;
         }
       }
 
       if (matchingClient) {
+        matchingClient.postMessage({ type: 'navigate-to-tracker' });
         return matchingClient.focus();
       } else {
-        return clients.openWindow(urlToOpen);
+        return clients.openWindow(urlToOpen + '#tracker');
       }
     });
 

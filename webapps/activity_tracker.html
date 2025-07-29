@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V0.2025.07.29-19.20.47 -->
+<!-- V0.2025.07.29-20.24.25 -->
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
@@ -381,9 +381,9 @@
             <h1>Activity Tracker</h1>
             <p>Track your daily activities with automatic reminders</p>
             <div class="nav">
-                <button class="nav-btn active" onclick="showSection('tracker')">Tracker</button>
-                <button class="nav-btn" onclick="showSection('reports')">Reports</button>
-                <button class="nav-btn" onclick="showSection('settings')">Settings</button>
+                <button class="nav-btn active" onclick="showSection('tracker', event)">Tracker</button>
+                <button class="nav-btn" onclick="showSection('reports', event)">Reports</button>
+                <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
             </div>
         </div>
 
@@ -1415,17 +1415,28 @@
 
         let tracker;
 
-        function showSection(sectionName) {
+        function showSection(sectionName, event) {
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.remove('active');
             });
-            
             document.getElementById(sectionName).classList.add('active');
-            
+
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.target.classList.add('active');
+
+            if (event && event.target) {
+                event.target.classList.add('active');
+            } else {
+                const button = document.querySelector(`.nav-btn[onclick*="'${sectionName}'"]`);
+                if (button) {
+                    button.classList.add('active');
+                }
+            }
+
+            if (sectionName === 'tracker') {
+                document.getElementById('activity').focus();
+            }
         }
 
         function addCurrentTime() {
@@ -1493,7 +1504,15 @@
                         tracker.addEntry(event.data.entry);
                         tracker.showNotification('Activity logged from notification!', 'success');
                     }
+                    if (event.data && event.data.type === 'navigate-to-tracker') {
+                        showSection('tracker');
+                    }
                 });
+            }
+
+            if (window.location.hash === '#tracker') {
+                showSection('tracker');
+                history.replaceState(null, document.title, window.location.pathname + window.location.search);
             }
         });
 
