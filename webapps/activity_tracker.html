@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .nav-btn.active {
+            background: #4c51bf;
+            box-shadow: 0 4px 15px rgba(76, 81, 191, 0.4);
+        }
+
+        .section {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .btn-success {
+            background: #38a169;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .entries-list {
+            margin-top: 30px;
+        }
+
+        .entry-item {
+            background: #f7fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .entry-content {
+            flex: 1;
+        }
+
+        .entry-time {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .entry-activity {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .entry-description {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .settings-section {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .settings-section h3 {
+            margin-bottom: 15px;
+            color: #2d3748;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
+
+        .notification-status {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .notification-enabled {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .notification-disabled {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .notification-warning {
+            background: #fef5e7;
+            color: #744210;
+        }
+
+        .report-filters {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .report-summary {
+            background: #e6fffa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #38b2ac;
+        }
+
+        .report-navigation {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .week-display {
+            background: #f7fafc;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .download-section {
+            background: #f0fff4;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #38a169;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-active {
+            background: #48bb78;
+        }
+
+        .status-inactive {
+            background: #f56565;
+        }
+
+        .notification-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .debug-info {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            border-left: 4px solid #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .nav {
+                flex-wrap: wrap;
+            }
+            
+            .entry-item {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .entry-actions {
+                align-self: flex-end;
+            }
+
+            .report-navigation {
+                flex-wrap: wrap;
+            }
+
+            .week-display {
+                min-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Activity Tracker</h1>
+            <p>Track your daily activities with automatic reminders</p>
+            <div class="nav">
+                <button class="nav-btn active" onclick="showSection('tracker')">Tracker</button>
+                <button class="nav-btn" onclick="showSection('reports')">Reports</button>
+                <button class="nav-btn" onclick="showSection('settings')">Settings</button>
+            </div>
+        </div>
+
+        <!-- Tracker Section -->
+        <div id="tracker" class="section active">
+            <h2>Activity Entry</h2>
+            <form id="activityForm">
+                <div class="form-group">
+                    <label for="activity">What are you doing?</label>
+                    <input type="text" id="activity" required placeholder="e.g., Writing report, Meeting with team">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <textarea id="description" rows="3" placeholder="Additional details about this activity"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="timestamp">Time</label>
+                    <input type="datetime-local" id="timestamp" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Entry</button>
+                <button type="button" class="btn btn-secondary" onclick="addCurrentTime()">Use Current Time</button>
+            </form>
+
+            <div class="entries-list">
+                <h3>Recent Entries</h3>
+                <div id="entriesList"></div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports" class="section">
+            <h2>Activity Reports</h2>
+            
+            <div class="report-navigation">
+                <button class="btn btn-secondary" onclick="previousWeek()">← Previous Week</button>
+                <div class="week-display" id="weekDisplay">Week of ...</div>
+                <button class="btn btn-secondary" onclick="nextWeek()">Next Week →</button>
+            </div>
+
+            <div class="report-filters">
+                <div class="form-group">
+                    <label for="reportStartDate">Start Date</label>
+                    <input type="date" id="reportStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="reportEndDate">End Date</label>
+                    <input type="date" id="reportEndDate">
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+                    <button class="btn btn-secondary" onclick="setWeeklyReport()">This Week</button>
+                </div>
+            </div>
+
+            <div class="download-section">
+                <h3>Download Report</h3>
+                <p>Generate and download the current report in your preferred format</p>
+                <div style="margin-top: 15px;">
+                    <div class="form-group" style="display: inline-block; width: 200px; margin-right: 15px;">
+                        <select id="downloadFormat">
+                            <option value="html">HTML Report</option>
+                            <option value="markdown">Markdown</option>
+                            <option value="csv">CSV (with timings)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" onclick="downloadReport()">Download Report</button>
+                </div>
+            </div>
+
+            <div id="reportResults"></div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <h2>Settings</h2>
+            
+            <div class="notification-status" id="notificationStatus">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Checking notification status...</span>
+            </div>
+
+            <div class="settings-grid">
+                <div class="settings-section">
+                    <h3>Notification Settings</h3>
+                    <div class="notification-buttons">
+                        <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
+                        <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
+                        <button class="btn btn-secondary" onclick="refreshNotificationStatus()">Refresh Status</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="notificationInterval">Reminder Interval (minutes)</label>
+                        <select id="notificationInterval">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    
+                    <div class="debug-info" id="debugInfo">
+                        <strong>Debug Information:</strong><br>
+                        <span id="debugText">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Working Hours</h3>
+                    <div class="form-group">
+                        <label for="startTime">Start Time</label>
+                        <input type="time" id="startTime" value="08:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">End Time</label>
+                        <input type="time" id="endTime" value="18:00">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Working Days</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="monday" checked>
+                        <label for="monday">Monday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="tuesday" checked>
+                        <label for="tuesday">Tuesday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="wednesday" checked>
+                        <label for="wednesday">Wednesday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="thursday" checked>
+                        <label for="thursday">Thursday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="friday" checked>
+                        <label for="friday">Friday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="saturday">
+                        <label for="saturday">Saturday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="sunday">
+                        <label for="sunday">Sunday</label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Entry</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editActivity">Activity</label>
+                    <input type="text" id="editActivity" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTimestamp">Time</label>
+                    <input type="datetime-local" id="editTimestamp" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Entry</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        class ActivityTracker {
+            constructor() {
+                this.entries = JSON.parse(localStorage.getItem('activityEntries')) || [];
+                this.settings = {
+                    notificationInterval: 60,
+                    startTime: '08:00',
+                    endTime: '18:00',
+                    workingDays: {
+                        monday: true,
+                        tuesday: true,
+                        wednesday: true,
+                        thursday: true,
+                        friday: true,
+                        saturday: false,
+                        sunday: false
+                    },
+                    ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
+                };
+                this.notificationTimer = null;
+                this.currentReportEntries = [];
+                this.currentWeekStart = null;
+                this.init();
+            }
+
+            init() {
+                this.loadSettings();
+                this.displayEntries();
+                this.updateNotificationStatus();
+                this.updateDebugInfo();
+                this.startNotificationTimer();
+                this.setDefaultReportDates();
+                
+                // Event listeners
+                document.getElementById('activityForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.addEntry();
+                });
+
+                document.getElementById('editForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.updateEntry();
+                });
+
+                // Set current time by default
+                this.setCurrentTime();
+
+                // Check for local file protocol
+                if (window.location.protocol === 'file:') {
+                    console.warn('Running from local file - notifications may have limitations');
+                }
+            }
+
+            addEntry() {
+                const activity = document.getElementById('activity').value;
+                const description = document.getElementById('description').value;
+                const timestamp = document.getElementById('timestamp').value;
+
+                const entry = {
+                    id: Date.now().toString(),
+                    activity,
+                    description,
+                    timestamp: new Date(timestamp).toISOString(),
+                    created: new Date().toISOString()
+                };
+
+                this.entries.unshift(entry);
+                this.saveEntries();
+                this.displayEntries();
+                
+                // Reset form
+                document.getElementById('activityForm').reset();
+                this.setCurrentTime();
+                
+                this.showNotification('Entry added successfully!', 'success');
+            }
+
+            updateEntry() {
+                const id = document.getElementById('editId').value;
+                const activity = document.getElementById('editActivity').value;
+                const description = document.getElementById('editDescription').value;
+                const timestamp = document.getElementById('editTimestamp').value;
+
+                const entryIndex = this.entries.findIndex(entry => entry.id === id);
+                if (entryIndex !== -1) {
+                    this.entries[entryIndex] = {
+                        ...this.entries[entryIndex],
+                        activity,
+                        description,
+                        timestamp: new Date(timestamp).toISOString()
+                    };
+                    
+                    this.saveEntries();
+                    this.displayEntries();
+                    this.closeEditModal();
+                    this.showNotification('Entry updated successfully!', 'success');
+                }
+            }
+
+            deleteEntry(id) {
+                if (confirm('Are you sure you want to delete this entry?')) {
+                    this.entries = this.entries.filter(entry => entry.id !== id);
+                    this.saveEntries();
+                    this.displayEntries();
+                    this.showNotification('Entry deleted successfully!', 'success');
+                }
+            }
+
+            editEntry(id) {
+                const entry = this.entries.find(entry => entry.id === id);
+                if (entry) {
+                    document.getElementById('editId').value = entry.id;
+                    document.getElementById('editActivity').value = entry.activity;
+                    document.getElementById('editDescription').value = entry.description || '';
+                    document.getElementById('editTimestamp').value = 
+                        new Date(entry.timestamp).toISOString().slice(0, 16);
+                    
+                    document.getElementById('editModal').classList.add('active');
+                }
+            }
+
+            closeEditModal() {
+                document.getElementById('editModal').classList.remove('active');
+            }
+
+            displayEntries() {
+                const container = document.getElementById('entriesList');
+                const recentEntries = this.entries.slice(0, 20); // Show last 20 entries
+
+                if (recentEntries.length === 0) {
+                    container.innerHTML = '<p>No entries yet. Add your first activity above!</p>';
+                    return;
+                }
+
+                container.innerHTML = recentEntries.map(entry => `
+                    <div class="entry-item">
+                        <div class="entry-content">
+                            <div class="entry-time">${this.formatDateTime(entry.timestamp)}</div>
+                            <div class="entry-activity">${this.escapeHtml(entry.activity)}</div>
+                            ${entry.description ? `<div class="entry-description">${this.escapeHtml(entry.description)}</div>` : ''}
+                        </div>
+                        <div class="entry-actions">
+                            <button class="btn btn-secondary" onclick="tracker.editEntry('${entry.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="tracker.deleteEntry('${entry.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            saveEntries() {
+                localStorage.setItem('activityEntries', JSON.stringify(this.entries));
+            }
+
+            saveSettings() {
+                this.settings = {
+                    notificationInterval: parseInt(document.getElementById('notificationInterval').value),
+                    startTime: document.getElementById('startTime').value,
+                    endTime: document.getElementById('endTime').value,
+                    workingDays: {
+                        monday: document.getElementById('monday').checked,
+                        tuesday: document.getElementById('tuesday').checked,
+                        wednesday: document.getElementById('wednesday').checked,
+                        thursday: document.getElementById('thursday').checked,
+                        friday: document.getElementById('friday').checked,
+                        saturday: document.getElementById('saturday').checked,
+                        sunday: document.getElementById('sunday').checked
+                    }
+                };
+
+                localStorage.setItem('activitySettings', JSON.stringify(this.settings));
+                this.startNotificationTimer();
+                this.showNotification('Settings saved successfully!', 'success');
+            }
+
+            loadSettings() {
+                document.getElementById('notificationInterval').value = this.settings.notificationInterval;
+                document.getElementById('startTime').value = this.settings.startTime;
+                document.getElementById('endTime').value = this.settings.endTime;
+                
+                Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
+                    document.getElementById(day).checked = checked;
+                });
+            }
+
+            async enableNotifications() {
+                if (!('Notification' in window)) {
+                    alert('This browser does not support notifications');
+                    this.updateDebugInfo();
+                    return;
+                }
+
+                try {
+                    console.log('Requesting notification permission...');
+                    const permission = await Notification.requestPermission();
+                    console.log('Permission result:', permission);
+                    
+                    // Force update status after a short delay
+                    setTimeout(() => {
+                        this.updateNotificationStatus();
+                        this.updateDebugInfo();
+                    }, 500);
+                    
+                    if (permission === 'granted') {
+                        this.showNotification('Notifications enabled successfully!', 'success');
+                        this.startNotificationTimer();
+                        
+                        // Try to send a test notification immediately
+                        setTimeout(() => {
+                            this.testNotification(true);
+                        }, 1000);
+                    } else if (permission === 'denied') {
+                        this.showNotification('Notifications were denied. Please check your browser settings and try again.', 'error');
+                    } else {
+                        this.showNotification('Notification permission was not granted. Please try again.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error requesting notification permission:', error);
+                    this.showNotification('Error requesting notification permission: ' + error.message, 'error');
+                    this.updateDebugInfo();
+                }
+            }
+
+            testNotification(isAutoTest = false) {
+                console.log('Testing notification, permission:', Notification.permission);
+                this.updateDebugInfo();
+                
+                if (!('Notification' in window)) {
+                    this.showNotification('Notifications are not supported in this browser!', 'error');
+                    return;
+                }
+
+                if (Notification.permission !== 'granted') {
+                    if (!isAutoTest) {
+                        this.showNotification('Please enable notifications first! Current permission: ' + Notification.permission, 'error');
+                    }
+                    return;
+                }
+
+                try {
+                    const notification = new Notification('Activity Tracker Test', {
+                        body: 'This is a test notification. If you can see this, notifications are working correctly!',
+                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+                        tag: 'test-notification',
+                        requireInteraction: false
+                    });
+
+                    notification.onclick = () => {
+                        window.focus();
+                        notification.close();
+                    };
+
+                    // Auto-close after 5 seconds
+                    setTimeout(() => {
+                        notification.close();
+                    }, 5000);
+
+                    if (!isAutoTest) {
+                        this.showNotification('Test notification sent successfully!', 'success');
+                    }
+                    console.log('Test notification created successfully');
+                } catch (error) {
+                    console.error('Error creating test notification:', error);
+                    this.showNotification('Error creating test notification: ' + error.message, 'error');
+                    this.updateDebugInfo();
+                }
+            }
+
+            refreshNotificationStatus() {
+                this.updateNotificationStatus();
+                this.updateDebugInfo();
+                this.showNotification('Notification status refreshed', 'success');
+            }
+
+            updateNotificationStatus() {
+                const statusEl = document.getElementById('notificationStatus');
+                const indicatorEl = document.getElementById('statusIndicator');
+                const textEl = document.getElementById('statusText');
+
+                console.log('Updating notification status, permission:', Notification.permission);
+
+                if (!('Notification' in window)) {
+                    statusEl.className = 'notification-status notification-disabled';
+                    indicatorEl.className = 'status-indicator status-inactive';
+                    textEl.textContent = 'Notifications not supported in this browser';
+                } else {
+                    switch (Notification.permission) {
+                        case 'granted':
+                            statusEl.className = 'notification-status notification-enabled';
+                            indicatorEl.className = 'status-indicator status-active';
+                            textEl.textContent = 'Notifications are enabled and working';
+                            break;
+                        case 'denied':
+                            statusEl.className = 'notification-status notification-disabled';
+                            indicatorEl.className = 'status-indicator status-inactive';
+                            textEl.textContent = 'Notifications are blocked - please enable them in browser settings';
+                            break;
+                        case 'default':
+                        default:
+                            statusEl.className = 'notification-status notification-warning';
+                            indicatorEl.className = 'status-indicator status-inactive';
+                            textEl.textContent = 'Notifications are disabled - click "Enable Notifications" to activate';
+                            break;
+                    }
+                }
+
+                // Add protocol warning for local files
+                if (window.location.protocol === 'file:') {
+                    statusEl.className = 'notification-status notification-warning';
+                    textEl.textContent += ' (Note: Running from local file may limit notification functionality)';
+                }
+            }
+
+            updateDebugInfo() {
+                const debugEl = document.getElementById('debugText');
+                const info = [];
+                
+                info.push(`Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
+                info.push(`Protocol: ${window.location.protocol}`);
+                info.push(`Notification API: ${'Notification' in window ? 'Available' : 'Not Available'}`);
+                
+                if ('Notification' in window) {
+                    info.push(`Permission: ${Notification.permission}`);
+                    info.push(`Max Actions: ${Notification.maxActions || 'Unknown'}`);
+                }
+                
+                info.push(`Service Worker: ${'serviceWorker' in navigator ? 'Available' : 'Not Available'}`);
+                info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
+                
+                debugEl.innerHTML = info.join('<br>');
+            }
+
+            startNotificationTimer() {
+                if (this.notificationTimer) {
+                    clearInterval(this.notificationTimer);
+                }
+
+                // Check every minute if we should show a notification
+                this.notificationTimer = setInterval(() => {
+                    this.checkForNotification();
+                }, 60000);
+            }
+
+            checkForNotification() {
+                if (Notification.permission !== 'granted') {
+                    console.log('Skipping notification check - permission not granted');
+                    return;
+                }
+
+                const now = new Date();
+                const currentTime = now.getHours() * 60 + now.getMinutes();
+                const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
+
+                // Check if it's a working day
+                if (!this.settings.workingDays[dayName]) {
+                    console.log('Skipping notification - not a working day');
+                    return;
+                }
+
+                // Check if it's within working hours
+                const [startHour, startMin] = this.settings.startTime.split(':').map(Number);
+                const [endHour, endMin] = this.settings.endTime.split(':').map(Number);
+                const startTime = startHour * 60 + startMin;
+                const endTime = endHour * 60 + endMin;
+
+                if (currentTime < startTime || currentTime > endTime) {
+                    console.log('Skipping notification - outside working hours');
+                    return;
+                }
+
+                // Check if enough time has passed since last notification
+                const lastNotification = localStorage.getItem('lastNotificationTime');
+                const timeSinceLastNotification = now.getTime() - (lastNotification || 0);
+                const intervalMs = this.settings.notificationInterval * 60 * 1000;
+
+                if (timeSinceLastNotification >= intervalMs) {
+                    console.log('Sending scheduled notification');
+                    this.showActivityReminder();
+                    localStorage.setItem('lastNotificationTime', now.getTime().toString());
+                }
+            }
+
+            showActivityReminder() {
+                try {
+                    const notification = new Notification('Activity Tracker Reminder', {
+                        body: 'What are you working on right now?',
+                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+                        tag: 'activity-reminder',
+                        requireInteraction: true
+                    });
+
+                    notification.onclick = () => {
+                        window.focus();
+                        showSection('tracker');
+                        notification.close();
+                    };
+
+                    // Auto-close after 30 seconds
+                    setTimeout(() => {
+                        notification.close();
+                    }, 30000);
+                } catch (error) {
+                    console.error('Error showing activity reminder:', error);
+                }
+            }
+
+            generateReport() {
+                const startDate = document.getElementById('reportStartDate').value;
+                const endDate = document.getElementById('reportEndDate').value;
+
+                if (!startDate || !endDate) {
+                    this.showNotification('Please select both start and end dates', 'error');
+                    return;
+                }
+
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // Include the entire end date
+
+                const filteredEntries = this.entries.filter(entry => {
+                    const entryDate = new Date(entry.timestamp);
+                    return entryDate >= start && entryDate <= end;
+                });
+
+                this.currentReportEntries = filteredEntries;
+                this.displayReport(filteredEntries, start, end);
+            }
+
+            displayReport(entries, startDate, endDate) {
+                const container = document.getElementById('reportResults');
+                
+                if (entries.length === 0) {
+                    container.innerHTML = `
+                        <div class="report-summary">
+                            <h3>No entries found for the selected period</h3>
+                            <p>From ${this.formatDate(startDate)} to ${this.formatDate(endDate)}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Group entries by date
+                const entriesByDate = {};
+                entries.forEach(entry => {
+                    const date = new Date(entry.timestamp).toDateString();
+                    if (!entriesByDate[date]) {
+                        entriesByDate[date] = [];
+                    }
+                    entriesByDate[date].push(entry);
+                });
+
+                const totalEntries = entries.length;
+                const daysWithEntries = Object.keys(entriesByDate).length;
+
+                container.innerHTML = `
+                    <div class="report-summary">
+                        <h3>Activity Report</h3>
+                        <p><strong>Period:</strong> ${this.formatDate(startDate)} to ${this.formatDate(endDate)}</p>
+                        <p><strong>Total Entries:</strong> ${totalEntries}</p>
+                        <p><strong>Active Days:</strong> ${daysWithEntries}</p>
+                    </div>
+                    
+                    ${Object.entries(entriesByDate)
+                        .sort(([a], [b]) => new Date(b) - new Date(a))
+                        .map(([date, dayEntries]) => `
+                            <div class="entry-item">
+                                <div class="entry-content">
+                                    <div class="entry-time"><strong>${date}</strong> (${dayEntries.length} entries)</div>
+                                    ${dayEntries
+                                        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                                        .map(entry => `
+                                            <div style="margin-left: 20px; margin-top: 10px;">
+                                                <div class="entry-time">${this.formatTime(entry.timestamp)}</div>
+                                                <div class="entry-activity">${this.escapeHtml(entry.activity)}</div>
+                                                ${entry.description ? `<div class="entry-description">${this.escapeHtml(entry.description)}</div>` : ''}
+                                            </div>
+                                        `).join('')}
+                                </div>
+                            </div>
+                        `).join('')}
+                `;
+            }
+
+            setWeeklyReport() {
+                const now = new Date();
+                const monday = new Date(now);
+                const dayOfWeek = now.getDay();
+                const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                monday.setDate(now.getDate() + daysToMonday);
+
+                const friday = new Date(monday);
+                friday.setDate(monday.getDate() + 4);
+
+                this.currentWeekStart = new Date(monday);
+                this.updateWeekDisplay();
+
+                document.getElementById('reportStartDate').value = monday.toISOString().split('T')[0];
+                document.getElementById('reportEndDate').value = friday.toISOString().split('T')[0];
+            }
+
+            previousWeek() {
+                if (!this.currentWeekStart) {
+                    this.setWeeklyReport();
+                    return;
+                }
+
+                this.currentWeekStart.setDate(this.currentWeekStart.getDate() - 7);
+                this.updateWeekFromCurrent();
+            }
+
+            nextWeek() {
+                if (!this.currentWeekStart) {
+                    this.setWeeklyReport();
+                    return;
+                }
+
+                this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
+                this.updateWeekFromCurrent();
+            }
+
+            updateWeekFromCurrent() {
+                const monday = new Date(this.currentWeekStart);
+                const friday = new Date(monday);
+                friday.setDate(monday.getDate() + 4);
+
+                document.getElementById('reportStartDate').value = monday.toISOString().split('T')[0];
+                document.getElementById('reportEndDate').value = friday.toISOString().split('T')[0];
+                
+                this.updateWeekDisplay();
+            }
+
+            updateWeekDisplay() {
+                if (!this.currentWeekStart) return;
+                
+                const monday = new Date(this.currentWeekStart);
+                const sunday = new Date(monday);
+                sunday.setDate(monday.getDate() + 6);
+
+                const weekText = `Week of ${monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${sunday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
+                document.getElementById('weekDisplay').textContent = weekText;
+            }
+
+            setDefaultReportDates() {
+                this.setWeeklyReport();
+            }
+
+            downloadReport() {
+                const format = document.getElementById('downloadFormat').value;
+                const startDate = document.getElementById('reportStartDate').value;
+                const endDate = document.getElementById('reportEndDate').value;
+
+                if (!startDate || !endDate) {
+                    this.showNotification('Please generate a report first', 'error');
+                    return;
+                }
+
+                if (this.currentReportEntries.length === 0) {
+                    this.showNotification('No entries to download. Generate a report first.', 'error');
+                    return;
+                }
+
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+
+                let content, filename, mimeType;
+
+                switch (format) {
+                    case 'html':
+                        content = this.generateHTMLReport(this.currentReportEntries, start, end);
+                        filename = `activity-report-${startDate}-to-${endDate}.html`;
+                        mimeType = 'text/html';
+                        break;
+                    case 'markdown':
+                        content = this.generateMarkdownReport(this.currentReportEntries, start, end);
+                        filename = `activity-report-${startDate}-to-${endDate}.md`;
+                        mimeType = 'text/markdown';
+                        break;
+                    case 'csv':
+                        content = this.generateCSVReport(this.currentReportEntries, start, end);
+                        filename = `activity-report-${startDate}-to-${endDate}.csv`;
+                        mimeType = 'text/csv';
+                        break;
+                }
+
+                this.downloadFile(content, filename, mimeType);
+                this.showNotification(`Report downloaded as ${format.toUpperCase()}`, 'success');
+            }
+
+            generateHTMLReport(entries, startDate, endDate) {
+                const entriesByDate = {};
+                entries.forEach(entry => {
+                    const date = new Date(entry.timestamp).toDateString();
+                    if (!entriesByDate[date]) {
+                        entriesByDate[date] = [];
+                    }
+                    entriesByDate[date].push(entry);
+                });
+
+                return `<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { background: #667eea; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .summary { background: #e6fffa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #38b2ac; }
+        .day-section { background: #f7fafc; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        .entry { margin: 10px 0; padding: 10px; background: white; border-radius: 4px; }
+        .time { font-weight: 600; color: #667eea; }
+        .activity { font-size: 16px; margin: 5px 0; }
+        .description { color: #718096; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Activity Report</h1>
+        <p>Generated on ${new Date().toLocaleString('en-GB')}</p>
+    </div>
+    
+    <div class="summary">
+        <h2>Summary</h2>
+        <p><strong>Period:</strong> ${this.formatDate(startDate)} to ${this.formatDate(endDate)}</p>
+        <p><strong>Total Entries:</strong> ${entries.length}</p>
+        <p><strong>Active Days:</strong> ${Object.keys(entriesByDate).length}</p>
+    </div>
+
+    ${Object.entries(entriesByDate)
+        .sort(([a], [b]) => new Date(a) - new Date(b))
+        .map(([date, dayEntries]) => `
+            <div class="day-section">
+                <h3>${date} (${dayEntries.length} entries)</h3>
+                ${dayEntries
+                    .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                    .map(entry => `
+                        <div class="entry">
+                            <div class="time">${this.formatTime(entry.timestamp)}</div>
+                            <div class="activity">${this.escapeHtml(entry.activity)}</div>
+                            ${entry.description ? `<div class="description">${this.escapeHtml(entry.description)}</div>` : ''}
+                        </div>
+                    `).join('')}
+            </div>
+        `).join('')}
+</body>
+</html>`;
+            }
+
+            generateMarkdownReport(entries, startDate, endDate) {
+                const entriesByDate = {};
+                entries.forEach(entry => {
+                    const date = new Date(entry.timestamp).toDateString();
+                    if (!entriesByDate[date]) {
+                        entriesByDate[date] = [];
+                    }
+                    entriesByDate[date].push(entry);
+                });
+
+                let markdown = `# Activity Report\n\n`;
+                markdown += `**Generated:** ${new Date().toLocaleString('en-GB')}\n\n`;
+                markdown += `## Summary\n\n`;
+                markdown += `- **Period:** ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\n`;
+                markdown += `- **Total Entries:** ${entries.length}\n`;
+                markdown += `- **Active Days:** ${Object.keys(entriesByDate).length}\n\n`;
+
+                Object.entries(entriesByDate)
+                    .sort(([a], [b]) => new Date(a) - new Date(b))
+                    .forEach(([date, dayEntries]) => {
+                        markdown += `## ${date} (${dayEntries.length} entries)\n\n`;
+                        dayEntries
+                            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                            .forEach(entry => {
+                                markdown += `### ${this.formatTime(entry.timestamp)} - ${entry.activity}\n\n`;
+                                if (entry.description) {
+                                    markdown += `${entry.description}\n\n`;
+                                }
+                            });
+                    });
+
+                return markdown;
+            }
+
+            generateCSVReport(entries, startDate, endDate) {
+                let csv = 'Date,Time,Activity,Description,Duration,Capped Start,Capped End\n';
+
+                // Sort entries by timestamp
+                const sortedEntries = entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                const [workStartHour, workStartMin] = this.settings.startTime.split(':').map(Number);
+                const [workEndHour, workEndMin] = this.settings.endTime.split(':').map(Number);
+
+                sortedEntries.forEach((entry, index) => {
+                    const entryDate = new Date(entry.timestamp);
+                    const entryTime = this.formatTime(entry.timestamp);
+                    const date = entryDate.toLocaleDateString('en-GB');
+                    
+                    // Calculate duration to next entry or end of day
+                    let duration = '';
+                    let cappedStart = this.formatTime(entry.timestamp);
+                    let cappedEnd = '';
+
+                    if (index < sortedEntries.length - 1) {
+                        const nextEntry = new Date(sortedEntries[index + 1].timestamp);
+                        const currentEntryDate = entryDate.toDateString();
+                        const nextEntryDate = nextEntry.toDateString();
+                        
+                        if (currentEntryDate === nextEntryDate) {
+                            // Same day - calculate duration
+                            const durationMs = nextEntry.getTime() - entryDate.getTime();
+                            const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+                            const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                            duration = `${durationHours}h ${durationMinutes}m`;
+                            cappedEnd = this.formatTime(nextEntry.toISOString());
+                        } else {
+                            // Different day - duration until end of work day
+                            const endOfWorkDay = new Date(entryDate);
+                            endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
+                            
+                            if (entryDate < endOfWorkDay) {
+                                const durationMs = endOfWorkDay.getTime() - entryDate.getTime();
+                                const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+                                const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                                duration = `${durationHours}h ${durationMinutes}m`;
+                                cappedEnd = `${workEndHour.toString().padStart(2, '0')}:${workEndMin.toString().padStart(2, '0')}`;
+                            }
+                        }
+                    } else {
+                        // Last entry - duration until end of work day
+                        const endOfWorkDay = new Date(entryDate);
+                        endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
+                        
+                        if (entryDate < endOfWorkDay) {
+                            const durationMs = endOfWorkDay.getTime() - entryDate.getTime();
+                            const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+                            const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                            duration = `${durationHours}h ${durationMinutes}m`;
+                            cappedEnd = `${workEndHour.toString().padStart(2, '0')}:${workEndMin.toString().padStart(2, '0')}`;
+                        }
+                    }
+
+                    // Cap start time to working hours
+                    const startOfWorkDay = new Date(entryDate);
+                    startOfWorkDay.setHours(workStartHour, workStartMin, 0, 0);
+                    
+                    if (entryDate < startOfWorkDay) {
+                        cappedStart = `${workStartHour.toString().padStart(2, '0')}:${workStartMin.toString().padStart(2, '0')}`;
+                    }
+
+                    // Escape commas and quotes in CSV
+                    const escapeCsv = (str) => {
+                        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                            return `"${str.replace(/"/g, '""')}"`;
+                        }
+                        return str;
+                    };
+
+                    csv += `${date},${entryTime},${escapeCsv(entry.activity)},${escapeCsv(entry.description || '')},${duration},${cappedStart},${cappedEnd}\n`;
+                });
+
+                return csv;
+            }
+
+            downloadFile(content, filename, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            clearAllData() {
+                if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                    localStorage.removeItem('activityEntries');
+                    localStorage.removeItem('activitySettings');
+                    localStorage.removeItem('lastNotificationTime');
+                    this.entries = [];
+                    this.currentReportEntries = [];
+                    this.displayEntries();
+                    document.getElementById('reportResults').innerHTML = '';
+                    this.showNotification('All data cleared successfully!', 'success');
+                }
+            }
+
+            setCurrentTime() {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
+            }
+
+            formatDateTime(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleString('en-GB', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            formatDate(date) {
+                return date.toLocaleDateString('en-GB', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+            }
+
+            formatTime(timestamp) {
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString('en-GB', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    color: white;
+                    font-weight: 600;
+                    z-index: 10000;
+                    background: ${type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : '#667eea'};
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                `;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        }
+
+        // Global functions
+        let tracker;
+
+        function showSection(sectionName) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(sectionName).classList.add('active');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function addCurrentTime() {
+            tracker.setCurrentTime();
+        }
+
+        function generateReport() {
+            tracker.generateReport();
+        }
+
+        function setWeeklyReport() {
+            tracker.setWeeklyReport();
+        }
+
+        function previousWeek() {
+            tracker.previousWeek();
+        }
+
+        function nextWeek() {
+            tracker.nextWeek();
+        }
+
+        function downloadReport() {
+            tracker.downloadReport();
+        }
+
+        function saveSettings() {
+            tracker.saveSettings();
+        }
+
+        function enableNotifications() {
+            tracker.enableNotifications();
+        }
+
+        function testNotification() {
+            tracker.testNotification();
+        }
+
+        function refreshNotificationStatus() {
+            tracker.refreshNotificationStatus();
+        }
+
+        function clearAllData() {
+            tracker.clearAllData();
+        }
+
+        function closeEditModal() {
+            tracker.closeEditModal();
+        }
+
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            tracker = new ActivityTracker();
+        });
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                closeEditModal();
+            }
+        });
+    </script>
+</body>
+</html>
