@@ -12,7 +12,7 @@ is a (mostly) single page web app that allows you to track what you're doing
 throughout the day.
 
 ### Templatimator
-[Templatimator](https://seesee.giuthub.io/toolbox/webapps/templatimator.html)
+[Templatimator](https://seesee.github.io/toolbox/webapps/templatimator.html)
 is a quick way of taking a text outline, applying a bunch of variables to it
 and outputting as text/html/csv etc.
 
