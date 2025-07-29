@@ -616,26 +616,16 @@
                 }
             }
 
-            addEntry() {
-                const activity = document.getElementById('activity').value;
-                const description = document.getElementById('description').value;
-                const timestamp = document.getElementById('timestamp').value;
-
-                const entry = {
-                    id: Date.now().toString(),
-                    activity,
-                    description,
-                    timestamp: new Date(timestamp).toISOString(),
-                    created: new Date().toISOString()
-                };
-
+            addEntry(entry) {
                 this.entries.unshift(entry);
                 this.saveEntries();
                 this.displayEntries();
-                
-                // Reset form
-                document.getElementById('activityForm').reset();
-                this.setCurrentTime();
+
+                if (document.getElementById('activity').value) {
+                    // Reset form only if it was manually submitted
+                    document.getElementById('activityForm').reset();
+                    this.setCurrentTime();
+                }
                 
                 this.showNotification('Entry added successfully!', 'success');
             }
@@ -748,8 +738,8 @@
             }
 
             async enableNotifications() {
-                if (!('Notification' in window)) {
-                    alert('This browser does not support notifications');
+                if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                    alert('This browser does not support notifications or service workers.');
                     this.updateDebugInfo();
                     return;
                 }
@@ -759,7 +749,6 @@
                     const permission = await Notification.requestPermission();
                     console.log('Permission result:', permission);
                     
-                    // Force update status after a short delay
                     setTimeout(() => {
                         this.updateNotificationStatus();
                         this.updateDebugInfo();
@@ -769,7 +758,6 @@
                         this.showNotification('Notifications enabled successfully!', 'success');
                         this.startNotificationTimer();
                         
-                        // Try to send a test notification immediately
                         setTimeout(() => {
                             this.testNotification(true);
                         }, 1000);
@@ -785,15 +773,19 @@
                 }
             }
 
+            async showNotificationWithServiceWorker(title, options) {
+                if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+                    return;
+                }
+
+                const registration = await navigator.serviceWorker.ready;
+                await registration.showNotification(title, options);
+            }
+
             testNotification(isAutoTest = false) {
                 console.log('Testing notification, permission:', Notification.permission);
                 this.updateDebugInfo();
                 
-                if (!('Notification' in window)) {
-                    this.showNotification('Notifications are not supported in this browser!', 'error');
-                    return;
-                }
-
                 if (Notification.permission !== 'granted') {
                     if (!isAutoTest) {
                         this.showNotification('Please enable notifications first! Current permission: ' + Notification.permission, 'error');
@@ -802,22 +794,16 @@
                 }
 
                 try {
-                    const notification = new Notification('Activity Tracker Test', {
+                    const options = {
                         body: 'This is a test notification. If you can see this, notifications are working correctly!',
                         icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
                         tag: 'test-notification',
-                        requireInteraction: false
-                    });
-
-                    notification.onclick = () => {
-                        window.focus();
-                        notification.close();
+                        requireInteraction: false,
+                        actions: [
+                            { action: 'reply', type: 'text', title: 'Log Activity', placeholder: 'e.g. coding' }
+                        ]
                     };
-
-                    // Auto-close after 5 seconds
-                    setTimeout(() => {
-                        notification.close();
-                    }, 5000);
+                    this.showNotificationWithServiceWorker('Activity Tracker Test', options);
 
                     if (!isAutoTest) {
                         this.showNotification('Test notification sent successfully!', 'success');
@@ -868,7 +854,6 @@
                     }
                 }
 
-                // Add protocol warning for local files
                 if (window.location.protocol === 'file:') {
                     statusEl.className = 'notification-status notification-warning';
                     textEl.textContent += ' (Note: Running from local file may limit notification functionality)';
@@ -889,6 +874,9 @@
                 }
                 
                 info.push(`Service Worker: ${'serviceWorker' in navigator ? 'Available' : 'Not Available'}`);
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    info.push(`SW State: ${navigator.serviceWorker.controller.state}`);
+                }
                 info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
                 
                 debugEl.innerHTML = info.join('<br>');
@@ -899,7 +887,6 @@
                     clearInterval(this.notificationTimer);
                 }
 
-                // Check every minute if we should show a notification
                 this.notificationTimer = setInterval(() => {
                     this.checkForNotification();
                 }, 60000);
@@ -915,13 +902,11 @@
                 const currentTime = now.getHours() * 60 + now.getMinutes();
                 const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
 
-                // Check if it's a working day
                 if (!this.settings.workingDays[dayName]) {
                     console.log('Skipping notification - not a working day');
                     return;
                 }
 
-                // Check if it's within working hours
                 const [startHour, startMin] = this.settings.startTime.split(':').map(Number);
                 const [endHour, endMin] = this.settings.endTime.split(':').map(Number);
                 const startTime = startHour * 60 + startMin;
@@ -932,7 +917,6 @@
                     return;
                 }
 
-                // Check if enough time has passed since last notification
                 const lastNotification = localStorage.getItem('lastNotificationTime');
                 const timeSinceLastNotification = now.getTime() - (lastNotification || 0);
                 const intervalMs = this.settings.notificationInterval * 60 * 1000;
@@ -946,23 +930,16 @@
 
             showActivityReminder() {
                 try {
-                    const notification = new Notification('Activity Tracker Reminder', {
+                    const options = {
                         body: 'What are you working on right now?',
                         icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
                         tag: 'activity-reminder',
-                        requireInteraction: true
-                    });
-
-                    notification.onclick = () => {
-                        window.focus();
-                        showSection('tracker');
-                        notification.close();
+                        requireInteraction: true,
+                        actions: [
+                            { action: 'reply', type: 'text', title: 'Log Activity', placeholder: 'e.g. coding' }
+                        ]
                     };
-
-                    // Auto-close after 30 seconds
-                    setTimeout(() => {
-                        notification.close();
-                    }, 30000);
+                    this.showNotificationWithServiceWorker('Activity Tracker Reminder', options);
                 } catch (error) {
                     console.error('Error showing activity reminder:', error);
                 }
@@ -979,7 +956,7 @@
 
                 const start = new Date(startDate);
                 const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999); // Include the entire end date
+                end.setHours(23, 59, 59, 999);
 
                 const filteredEntries = this.entries.filter(entry => {
                     const entryDate = new Date(entry.timestamp);
@@ -1003,7 +980,6 @@
                     return;
                 }
 
-                // Group entries by date
                 const entriesByDate = {};
                 entries.forEach(entry => {
                     const date = new Date(entry.timestamp).toDateString();
@@ -1247,7 +1223,6 @@
             generateCSVReport(entries, startDate, endDate) {
                 let csv = 'Date,Time,Activity,Description,Duration,Capped Start,Capped End\n';
 
-                // Sort entries by timestamp
                 const sortedEntries = entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
                 const [workStartHour, workStartMin] = this.settings.startTime.split(':').map(Number);
@@ -1258,7 +1233,6 @@
                     const entryTime = this.formatTime(entry.timestamp);
                     const date = entryDate.toLocaleDateString('en-GB');
                     
-                    // Calculate duration to next entry or end of day
                     let duration = '';
                     let cappedStart = this.formatTime(entry.timestamp);
                     let cappedEnd = '';
@@ -1269,14 +1243,12 @@
                         const nextEntryDate = nextEntry.toDateString();
                         
                         if (currentEntryDate === nextEntryDate) {
-                            // Same day - calculate duration
                             const durationMs = nextEntry.getTime() - entryDate.getTime();
                             const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
                             const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
                             duration = `${durationHours}h ${durationMinutes}m`;
                             cappedEnd = this.formatTime(nextEntry.toISOString());
                         } else {
-                            // Different day - duration until end of work day
                             const endOfWorkDay = new Date(entryDate);
                             endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
                             
@@ -1289,7 +1261,6 @@
                             }
                         }
                     } else {
-                        // Last entry - duration until end of work day
                         const endOfWorkDay = new Date(entryDate);
                         endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
                         
@@ -1302,7 +1273,6 @@
                         }
                     }
 
-                    // Cap start time to working hours
                     const startOfWorkDay = new Date(entryDate);
                     startOfWorkDay.setHours(workStartHour, workStartMin, 0, 0);
                     
@@ -1310,7 +1280,6 @@
                         cappedStart = `${workStartHour.toString().padStart(2, '0')}:${workStartMin.toString().padStart(2, '0')}`;
                     }
 
-                    // Escape commas and quotes in CSV
                     const escapeCsv = (str) => {
                         if (str.includes(',') || str.includes('"') || str.includes('\n')) {
                             return `"${str.replace(/"/g, '""')}"`;
@@ -1413,7 +1382,6 @@
             }
         }
 
-        // Global functions
         let tracker;
 
         function showSection(sectionName) {
@@ -1477,12 +1445,27 @@
             tracker.closeEditModal();
         }
 
-        // Initialize the app when the page loads
         document.addEventListener('DOMContentLoaded', () => {
             tracker = new ActivityTracker();
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                    tracker.updateDebugInfo();
+                }).catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                    tracker.updateDebugInfo();
+                });
+
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data && event.data.type === 'add-entry') {
+                        tracker.addEntry(event.data.entry);
+                        tracker.showNotification('Activity logged from notification!', 'success');
+                    }
+                });
+            }
         });
 
-        // Close modal when clicking outside
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 closeEditModal();
