@@ -566,7 +566,7 @@
     <script>
         class ActivityTracker {
             constructor() {
-                this.entries = JSON.parse(localStorage.getItem('activityEntries')) || [];
+                this.entries = (JSON.parse(localStorage.getItem('activityEntries')) || []).filter(Boolean);
                 this.settings = {
                     notificationInterval: 60,
                     startTime: '08:00',
