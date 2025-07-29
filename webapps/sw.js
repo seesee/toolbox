@@ -47,46 +47,49 @@ self.addEventListener('notificationclick', event => {
 
   notification.close();
 
-  if (action === 'reply') {
-    if (reply) {
-      const entry = {
-        id: Date.now().toString(),
-        activity: reply,
-        description: 'Logged from notification',
-        timestamp: new Date().toISOString(),
-        created: new Date().toISOString()
-      };
+  if (action === 'reply' && reply) {
+    const entry = {
+      id: Date.now().toString(),
+      activity: reply,
+      description: 'Logged from notification',
+      timestamp: new Date().toISOString(),
+      created: new Date().toISOString()
+    };
 
-      // This is a bit of a hack, but we can't directly add to localStorage from the service worker.
-      // We can send a message to the client to add the entry.
-      event.waitUntil(
-        clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'add-entry',
-              entry: entry
-            });
-          });
-        })
-      );
-    }
-  } else {
     event.waitUntil(
-      clients.matchAll({ type: 'window' }).then(clientsArr => {
-        const hadWindowToFocus = clientsArr.some(windowClient => {
-          if (windowClient.url.endsWith('activity_tracker.html')) {
-            windowClient.focus();
-            return true;
-          }
-          return false;
-        });
-
-        if (!hadWindowToFocus) {
-          clients.openWindow('activity_tracker.html').then(windowClient => {
-            // windowClient is the newly opened window
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientsArr => {
+        clientsArr.forEach(client => {
+          client.postMessage({
+            type: 'add-entry',
+            entry: entry
           });
-        }
+        });
       })
     );
+  } else {
+    const urlToOpen = new URL('activity_tracker.html', self.location.origin).href;
+
+    const promiseChain = clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    }).then((windowClients) => {
+      let matchingClient = null;
+
+      for (let i = 0; i < windowClients.length; i++) {
+        const windowClient = windowClients[i];
+        if (windowClient.url === urlToOpen) {
+          matchingClient = windowClient;
+          break;
+        }
+      }
+
+      if (matchingClient) {
+        return matchingClient.focus();
+      } else {
+        return clients.openWindow(urlToOpen);
+      }
+    });
+
+    event.waitUntil(promiseChain);
   }
 });
