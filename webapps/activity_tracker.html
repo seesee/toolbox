@@ -570,7 +570,18 @@
     <script>
         class ActivityTracker {
             constructor() {
-                this.entries = (JSON.parse(localStorage.getItem('activityEntries')) || []).filter(entry => entry && entry.timestamp);
+                let entries = [];
+                try {
+                    const storedEntries = JSON.parse(localStorage.getItem('activityEntries'));
+                    if (Array.isArray(storedEntries)) {
+                        entries = storedEntries.filter(entry => entry && typeof entry === 'object' && entry.timestamp);
+                    }
+                } catch (e) {
+                    console.error("Error parsing activity entries from localStorage", e);
+                    localStorage.removeItem('activityEntries');
+                }
+                this.entries = entries;
+
                 this.settings = {
                     notificationInterval: 60,
                     startTime: '08:00',
