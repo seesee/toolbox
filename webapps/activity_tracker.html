@@ -384,6 +384,7 @@
                 <button class="nav-btn active" onclick="showSection('tracker', event)">Tracker</button>
                 <button class="nav-btn" onclick="showSection('reports', event)">Reports</button>
                 <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
+                <button id="pauseButton" class="nav-btn" onclick="togglePause()">Pause Alerts</button>
             </div>
         </div>
 
@@ -393,7 +394,7 @@
             <form id="activityForm">
                 <div class="form-group">
                     <label for="activity">What are you doing?</label>
-                    <input type="text" id="activity" required placeholder="e.g., Writing report, Meeting with team">
+                    <input type="text" id="activity" required placeholder="e.g., Writing report, Meeting with team" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label for="description">Description (optional)</label>
@@ -485,6 +486,16 @@
                             <option value="60" selected>1 hour</option>
                             <option value="90">1.5 hours</option>
                             <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pauseDuration">Auto-resume alerts after</label>
+                        <select id="pauseDuration">
+                            <option value="15">15 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="240">4 hours</option>
+                            <option value="1440">24 hours</option>
+                            <option value="-1">Never</option>
                         </select>
                     </div>
                     
@@ -596,6 +607,8 @@
                         saturday: false,
                         sunday: false
                     },
+                    pauseDuration: 60,
+                    notificationsPausedUntil: null,
                     ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
                 };
                 this.notificationTimer = null;
@@ -609,6 +622,7 @@
                 this.displayEntries();
                 this.updateNotificationStatus();
                 this.updateDebugInfo();
+                this.updatePauseButtonState();
                 this.startNotificationTimer();
                 this.setDefaultReportDates();
                 
@@ -739,9 +753,11 @@
 
             saveSettings() {
                 this.settings = {
+                    ...this.settings,
                     notificationInterval: parseInt(document.getElementById('notificationInterval').value),
                     startTime: document.getElementById('startTime').value,
                     endTime: document.getElementById('endTime').value,
+                    pauseDuration: parseInt(document.getElementById('pauseDuration').value),
                     workingDays: {
                         monday: document.getElementById('monday').checked,
                         tuesday: document.getElementById('tuesday').checked,
@@ -762,6 +778,7 @@
                 document.getElementById('notificationInterval').value = this.settings.notificationInterval;
                 document.getElementById('startTime').value = this.settings.startTime;
                 document.getElementById('endTime').value = this.settings.endTime;
+                document.getElementById('pauseDuration').value = this.settings.pauseDuration;
                 
                 Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
                     document.getElementById(day).checked = checked;
@@ -924,6 +941,16 @@
             }
 
             checkForNotification() {
+                if (this.settings.notificationsPausedUntil) {
+                    const now = new Date().getTime();
+                    if (now < this.settings.notificationsPausedUntil) {
+                        console.log('Notifications are paused.');
+                        return;
+                    } else {
+                        this.unpauseNotifications(false);
+                    }
+                }
+                
                 if (Notification.permission !== 'granted') {
                     console.log('Skipping notification check - permission not granted');
                     return;
@@ -1411,6 +1438,45 @@
                     notification.remove();
                 }, 3000);
             }
+
+            togglePause(showNotification = true) {
+                if (this.settings.notificationsPausedUntil) {
+                    this.unpauseNotifications(showNotification);
+                } else {
+                    const duration = this.settings.pauseDuration;
+                    if (duration === -1) {
+                        this.settings.notificationsPausedUntil = Infinity;
+                    } else {
+                        this.settings.notificationsPausedUntil = new Date().getTime() + duration * 60 * 1000;
+                    }
+                    
+                    if (showNotification) {
+                        this.showNotification('Notifications paused', 'info');
+                    }
+                    this.updatePauseButtonState();
+                    this.saveSettings();
+                }
+            }
+
+            unpauseNotifications(showNotification = true) {
+                this.settings.notificationsPausedUntil = null;
+                if (showNotification) {
+                    this.showNotification('Notifications resumed', 'success');
+                }
+                this.updatePauseButtonState();
+                this.saveSettings();
+            }
+
+            updatePauseButtonState() {
+                const pauseButton = document.getElementById('pauseButton');
+                if (this.settings.notificationsPausedUntil) {
+                    pauseButton.textContent = 'Resume Alerts';
+                    pauseButton.style.background = '#e53e3e';
+                } else {
+                    pauseButton.textContent = 'Pause Alerts';
+                    pauseButton.style.background = '';
+                }
+            }
         }
 
         let tracker;
@@ -1485,6 +1551,10 @@
 
         function closeEditModal() {
             tracker.closeEditModal();
+        }
+
+        function togglePause() {
+            tracker.togglePause();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
