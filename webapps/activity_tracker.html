@@ -570,7 +570,7 @@
     <script>
         class ActivityTracker {
             constructor() {
-                this.entries = (JSON.parse(localStorage.getItem('activityEntries')) || []).filter(Boolean);
+                this.entries = (JSON.parse(localStorage.getItem('activityEntries')) || []).filter(entry => entry && entry.timestamp);
                 this.settings = {
                     notificationInterval: 60,
                     startTime: '08:00',
@@ -613,6 +613,7 @@
 
                 // Set current time by default
                 this.setCurrentTime();
+                document.getElementById('activity').focus();
 
                 // Check for local file protocol
                 if (window.location.protocol === 'file:') {
