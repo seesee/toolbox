@@ -617,12 +617,26 @@
             }
 
             addEntry(entry) {
-                this.entries.unshift(entry);
+                let newEntry = entry;
+                if (!newEntry) {
+                    const activity = document.getElementById('activity').value;
+                    const description = document.getElementById('description').value;
+                    const timestamp = document.getElementById('timestamp').value;
+
+                    newEntry = {
+                        id: Date.now().toString(),
+                        activity,
+                        description,
+                        timestamp: new Date(timestamp).toISOString(),
+                        created: new Date().toISOString()
+                    };
+                }
+
+                this.entries.unshift(newEntry);
                 this.saveEntries();
                 this.displayEntries();
 
-                if (document.getElementById('activity').value) {
-                    // Reset form only if it was manually submitted
+                if (!entry) {
                     document.getElementById('activityForm').reset();
                     this.setCurrentTime();
                 }
