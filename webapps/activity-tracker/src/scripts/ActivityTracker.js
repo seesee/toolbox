@@ -36,6 +36,7 @@ class ActivityTracker {
             pauseDuration: 60,
             notificationsPausedUntil: null,
             muteNotificationSound: false,
+            notificationSoundType: "classic",
             ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
         };
 
@@ -43,7 +44,8 @@ class ActivityTracker {
         this.notificationTimer = null;
         this.currentReportEntries = [];
         this.currentWeekStart = null;
-        this.audioContext = null;
+        this.soundManager = null;
+        this.pauseManager = null;
 
         this.init();
     }
@@ -59,7 +61,9 @@ class ActivityTracker {
         this.updatePauseButtonState();
         this.startNotificationTimer();
         this.setDefaultReportDates();
-        this.initAudioContext();
+        this.initSoundManager();
+        this.initPauseManager();
+        this.initMarkdownRenderer();
         
         // Event listeners
         this.attachEventListeners();
@@ -71,6 +75,28 @@ class ActivityTracker {
         // Check for local file protocol
         if (window.location.protocol === 'file:') {
             console.warn('Running from local file - notifications may have limitations');
+        }
+    }
+
+    /**
+     * Initialize markdown renderer
+     */
+    initMarkdownRenderer() {
+        try {
+            this.markdownRenderer = new MarkdownRenderer();
+        } catch (error) {
+            console.warn('Markdown Renderer initialization failed:', error);
+        }
+    }
+
+    /**
+     * Initialize pause manager
+     */
+    initPauseManager() {
+        try {
+            this.pauseManager = new PauseManager(this);
+        } catch (error) {
+            console.warn('Pause Manager initialization failed:', error);
         }
     }
 
@@ -92,12 +118,11 @@ class ActivityTracker {
     /**
      * Initialize Web Audio API for notification sounds
      */
-    initAudioContext() {
+    initSoundManager() {
         try {
-            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.soundManager = new SoundManager();
         } catch (error) {
-            console.warn('Web Audio API not supported:', error);
-            this.audioContext = null;
+            console.warn('Sound Manager failed to initialise:', error);
         }
     }
 
@@ -105,40 +130,8 @@ class ActivityTracker {
      * Play notification sound
      */
     playNotificationSound() {
-        if (!this.audioContext || this.settings.muteNotificationSound) {
-            return;
-        }
-
-        try {
-            // Resume audio context if it's suspended (required by some browsers)
-            if (this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
-            }
-
-            // Create a pleasant "bloop" sound
-            const oscillator = this.audioContext.createOscillator();
-            const gainNode = this.audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(this.audioContext.destination);
-            
-            // Configure the sound - a pleasant rising tone
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.1);
-            
-            // Configure volume envelope for a smooth "bloop"
-            gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
-            
-            // Play the sound
-            oscillator.start(this.audioContext.currentTime);
-            oscillator.stop(this.audioContext.currentTime + 0.3);
-            
-            console.log('Notification sound played');
-        } catch (error) {
-            console.warn('Error playing notification sound:', error);
+        if (this.soundManager) {
+            this.soundManager.playSound(this.settings.notificationSoundType, this.settings.muteNotificationSound);
         }
     }
 
@@ -146,7 +139,9 @@ class ActivityTracker {
      * Test notification sound
      */
     testNotificationSound() {
-        this.playNotificationSound();
+        if (this.soundManager) {
+            this.soundManager.playSound(this.settings.notificationSoundType, this.settings.muteNotificationSound);
+        }
         showNotification('Test sound played!', 'success');
     }
 
@@ -261,7 +256,7 @@ class ActivityTracker {
                 <div class="entry-content">
                     <div class="entry-time">${formatDateTime(entry.timestamp)}</div>
                     <div class="entry-activity">${escapeHtml(entry.activity)}</div>
-                    ${entry.description ? `<div class="entry-description">${escapeHtml(entry.description)}</div>` : ''}
+                    ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
                 </div>
                 <div class="entry-actions">
                     <button class="btn btn-secondary" onclick="tracker.editEntry('${entry.id}')">Edit</button>
@@ -269,6 +264,18 @@ class ActivityTracker {
                 </div>
             </div>
         `).join('');
+    }
+
+    /**
+     * Render description text as markdown
+     * @param {string} description - Description text
+     * @returns {string} HTML string
+     */
+    renderDescriptionMarkdown(description) {
+        if (this.markdownRenderer && description) {
+            return this.markdownRenderer.renderInlineWithClasses(description);
+        }
+        return escapeHtml(description);
     }
 
     /**
@@ -289,6 +296,7 @@ class ActivityTracker {
             endTime: document.getElementById('endTime').value,
             pauseDuration: parseInt(document.getElementById('pauseDuration').value),
             muteNotificationSound: document.getElementById('muteNotificationSound').checked,
+            notificationSoundType: document.getElementById('notificationSoundType').value,
             workingDays: {
                 monday: document.getElementById('monday').checked,
                 tuesday: document.getElementById('tuesday').checked,
@@ -314,6 +322,7 @@ class ActivityTracker {
         document.getElementById('endTime').value = this.settings.endTime;
         document.getElementById('pauseDuration').value = this.settings.pauseDuration;
         document.getElementById('muteNotificationSound').checked = this.settings.muteNotificationSound;
+        document.getElementById('notificationSoundType').value = this.settings.notificationSoundType;
         
         Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
             document.getElementById(day).checked = checked;
@@ -486,6 +495,7 @@ class ActivityTracker {
         }
         info.push(`Web Audio API: ${this.audioContext ? 'Available' : 'Not Available'}`);
         info.push(`Sound Muted: ${this.settings.muteNotificationSound ? 'Yes' : 'No'}`);
+        info.push(`Sound Type: ${this.settings.notificationSoundType}`);
         info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
         
         debugEl.innerHTML = info.join('<br>');
@@ -592,24 +602,35 @@ class ActivityTracker {
 
     /**
      * Toggle pause/resume notifications
-     * @param {boolean} showNotification - Whether to show notification
+     * @param {boolean} showNotif - Whether to show notification
      */
-    togglePause(showNotification = true) {
+    togglePause(showNotif = true) {
         if (this.settings.notificationsPausedUntil) {
-            this.unpauseNotifications(showNotification);
-        } else {
-            const duration = this.settings.pauseDuration;
-            if (duration === -1) {
-                this.settings.notificationsPausedUntil = Infinity;
+            if (this.pauseManager) {
+                this.pauseManager.resume();
             } else {
-                this.settings.notificationsPausedUntil = new Date().getTime() + duration * 60 * 1000;
+                this.unpauseNotifications(showNotif);
             }
+        } else {
+            if (this.pauseManager) {
+                this.pauseManager.startPause(this.settings.pauseDuration);
+            } else {
+                // Fallback to old method
+                const duration = this.settings.pauseDuration;
+                if (duration === -1) {
+                    this.settings.notificationsPausedUntil = Infinity;
+                } else {
+                    this.settings.notificationsPausedUntil = new Date().getTime() + duration * 60 * 1000;
+                }
+                this.updatePauseButtonState();
+                this.saveSettings();
+            }
+        }
             
-            if (showNotification) {
-                showNotification('Notifications paused', 'info');
-            }
-            this.updatePauseButtonState();
-            this.saveSettings();
+        if (showNotif) {
+            const message = this.settings.notificationsPausedUntil ? 'Notifications paused' : 'Notifications resumed';
+            const type = this.settings.notificationsPausedUntil ? 'info' : 'success';
+            showNotification(message, type);
         }
     }
 
@@ -617,9 +638,9 @@ class ActivityTracker {
      * Unpause notifications
      * @param {boolean} showNotification - Whether to show notification
      */
-    unpauseNotifications(showNotification = true) {
+    unpauseNotifications(showNotif = true) {
         this.settings.notificationsPausedUntil = null;
-        if (showNotification) {
+        if (showNotif) {
             showNotification('Notifications resumed', 'success');
         }
         this.updatePauseButtonState();
@@ -630,13 +651,8 @@ class ActivityTracker {
      * Update pause button state
      */
     updatePauseButtonState() {
-        const pauseButton = document.getElementById('pauseButton');
-        if (this.settings.notificationsPausedUntil) {
-            pauseButton.textContent = 'Resume Alerts';
-            pauseButton.style.background = '#e53e3e';
-        } else {
-            pauseButton.textContent = 'Pause Alerts';
-            pauseButton.style.background = '';
+        if (this.pauseManager) {
+            this.pauseManager.updatePauseButtonDisplay();
         }
     }
 

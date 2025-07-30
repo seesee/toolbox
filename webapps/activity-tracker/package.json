@@ -5,8 +5,8 @@
   "main": "dist/index.html",
   "scripts": {
     "build": "node build.js",
-    "dev": "node build.js && python -m http.server 8000 --directory dist",
-    "serve": "python -m http.server 8000 --directory dist",
+    "dev": "node build.js && npm run serve",
+    "serve": "python3 -m http.server 8000 --directory dist || python -m http.server 8000 --directory dist || npx serve dist -p 8000",
     "clean": "rm -rf dist && mkdir -p dist"
   },
   "dependencies": {},

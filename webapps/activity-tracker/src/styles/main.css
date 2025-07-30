@@ -180,6 +180,26 @@ body {
     font-size: 14px;
 }
 
+/* Markdown in descriptions should be more compact */
+.entry-description .md-paragraph {
+    margin: 5px 0;
+}
+
+.entry-description .md-list {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.entry-description .md-blockquote {
+    margin: 8px 0;
+    padding: 5px 10px;
+    font-size: 13px;
+}
+
+.entry-description .md-code {
+    font-size: 12px;
+}
+
 .entry-actions {
     display: flex;
     gap: 10px;
@@ -337,6 +357,139 @@ body {
     font-family: monospace;
     font-size: 14px;
     border-left: 4px solid #667eea;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Markdown rendering styles */
+.markdown-preview {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+}
+
+.markdown-preview .md-h1 {
+    color: #2d3748;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+    margin: 20px 0 15px 0;
+}
+
+.markdown-preview .md-h2 {
+    color: #2d3748;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 5px;
+    margin: 18px 0 12px 0;
+}
+
+.markdown-preview .md-h3 {
+    color: #4a5568;
+    margin: 15px 0 10px 0;
+}
+
+.markdown-preview .md-blockquote {
+    border-left: 4px solid #667eea;
+    padding-left: 15px;
+    margin: 15px 0;
+    color: #718096;
+    font-style: italic;
+    background: rgba(102, 126, 234, 0.05);
+    padding: 10px 15px;
+    border-radius: 0 4px 4px 0;
+}
+
+.markdown-preview .md-code {
+    background: #edf2f7;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 14px;
+}
+
+.markdown-preview .md-list {
+    margin: 10px 0;
+    padding-left: 30px;
+}
+
+.markdown-preview .md-paragraph {
+    margin: 10px 0;
+}
+
+.markdown-preview .md-hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 20px 0;
+}
+
+.markdown-preview .md-preview-more {
+    color: #718096;
+    font-style: italic;
+    text-align: center;
+    margin: 15px 0 5px 0;
+}
+
+/* Compact markdown styles for inline use */
+.md-paragraph {
+    margin: 8px 0;
+}
+
+.md-paragraph:first-child {
+    margin-top: 0;
+}
+
+.md-paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.md-list {
+    margin: 8px 0;
+}
+
+.md-list li {
+    margin: 3px 0;
+}
+
+.md-blockquote {
+    margin: 8px 0;
+}
+
+.report-format-tabs {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.format-tab {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #718096;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.format-tab:hover {
+    color: #4a5568;
+}
+
+.format-tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+/* Ensure transitions work smoothly for pause button */
+.nav-btn {
+    transition: all 0.3s ease, background 1s ease-out;
 }
 
 @media (max-width: 768px) {

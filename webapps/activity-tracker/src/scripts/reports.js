@@ -4,6 +4,15 @@
  */
 
 /**
+ * Initialize markdown renderer
+ */
+ActivityTracker.prototype.initMarkdownRenderer = function() {
+    if (typeof MarkdownRenderer !== 'undefined') {
+        this.markdownRenderer = new MarkdownRenderer();
+    }
+};
+
+/**
  * Generate report based on selected date range
  */
 ActivityTracker.prototype.generateReport = function() {
@@ -36,7 +45,12 @@ ActivityTracker.prototype.generateReport = function() {
  */
 ActivityTracker.prototype.displayReport = function(entries, startDate, endDate) {
     const container = document.getElementById('reportResults');
-    
+
+    // Initialize markdown renderer if not already done
+    if (!this.markdownRenderer && typeof MarkdownRenderer !== 'undefined') {
+        this.initMarkdownRenderer();
+    }
+
     if (entries.length === 0) {
         container.innerHTML = `
             <div class="report-summary">
@@ -61,6 +75,33 @@ ActivityTracker.prototype.displayReport = function(entries, startDate, endDate) 
     const averageEntriesPerDay = (totalEntries / daysWithEntries).toFixed(1);
 
     container.innerHTML = `
+        <div class="report-format-tabs">
+            <button class="format-tab active" onclick="tracker.showReportFormat('html')">HTML View</button>
+            <button class="format-tab" onclick="tracker.showReportFormat('markdown')">Markdown Preview</button>
+        </div>
+        
+        <div id="htmlReport" class="report-format-content">
+            ${this.generateHTMLReportContent(entries, startDate, endDate, entriesByDate, totalEntries, daysWithEntries, averageEntriesPerDay)}
+        </div>
+        
+        <div id="markdownReport" class="report-format-content" style="display: none;">
+            <div class="markdown-preview" id="markdownPreview">
+                Loading markdown preview...
+            </div>
+        </div>
+    `;
+    
+    // Generate markdown preview asynchronously to avoid blocking
+    setTimeout(() => {
+        this.updateMarkdownPreview(entries, startDate, endDate);
+    }, 100);
+};
+
+/**
+ * Generate HTML report content
+ */
+ActivityTracker.prototype.generateHTMLReportContent = function(entries, startDate, endDate, entriesByDate, totalEntries, daysWithEntries, averageEntriesPerDay) {
+    return `
         <div class="report-summary">
             <h3>Activity Report</h3>
             <p><strong>Period:</strong> ${formatDate(startDate)} to ${formatDate(endDate)}</p>
@@ -81,13 +122,50 @@ ActivityTracker.prototype.displayReport = function(entries, startDate, endDate) 
                                 <div style="margin-left: 20px; margin-top: 10px;">
                                     <div class="entry-time">${formatTime(entry.timestamp)}</div>
                                     <div class="entry-activity">${escapeHtml(entry.activity)}</div>
-                                    ${entry.description ? `<div class="entry-description">${escapeHtml(entry.description)}</div>` : ''}
+                                    ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
                                 </div>
                             `).join('')}
                     </div>
                 </div>
             `).join('')}
     `;
+};
+
+/**
+ * Update markdown preview
+ */
+ActivityTracker.prototype.updateMarkdownPreview = function(entries, startDate, endDate) {
+    if (!this.markdownRenderer) return;
+    
+    const markdownContent = this.generateMarkdownReport(entries, startDate, endDate);
+    const htmlContent = this.markdownRenderer.renderWithClasses(markdownContent);
+    
+    const previewElement = document.getElementById('markdownPreview');
+    if (previewElement) {
+        previewElement.innerHTML = htmlContent;
+    }
+};
+
+/**
+ * Show different report format
+ * @param {string} format - Format to show ('html' or 'markdown')
+ */
+ActivityTracker.prototype.showReportFormat = function(format) {
+    // Update tabs
+    document.querySelectorAll('.format-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[onclick*="'${format}'"]`).classList.add('active');
+    
+    // Update content
+    document.querySelectorAll('.report-format-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    const targetContent = document.getElementById(`${format}Report`);
+    if (targetContent) {
+        targetContent.style.display = 'block';
+    }
 };
 
 /**
@@ -321,7 +399,7 @@ ActivityTracker.prototype.generateHTMLReport = function(entries, startDate, endD
                         <div class="entry">
                             <div class="time">${formatTime(entry.timestamp)}</div>
                             <div class="activity">${escapeHtml(entry.activity)}</div>
-                            ${entry.description ? `<div class="description">${escapeHtml(entry.description)}</div>` : ''}
+                            ${entry.description ? `<div class="description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
                         </div>
                     `).join('')}
             </div>

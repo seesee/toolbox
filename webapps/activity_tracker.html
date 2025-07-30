@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V0.2025.07.30.01 -->
+<!-- V2025.07.30.1031 -->
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
@@ -8,372 +8,526 @@
     <title>Activity Tracker</title>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
+.header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
 
-        .nav {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
+.nav {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+}
 
-        .nav-btn {
-            padding: 10px 20px;
-            border: none;
-            background: #667eea;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 500;
-        }
+.nav-btn {
+    padding: 10px 20px;
+    border: none;
+    background: #667eea;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
 
-        .nav-btn:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-        }
+.nav-btn:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+}
 
-        .nav-btn.active {
-            background: #4c51bf;
-            box-shadow: 0 4px 15px rgba(76, 81, 191, 0.4);
-        }
+.nav-btn.active {
+    background: #4c51bf;
+    box-shadow: 0 4px 15px rgba(76, 81, 191, 0.4);
+}
 
-        .section {
-            display: none;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
+.section {
+    display: none;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
 
-        .section.active {
-            display: block;
-        }
+.section.active {
+    display: block;
+}
 
-        .form-group {
-            margin-bottom: 20px;
-        }
+.form-group {
+    margin-bottom: 20px;
+}
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #4a5568;
-        }
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #4a5568;
+}
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
+}
 
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
 
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 16px;
-            transition: all 0.3s ease;
-            margin-right: 10px;
-            margin-bottom: 10px;
-        }
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    margin-right: 10px;
+    margin-bottom: 10px;
+}
 
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
 
-        .btn-primary:hover {
-            background: #5a67d8;
-            transform: translateY(-2px);
-        }
+.btn-primary:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+}
 
-        .btn-secondary {
-            background: #718096;
-            color: white;
-        }
+.btn-secondary {
+    background: #718096;
+    color: white;
+}
 
-        .btn-secondary:hover {
-            background: #4a5568;
-        }
+.btn-secondary:hover {
+    background: #4a5568;
+}
 
-        .btn-danger {
-            background: #e53e3e;
-            color: white;
-        }
+.btn-danger {
+    background: #e53e3e;
+    color: white;
+}
 
-        .btn-danger:hover {
-            background: #c53030;
-        }
+.btn-danger:hover {
+    background: #c53030;
+}
 
-        .btn-success {
-            background: #38a169;
-            color: white;
-        }
+.btn-success {
+    background: #38a169;
+    color: white;
+}
 
-        .btn-success:hover {
-            background: #2f855a;
-        }
+.btn-success:hover {
+    background: #2f855a;
+}
 
-        .entries-list {
-            margin-top: 30px;
-        }
+.entries-list {
+    margin-top: 30px;
+}
 
-        .entry-item {
-            background: #f7fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
+.entry-item {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
 
-        .entry-content {
-            flex: 1;
-        }
+.entry-content {
+    flex: 1;
+}
 
-        .entry-time {
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
+.entry-time {
+    font-weight: 600;
+    color: #667eea;
+    margin-bottom: 5px;
+}
 
-        .entry-activity {
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
+.entry-activity {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
 
-        .entry-description {
-            color: #718096;
-            font-size: 14px;
-        }
+.entry-description {
+    color: #718096;
+    font-size: 14px;
+}
 
-        .entry-actions {
-            display: flex;
-            gap: 10px;
-        }
+/* Markdown in descriptions should be more compact */
+.entry-description .md-paragraph {
+    margin: 5px 0;
+}
 
-        .settings-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-        }
+.entry-description .md-list {
+    margin: 5px 0;
+    padding-left: 20px;
+}
 
-        .settings-section {
-            background: #f7fafc;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-        }
+.entry-description .md-blockquote {
+    margin: 8px 0;
+    padding: 5px 10px;
+    font-size: 13px;
+}
 
-        .settings-section h3 {
-            margin-bottom: 15px;
-            color: #2d3748;
-        }
+.entry-description .md-code {
+    font-size: 12px;
+}
 
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+.entry-actions {
+    display: flex;
+    gap: 10px;
+}
 
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
-        }
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
 
-        .notification-status {
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-        }
+.settings-section {
+    background: #f7fafc;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
 
-        .notification-enabled {
-            background: #c6f6d5;
-            color: #22543d;
-        }
+.settings-section h3 {
+    margin-bottom: 15px;
+    color: #2d3748;
+}
 
-        .notification-disabled {
-            background: #fed7d7;
-            color: #742a2a;
-        }
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
 
-        .notification-warning {
-            background: #fef5e7;
-            color: #744210;
-        }
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+}
 
-        .report-filters {
-            background: #f7fafc;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            align-items: end;
-        }
+.notification-status {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 600;
+}
 
-        .report-summary {
-            background: #e6fffa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #38b2ac;
-        }
+.notification-enabled {
+    background: #c6f6d5;
+    color: #22543d;
+}
 
-        .report-navigation {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+.notification-disabled {
+    background: #fed7d7;
+    color: #742a2a;
+}
 
-        .week-display {
-            background: #f7fafc;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-weight: 600;
-            min-width: 200px;
-            text-align: center;
-        }
+.notification-warning {
+    background: #fef5e7;
+    color: #744210;
+}
 
-        .download-section {
-            background: #f0fff4;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-            border-left: 4px solid #38a169;
-        }
+.report-filters {
+    background: #f7fafc;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    align-items: end;
+}
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
+.report-summary {
+    background: #e6fffa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #38b2ac;
+}
 
-        .modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+.report-navigation {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 20px;
+}
 
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
+.week-display {
+    background: #f7fafc;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    min-width: 200px;
+    text-align: center;
+}
 
-        .status-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
+.download-section {
+    background: #f0fff4;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border-left: 4px solid #38a169;
+}
 
-        .status-active {
-            background: #48bb78;
-        }
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
 
-        .status-inactive {
-            background: #f56565;
-        }
+.modal.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
-        .notification-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+.modal-content {
+    background: white;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
 
-        .debug-info {
-            background: #f7fafc;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-family: monospace;
-            font-size: 14px;
-            border-left: 4px solid #667eea;
-        }
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
 
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .nav {
-                flex-wrap: wrap;
-            }
-            
-            .entry-item {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .entry-actions {
-                align-self: flex-end;
-            }
+.status-active {
+    background: #48bb78;
+}
 
-            .report-navigation {
-                flex-wrap: wrap;
-            }
+.status-inactive {
+    background: #f56565;
+}
 
-            .week-display {
-                min-width: 150px;
-            }
-        }
+.notification-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.debug-info {
+    background: #f7fafc;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    font-family: monospace;
+    font-size: 14px;
+    border-left: 4px solid #667eea;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Markdown rendering styles */
+.markdown-preview {
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 15px 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+}
+
+.markdown-preview .md-h1 {
+    color: #2d3748;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 10px;
+    margin: 20px 0 15px 0;
+}
+
+.markdown-preview .md-h2 {
+    color: #2d3748;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 5px;
+    margin: 18px 0 12px 0;
+}
+
+.markdown-preview .md-h3 {
+    color: #4a5568;
+    margin: 15px 0 10px 0;
+}
+
+.markdown-preview .md-blockquote {
+    border-left: 4px solid #667eea;
+    padding-left: 15px;
+    margin: 15px 0;
+    color: #718096;
+    font-style: italic;
+    background: rgba(102, 126, 234, 0.05);
+    padding: 10px 15px;
+    border-radius: 0 4px 4px 0;
+}
+
+.markdown-preview .md-code {
+    background: #edf2f7;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 14px;
+}
+
+.markdown-preview .md-list {
+    margin: 10px 0;
+    padding-left: 30px;
+}
+
+.markdown-preview .md-paragraph {
+    margin: 10px 0;
+}
+
+.markdown-preview .md-hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 20px 0;
+}
+
+.markdown-preview .md-preview-more {
+    color: #718096;
+    font-style: italic;
+    text-align: center;
+    margin: 15px 0 5px 0;
+}
+
+/* Compact markdown styles for inline use */
+.md-paragraph {
+    margin: 8px 0;
+}
+
+.md-paragraph:first-child {
+    margin-top: 0;
+}
+
+.md-paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.md-list {
+    margin: 8px 0;
+}
+
+.md-list li {
+    margin: 3px 0;
+}
+
+.md-blockquote {
+    margin: 8px 0;
+}
+
+.report-format-tabs {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.format-tab {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: #718096;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.format-tab:hover {
+    color: #4a5568;
+}
+
+.format-tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+/* Ensure transitions work smoothly for pause button */
+.nav-btn {
+    transition: all 0.3s ease, background 1s ease-out;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .nav {
+        flex-wrap: wrap;
+    }
+    
+    .entry-item {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .entry-actions {
+        align-self: flex-end;
+    }
+
+    .report-navigation {
+        flex-wrap: wrap;
+    }
+
+    .week-display {
+        min-width: 150px;
+    }
+}
+
     </style>
 </head>
 <body>
@@ -500,6 +654,19 @@
                             <option value="-1">Never</option>
                         </select>
                     </div>
+                <div class="form-group">
+                    <label for="notificationSoundType">Notification Sound</label>
+                    <select id="notificationSoundType">
+                        <option value="classic">Classic Bloop</option>
+                        <option value="gentle">Gentle Chime</option>
+                        <option value="urgent">Urgent Ping</option>
+                        <option value="digital">Digital Beep</option>
+                        <option value="nature">Nature Drop</option>
+                        <option value="mechanical">Mechanical Click</option>
+                        <option value="spacey">Spacey Wobble</option>
+                        <option value="corporate">Corporate Ding</option>
+                    </select>
+                </div>
                     <div class="checkbox-group">
                         <input type="checkbox" id="muteNotificationSound">
                         <label for="muteNotificationSound">Mute notification sound</label>
@@ -586,700 +753,2046 @@
     </div>
 
     <script>
-        class ActivityTracker {
-            constructor() {
-                let entries = [];
-                try {
-                    const storedEntries = JSON.parse(localStorage.getItem('activityEntries'));
-                    if (Array.isArray(storedEntries)) {
-                        entries = storedEntries.filter(entry => entry && typeof entry === 'object' && entry.timestamp);
-                    }
-                } catch (e) {
-                    console.error("Error parsing activity entries from localStorage", e);
-                    localStorage.removeItem('activityEntries');
-                }
-                this.entries = entries;
+        
+// === utils.js ===
+/**
+ * Utility functions for the Activity Tracker application
+ */
 
-                this.settings = {
-                    notificationInterval: 60,
-                    startTime: '08:00',
-                    endTime: '18:00',
-                    workingDays: {
-                        monday: true,
-                        tuesday: true,
-                        wednesday: true,
-                        thursday: true,
-                        friday: true,
-                        saturday: false,
-                        sunday: false
-                    },
-                    pauseDuration: 60,
-                    notificationsPausedUntil: null,
-                    muteNotificationSound: false,
-                    ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
-                };
-                this.notificationTimer = null;
-                this.currentReportEntries = [];
-                this.currentWeekStart = null;
-                this.audioContext = null;
-                this.init();
+/**
+ * Format a timestamp to a readable date and time string
+ * @param {string} timestamp - ISO timestamp string
+ * @returns {string} Formatted date and time
+ */
+function formatDateTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleString('en-GB', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+/**
+ * Format a date to a readable date string
+ * @param {Date} date - Date object
+ * @returns {string} Formatted date
+ */
+function formatDate(date) {
+    return date.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+/**
+ * Format a timestamp to just the time portion
+ * @param {string} timestamp - ISO timestamp string
+ * @returns {string} Formatted time
+ */
+function formatTime(timestamp) {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+/**
+ * Escape HTML special characters to prevent XSS
+ * @param {string} text - Text to escape
+ * @returns {string} HTML-safe text
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+/**
+ * Show a temporary notification message
+ * @param {string} message - Message to display
+ * @param {string} type - Type of notification (info, success, error)
+ */
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 10000;
+        background: ${type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : '#667eea'};
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Add slide-in animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+
+    // Remove notification after 3 seconds with slide-out animation
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 300);
+    }, 3000);
+}
+
+/**
+ * Download a file with the given content
+ * @param {string} content - File content
+ * @param {string} filename - Desired filename
+ * @param {string} mimeType - MIME type of the file
+ */
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+/**
+ * Get the current time formatted for datetime-local input
+ * @returns {string} Current time in datetime-local format
+ */
+function getCurrentTimeForInput() {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    return now.toISOString().slice(0, 16);
+}
+
+/**
+ * Escape CSV field content
+ * @param {string} str - String to escape
+ * @returns {string} CSV-safe string
+ */
+function escapeCsv(str) {
+    if (!str) return '';
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+}
+
+/**
+ * Generate a unique ID based on timestamp
+ * @returns {string} Unique identifier
+ */
+function generateId() {
+    return Date.now().toString() + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * Validate if a date string is valid
+ * @param {string} dateString - Date string to validate
+ * @returns {boolean} True if valid date
+ */
+function isValidDate(dateString) {
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date);
+}
+
+/**
+ * Get week start date (Monday) for a given date
+ * @param {Date} date - Reference date
+ * @returns {Date} Monday of that week
+ */
+function getWeekStart(date) {
+    const monday = new Date(date);
+    const dayOfWeek = date.getDay();
+    const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    monday.setDate(date.getDate() + daysToMonday);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+}
+
+/**
+ * Get week end date (Sunday) for a given date
+ * @param {Date} date - Reference date
+ * @returns {Date} Sunday of that week
+ */
+function getWeekEnd(date) {
+    const sunday = new Date(getWeekStart(date));
+    sunday.setDate(sunday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return sunday;
+}
+
+/**
+ * Deep clone an object
+ * @param {Object} obj - Object to clone
+ * @returns {Object} Cloned object
+ */
+function deepClone(obj) {
+    if (obj === null || typeof obj !== 'object') return obj;
+    if (obj instanceof Date) return new Date(obj.getTime());
+    if (obj instanceof Array) return obj.map(item => deepClone(item));
+    if (typeof obj === 'object') {
+        const cloned = {};
+        Object.keys(obj).forEach(key => {
+            cloned[key] = deepClone(obj[key]);
+        });
+        return cloned;
+    }
+}
+
+
+// === sounds.js ===
+/**
+ * Sound management for Activity Tracker
+ * Handles different notification sound types and synthesis
+ */
+
+class SoundManager {
+    constructor() {
+        this.audioContext = null;
+        this.soundTypes = {
+            'classic': 'Classic Bloop',
+            'gentle': 'Gentle Chime',
+            'urgent': 'Urgent Ping',
+            'digital': 'Digital Beep',
+            'nature': 'Nature Drop',
+            'mechanical': 'Mechanical Click',
+            'spacey': 'Spacey Wobble',
+            'corporate': 'Corporate Ding'
+        };
+        this.initAudioContext();
+    }
+
+    /**
+     * Initialize Web Audio API context
+     */
+    initAudioContext() {
+        try {
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (error) {
+            console.warn('Web Audio API not supported:', error);
+            this.audioContext = null;
+        }
+    }
+
+    /**
+     * Get available sound types
+     * @returns {Object} Sound types object
+     */
+    getSoundTypes() {
+        return this.soundTypes;
+    }
+
+    /**
+     * Play notification sound of specified type
+     * @param {string} soundType - Type of sound to play
+     * @param {boolean} muted - Whether sound is muted
+     */
+    playSound(soundType = 'classic', muted = false) {
+        if (!this.audioContext || muted) {
+            return;
+        }
+
+        try {
+            // Resume audio context if it's suspended
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
             }
 
-            init() {
-                this.loadSettings();
-                this.displayEntries();
+            const currentTime = this.audioContext.currentTime;
+            
+            switch (soundType) {
+                case 'classic':
+                    this.playClassicBloop(currentTime);
+                    break;
+                case 'gentle':
+                    this.playGentleChime(currentTime);
+                    break;
+                case 'urgent':
+                    this.playUrgentPing(currentTime);
+                    break;
+                case 'digital':
+                    this.playDigitalBeep(currentTime);
+                    break;
+                case 'nature':
+                    this.playNatureDrop(currentTime);
+                    break;
+                case 'mechanical':
+                    this.playMechanicalClick(currentTime);
+                    break;
+                case 'spacey':
+                    this.playSpaceyWobble(currentTime);
+                    break;
+                case 'corporate':
+                    this.playCorporateDing(currentTime);
+                    break;
+                default:
+                    this.playClassicBloop(currentTime);
+            }
+            
+            console.log(`Notification sound played: ${soundType}`);
+        } catch (error) {
+            console.warn('Error playing notification sound:', error);
+        }
+    }
+
+    /**
+     * Classic bloop sound (original)
+     */
+    playClassicBloop(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(400, currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(600, currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.3);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.3);
+    }
+
+    /**
+     * Gentle chime sound
+     */
+    playGentleChime(currentTime) {
+        const oscillator1 = this.audioContext.createOscillator();
+        const oscillator2 = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator1.type = 'sine';
+        oscillator2.type = 'sine';
+        oscillator1.frequency.setValueAtTime(523.25, currentTime); // C5
+        oscillator2.frequency.setValueAtTime(659.25, currentTime); // E5
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.2, currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 1.0);
+        
+        oscillator1.start(currentTime);
+        oscillator2.start(currentTime);
+        oscillator1.stop(currentTime + 1.0);
+        oscillator2.stop(currentTime + 1.0);
+    }
+
+    /**
+     * Urgent ping sound
+     */
+    playUrgentPing(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(800, currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1200, currentTime + 0.05);
+        oscillator.frequency.exponentialRampToValueAtTime(800, currentTime + 0.1);
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.4, currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.15);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.15);
+    }
+
+    /**
+     * Digital beep sound
+     */
+    playDigitalBeep(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(1000, currentTime);
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.01);
+        gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.05);
+        gainNode.gain.linearRampToValueAtTime(0, currentTime + 0.06);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.06);
+    }
+
+    /**
+     * Nature drop sound
+     */
+    playNatureDrop(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(1200, currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(200, currentTime + 0.8);
+        
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2000, currentTime);
+        filter.frequency.exponentialRampToValueAtTime(300, currentTime + 0.8);
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.25, currentTime + 0.05);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.8);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.8);
+    }
+
+    /**
+     * Mechanical click sound
+     */
+    playMechanicalClick(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'sawtooth';
+        oscillator.frequency.setValueAtTime(150, currentTime);
+        
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(100, currentTime);
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.5, currentTime + 0.005);
+        gainNode.gain.linearRampToValueAtTime(0, currentTime + 0.05);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.05);
+    }
+
+    /**
+     * Spacey wobble sound
+     */
+    playSpaceyWobble(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const lfo = this.audioContext.createOscillator();
+        const lfoGain = this.audioContext.createGain();
+        const gainNode = this.audioContext.createGain();
+        
+        lfo.connect(lfoGain);
+        lfoGain.connect(oscillator.frequency);
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(300, currentTime);
+        
+        lfo.type = 'sine';
+        lfo.frequency.setValueAtTime(6, currentTime);
+        lfoGain.gain.setValueAtTime(50, currentTime);
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.3, currentTime + 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 1.2);
+        
+        lfo.start(currentTime);
+        oscillator.start(currentTime);
+        lfo.stop(currentTime + 1.2);
+        oscillator.stop(currentTime + 1.2);
+    }
+
+    /**
+     * Corporate ding sound
+     */
+    playCorporateDing(currentTime) {
+        const oscillator1 = this.audioContext.createOscillator();
+        const oscillator2 = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator1.connect(gainNode);
+        oscillator2.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator1.type = 'sine';
+        oscillator2.type = 'sine';
+        oscillator1.frequency.setValueAtTime(880, currentTime); // A5
+        oscillator2.frequency.setValueAtTime(1108.73, currentTime); // C#6
+        
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.25, currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.5);
+        
+        oscillator1.start(currentTime);
+        oscillator2.start(currentTime);
+        oscillator1.stop(currentTime + 0.5);
+        oscillator2.stop(currentTime + 0.5);
+    }
+
+    /**
+     * Test a specific sound type
+     * @param {string} soundType - Sound type to test
+     * @param {boolean} muted - Whether sound is muted
+     */
+    testSound(soundType, muted = false) {
+        this.playSound(soundType, muted);
+    }
+}
+
+// Export for use in other modules
+if (typeof window !== 'undefined') {
+    window.SoundManager = SoundManager;
+}
+
+console.log('🔊 Sound Manager module loaded');
+
+
+// === pauseManager.js ===
+/**
+ * Pause Manager for Activity Tracker
+ * Handles pause countdown, visual draining effect, and pause state management
+ */
+
+class PauseManager {
+    constructor(activityTracker) {
+        this.tracker = activityTracker;
+        this.countdownInterval = null;
+        this.pauseButton = null;
+        this.originalButtonText = 'Pause Alerts';
+        this.init();
+    }
+
+    /**
+     * Initialize the pause manager
+     */
+    init() {
+        this.pauseButton = document.getElementById('pauseButton');
+        if (this.pauseButton) {
+            this.updatePauseButtonDisplay();
+        }
+    }
+
+    /**
+     * Start pause with countdown
+     * @param {number} durationMinutes - Duration in minutes (-1 for forever)
+     */
+    startPause(durationMinutes) {
+        // Clear any existing countdown
+        this.stopCountdown();
+
+        if (durationMinutes === -1) {
+            // Forever pause
+            this.tracker.settings.notificationsPausedUntil = Infinity;
+            this.updatePauseButtonForever();
+        } else {
+            // Timed pause
+            this.tracker.settings.notificationsPausedUntil = new Date().getTime() + durationMinutes * 60 * 1000;
+            this.startCountdown();
+        }
+
+        this.tracker.saveSettings();
+    }
+
+    /**
+     * Resume notifications
+     */
+    resume() {
+        this.stopCountdown();
+        this.tracker.settings.notificationsPausedUntil = null;
+        this.updatePauseButtonNormal();
+        this.tracker.saveSettings();
+    }
+
+    /**
+     * Start the countdown timer
+     */
+    startCountdown() {
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+        }
+
+        // Update immediately
+        this.updateCountdownDisplay();
+
+        // Update every second
+        this.countdownInterval = setInterval(() => {
+            this.updateCountdownDisplay();
+        }, 1000);
+    }
+
+    /**
+     * Stop the countdown timer
+     */
+    stopCountdown() {
+        if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+            this.countdownInterval = null;
+        }
+    }
+
+    /**
+     * Update the countdown display and draining effect
+     */
+    updateCountdownDisplay() {
+        if (!this.pauseButton || !this.tracker.settings.notificationsPausedUntil) {
+            this.updatePauseButtonNormal();
+            return;
+        }
+
+        const now = new Date().getTime();
+        const pausedUntil = this.tracker.settings.notificationsPausedUntil;
+
+        if (pausedUntil === Infinity) {
+            this.updatePauseButtonForever();
+            return;
+        }
+
+        const timeRemaining = pausedUntil - now;
+
+        if (timeRemaining <= 0) {
+            // Time's up, auto-resume
+            this.resume();
+            showNotification('Notifications automatically resumed', 'success');
+            return;
+        }
+
+        // Calculate time components
+        const totalSeconds = Math.floor(timeRemaining / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        // Format countdown text
+        let countdownText;
+        if (hours > 0) {
+            countdownText = `${hours}h ${minutes}m ${seconds}s`;
+        } else if (minutes > 0) {
+            countdownText = `${minutes}m ${seconds}s`;
+        } else {
+            countdownText = `${seconds}s`;
+        }
+
+        // Update button text
+        this.pauseButton.textContent = `Resume (${countdownText})`;
+
+        // Calculate drain percentage (how much time has passed)
+        const totalDuration = this.tracker.settings.pauseDuration * 60 * 1000;
+        const timeElapsed = totalDuration - timeRemaining;
+        const drainPercentage = Math.max(0, Math.min(100, (timeElapsed / totalDuration) * 100));
+
+        // Apply draining visual effect
+        this.applyDrainingEffect(drainPercentage);
+    }
+
+    /**
+     * Apply visual draining effect to button
+     * @param {number} percentage - Percentage drained (0-100)
+     */
+    applyDrainingEffect(percentage) {
+        // Create a gradient that "drains" from bottom to top
+        const drained = `rgba(229, 62, 62, 0.3)`; // Light red for drained area
+        const full = `#e53e3e`; // Full red for remaining area
+
+        // Calculate where the drain line should be
+        const drainLevel = 100 - percentage;
+
+        this.pauseButton.style.background = `linear-gradient(to top, ${drained} 0%, ${drained} ${percentage}%, ${full} ${percentage}%, ${full} 100%)`;
+        this.pauseButton.style.transition = 'background 1s ease-out';
+        
+        // Add a subtle pulse effect when nearly drained
+        if (percentage > 90) {
+            this.pauseButton.style.animation = 'pulse 1s infinite';
+        } else {
+            this.pauseButton.style.animation = 'none';
+        }
+    }
+
+    /**
+     * Update button for forever pause
+     */
+    updatePauseButtonForever() {
+        this.pauseButton.textContent = 'Resume (Paused Forever)';
+        this.pauseButton.style.background = '#e53e3e';
+        this.pauseButton.style.animation = 'none';
+        this.pauseButton.style.transition = '';
+    }
+
+    /**
+     * Update button for normal (not paused) state
+     */
+    updatePauseButtonNormal() {
+        this.pauseButton.textContent = this.originalButtonText;
+        this.pauseButton.style.background = '';
+        this.pauseButton.style.animation = 'none';
+        this.pauseButton.style.transition = '';
+    }
+
+    /**
+     * Update the pause button display based on current state
+     */
+    updatePauseButtonDisplay() {
+        if (!this.pauseButton) return;
+
+        if (this.tracker.settings.notificationsPausedUntil) {
+            if (this.tracker.settings.notificationsPausedUntil === Infinity) {
+                this.updatePauseButtonForever();
+            } else {
+                this.startCountdown();
+            }
+        } else {
+            this.updatePauseButtonNormal();
+        }
+    }
+
+    /**
+     * Check if notifications are currently paused
+     * @returns {boolean} True if paused
+     */
+    isPaused() {
+        if (!this.tracker.settings.notificationsPausedUntil) {
+            return false;
+        }
+
+        if (this.tracker.settings.notificationsPausedUntil === Infinity) {
+            return true;
+        }
+
+        const now = new Date().getTime();
+        return now < this.tracker.settings.notificationsPausedUntil;
+    }
+
+    /**
+     * Get remaining pause time in milliseconds
+     * @returns {number} Remaining time in ms, or -1 for forever, or 0 if not paused
+     */
+    getRemainingTime() {
+        if (!this.tracker.settings.notificationsPausedUntil) {
+            return 0;
+        }
+
+        if (this.tracker.settings.notificationsPausedUntil === Infinity) {
+            return -1;
+        }
+
+        const now = new Date().getTime();
+        const remaining = this.tracker.settings.notificationsPausedUntil - now;
+        return Math.max(0, remaining);
+    }
+
+    /**
+     * Cleanup when destroying the pause manager
+     */
+    destroy() {
+        this.stopCountdown();
+    }
+}
+
+// Export for use in other modules
+if (typeof window !== 'undefined') {
+    window.PauseManager = PauseManager;
+}
+
+console.log('⏸️ Pause Manager module loaded');
+
+
+// === markdownRenderer.js ===
+/**
+ * Lightweight Markdown Renderer for Activity Tracker
+ * Handles basic markdown rendering for reports preview
+ */
+
+class MarkdownRenderer {
+    constructor() {
+        this.rules = [
+            // Headers
+            { pattern: /^### (.*$)/gim, replacement: '<h3>$1</h3>' },
+            { pattern: /^## (.*$)/gim, replacement: '<h2>$1</h2>' },
+            { pattern: /^# (.*$)/gim, replacement: '<h1>$1</h1>' },
+            
+            // Bold
+            { pattern: /\*\*(.*)\*\*/gim, replacement: '<strong>$1</strong>' },
+            
+            // Italic
+            { pattern: /\*(.*)\*/gim, replacement: '<em>$1</em>' },
+            
+            // Code (inline)
+            { pattern: /`(.*)`/gim, replacement: '<code>$1</code>' },
+            
+            // Links
+            { pattern: /\[([^\]]*)\]\(([^\)]*)\)/gim, replacement: '<a href="$2">$1</a>' },
+            
+            // Horizontal rules
+            { pattern: /^---\s*$/gim, replacement: '<hr>' },
+            
+            // Blockquotes
+            { pattern: /^> (.*)$/gim, replacement: '<blockquote>$1</blockquote>' },
+            
+            // Unordered lists
+            { pattern: /^\- (.*)$/gim, replacement: '<li>$1</li>' }
+        ];
+    }
+
+    /**
+     * Render markdown to HTML
+     * @param {string} markdown - Markdown text
+     * @param {boolean} inline - Whether this is inline rendering (for descriptions)  
+     * @returns {string} HTML string
+     */
+    render(markdown, inline = false) {
+        if (!markdown || typeof markdown !== 'string') {
+            return '';
+        }
+
+        let html = markdown.trim();
+
+        // Apply markdown rules
+        this.rules.forEach(rule => {
+            html = html.replace(rule.pattern, rule.replacement);
+        });
+
+        // Handle line breaks and paragraphs
+        if (inline) {
+            // For inline content (descriptions), be more conservative
+            // Double newlines become paragraph breaks
+            html = html.replace(/\n\s*\n/gim, '</p><p>');
+            // Single newlines become line breaks only if not in lists
+            html = html.replace(/\n(?![<\/])/gim, '<br>');
+        } else {
+            // For full content, handle paragraphs more aggressively
+            html = html.replace(/\n\s*\n/gim, '</p><p>');
+            html = html.replace(/\n(?![<\/])/gim, '<br>');
+        }
+
+        // Wrap in paragraphs if not inline or if it doesn't start with a block element
+        if (!inline || !html.match(/^<(h[1-6]|ul|ol|blockquote|hr)/)) {
+            html = '<p>' + html + '</p>';
+        }
+
+        // Clean up empty paragraphs
+        html = html.replace(/<p>\s*<\/p>/gim, '');
+        html = html.replace(/<p><h/gim, '<h');
+        html = html.replace(/<\/h([1-6])><\/p>/gim, '</h$1>');
+        html = html.replace(/<p><hr><\/p>/gim, '<hr>');
+        html = html.replace(/<p><blockquote>/gim, '<blockquote>');
+        html = html.replace(/<\/blockquote><\/p>/gim, '</blockquote>');
+        html = html.replace(/<p><ul>/gim, '<ul>');
+        html = html.replace(/<\/ul><\/p>/gim, '</ul>');
+
+        // Handle lists
+        html = this.renderLists(html);
+        
+        // Clean up extra line breaks around lists
+        html = html.replace(/<br>\s*<\/li>/gim, '</li>');
+        html = html.replace(/<li><br>/gim, '<li>');
+        html = html.replace(/<\/ul><br>/gim, '</ul>');
+        html = html.replace(/<br><ul>/gim, '<ul>');
+
+        return html;
+    }
+
+    /**
+     * Process list items into proper ul/ol tags
+     * @param {string} html - HTML with list items
+     * @returns {string} HTML with proper list structure
+     */
+    renderLists(html) {
+        // Find sequences of <li> tags (including those separated by <br> tags) and wrap them in <ul>
+        html = html.replace(/(<li>.*?<\/li>)(\s*(<br>)?\s*<li>.*?<\/li>)*/gim, (match) => {
+            // Remove <br> tags between list items
+            const cleanMatch = match.replace(/<br>\s*(?=<li>)/gim, '');            return '<ul>' + match + '</ul>';
+        });
+
+        // Clean up paragraph tags around lists
+        html = html.replace(/<p><ul>/gim, '<ul>');
+        html = html.replace(/<\/ul><\/p>/gim, '</ul>');
+        html = html.replace(/<p><li>/gim, '<li>');
+        html = html.replace(/<\/li><\/p>/gim, '</li>');
+        
+        // Remove <br> tags immediately before/after lists
+        html = html.replace(/<br>\s*<ul>/gim, '<ul>');
+        html = html.replace(/<\/ul>\s*<br>/gim, '</ul>');
+
+        return html;
+    }
+
+    /**
+     * Render inline markdown (for descriptions)
+     * @param {string} markdown - Markdown text
+     * @returns {string} HTML string
+     */
+    renderInline(markdown) {
+        return this.render(markdown, true);
+    }
+
+    /**
+     * Render markdown with custom CSS classes
+     * @param {string} markdown - Markdown text
+     * @param {boolean} inline - Whether this is inline rendering
+     * @returns {string} HTML with CSS classes
+     */
+    renderWithClasses(markdown, inline = false) {
+        let html = this.render(markdown, inline);
+        
+        // Add CSS classes for styling
+        html = html.replace(/<h1>/gim, '<h1 class="md-h1">');
+        html = html.replace(/<h2>/gim, '<h2 class="md-h2">');
+        html = html.replace(/<h3>/gim, '<h3 class="md-h3">');
+        html = html.replace(/<blockquote>/gim, '<blockquote class="md-blockquote">');
+        html = html.replace(/<code>/gim, '<code class="md-code">');
+        html = html.replace(/<ul>/gim, '<ul class="md-list">');
+        html = html.replace(/<p>/gim, '<p class="md-paragraph">');
+        html = html.replace(/<hr>/gim, '<hr class="md-hr">');
+
+        return html;
+    }
+
+    /**
+     * Render inline markdown with CSS classes (for descriptions)
+     * @param {string} markdown - Markdown text
+     * @returns {string} HTML string with classes
+     */
+    renderInlineWithClasses(markdown) {
+        return this.renderWithClasses(markdown, true);
+    }
+
+    /**
+     * Create a preview of markdown content (first few lines)
+     * @param {string} markdown - Markdown text
+     * @param {number} maxLines - Maximum lines to preview
+     * @returns {string} HTML preview
+     */
+    preview(markdown, maxLines = 10) {
+        if (!markdown) return '';
+        
+        const lines = markdown.split('\n').slice(0, maxLines);
+        const previewMarkdown = lines.join('\n');
+        
+        if (lines.length >= maxLines && markdown.split('\n').length > maxLines) {
+            return this.renderWithClasses(previewMarkdown) + '<p class="md-preview-more">...</p>';
+        }
+        
+        return this.renderWithClasses(previewMarkdown);
+    }
+}
+
+// Export for use in other modules
+if (typeof window !== 'undefined') {
+    window.MarkdownRenderer = MarkdownRenderer;
+}
+
+console.log('📝 Markdown Renderer module loaded');
+
+
+// === ActivityTracker.js ===
+/**
+ * Main ActivityTracker class
+ * Handles all functionality for tracking activities, notifications, and reports
+ */
+class ActivityTracker {
+    constructor() {
+        // Initialize entries array from localStorage
+        let entries = [];
+        try {
+            const storedEntries = JSON.parse(localStorage.getItem('activityEntries'));
+            if (Array.isArray(storedEntries)) {
+                entries = storedEntries.filter(entry => 
+                    entry && typeof entry === 'object' && entry.timestamp
+                );
+            }
+        } catch (e) {
+            console.error("Error parsing activity entries from localStorage", e);
+            localStorage.removeItem('activityEntries');
+        }
+        this.entries = entries;
+
+        // Initialize settings with defaults
+        this.settings = {
+            notificationInterval: 60,
+            startTime: '08:00',
+            endTime: '18:00',
+            workingDays: {
+                monday: true,
+                tuesday: true,
+                wednesday: true,
+                thursday: true,
+                friday: true,
+                saturday: false,
+                sunday: false
+            },
+            pauseDuration: 60,
+            notificationsPausedUntil: null,
+            muteNotificationSound: false,
+            notificationSoundType: "classic",
+            ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
+        };
+
+        // Initialize state variables
+        this.notificationTimer = null;
+        this.currentReportEntries = [];
+        this.currentWeekStart = null;
+        this.soundManager = null;
+        this.pauseManager = null;
+
+        this.init();
+    }
+
+    /**
+     * Initialize the application
+     */
+    init() {
+        this.loadSettings();
+        this.displayEntries();
+        this.updateNotificationStatus();
+        this.updateDebugInfo();
+        this.updatePauseButtonState();
+        this.startNotificationTimer();
+        this.setDefaultReportDates();
+        this.initSoundManager();
+        this.initPauseManager();
+        this.initMarkdownRenderer();
+        
+        // Event listeners
+        this.attachEventListeners();
+        
+        // Set current time by default
+        this.setCurrentTime();
+        document.getElementById('activity').focus();
+
+        // Check for local file protocol
+        if (window.location.protocol === 'file:') {
+            console.warn('Running from local file - notifications may have limitations');
+        }
+    }
+
+    /**
+     * Initialize markdown renderer
+     */
+    initMarkdownRenderer() {
+        try {
+            this.markdownRenderer = new MarkdownRenderer();
+        } catch (error) {
+            console.warn('Markdown Renderer initialization failed:', error);
+        }
+    }
+
+    /**
+     * Initialize pause manager
+     */
+    initPauseManager() {
+        try {
+            this.pauseManager = new PauseManager(this);
+        } catch (error) {
+            console.warn('Pause Manager initialization failed:', error);
+        }
+    }
+
+    /**
+     * Attach event listeners to forms
+     */
+    attachEventListeners() {
+        document.getElementById('activityForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.addEntry();
+        });
+
+        document.getElementById('editForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.updateEntry();
+        });
+    }
+
+    /**
+     * Initialize Web Audio API for notification sounds
+     */
+    initSoundManager() {
+        try {
+            this.soundManager = new SoundManager();
+        } catch (error) {
+            console.warn('Sound Manager failed to initialise:', error);
+        }
+    }
+
+    /**
+     * Play notification sound
+     */
+    playNotificationSound() {
+        if (this.soundManager) {
+            this.soundManager.playSound(this.settings.notificationSoundType, this.settings.muteNotificationSound);
+        }
+    }
+
+    /**
+     * Test notification sound
+     */
+    testNotificationSound() {
+        if (this.soundManager) {
+            this.soundManager.playSound(this.settings.notificationSoundType, this.settings.muteNotificationSound);
+        }
+        showNotification('Test sound played!', 'success');
+    }
+
+    /**
+     * Add a new activity entry
+     * @param {Object} entry - Optional pre-formed entry object
+     */
+    addEntry(entry) {
+        let newEntry = entry;
+        if (!newEntry) {
+            const activity = document.getElementById('activity').value;
+            const description = document.getElementById('description').value;
+            const timestamp = document.getElementById('timestamp').value;
+
+            newEntry = {
+                id: generateId(),
+                activity,
+                description,
+                timestamp: new Date(timestamp).toISOString(),
+                created: new Date().toISOString()
+            };
+        }
+
+        this.entries.unshift(newEntry);
+        this.saveEntries();
+        this.displayEntries();
+
+        if (!entry) {
+            document.getElementById('activityForm').reset();
+            this.setCurrentTime();
+        }
+        
+        showNotification('Entry added successfully!', 'success');
+    }
+
+    /**
+     * Update an existing entry
+     */
+    updateEntry() {
+        const id = document.getElementById('editId').value;
+        const activity = document.getElementById('editActivity').value;
+        const description = document.getElementById('editDescription').value;
+        const timestamp = document.getElementById('editTimestamp').value;
+
+        const entryIndex = this.entries.findIndex(entry => entry.id === id);
+        if (entryIndex !== -1) {
+            this.entries[entryIndex] = {
+                ...this.entries[entryIndex],
+                activity,
+                description,
+                timestamp: new Date(timestamp).toISOString()
+            };
+            
+            this.saveEntries();
+            this.displayEntries();
+            this.closeEditModal();
+            showNotification('Entry updated successfully!', 'success');
+        }
+    }
+
+    /**
+     * Delete an entry
+     * @param {string} id - Entry ID to delete
+     */
+    deleteEntry(id) {
+        if (confirm('Are you sure you want to delete this entry?')) {
+            this.entries = this.entries.filter(entry => entry.id !== id);
+            this.saveEntries();
+            this.displayEntries();
+            showNotification('Entry deleted successfully!', 'success');
+        }
+    }
+
+    /**
+     * Edit an entry (open modal)
+     * @param {string} id - Entry ID to edit
+     */
+    editEntry(id) {
+        const entry = this.entries.find(entry => entry.id === id);
+        if (entry) {
+            document.getElementById('editId').value = entry.id;
+            document.getElementById('editActivity').value = entry.activity;
+            document.getElementById('editDescription').value = entry.description || '';
+            document.getElementById('editTimestamp').value = 
+                new Date(entry.timestamp).toISOString().slice(0, 16);
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+    }
+
+    /**
+     * Close the edit modal
+     */
+    closeEditModal() {
+        document.getElementById('editModal').classList.remove('active');
+    }
+
+    /**
+     * Display entries in the UI
+     */
+    displayEntries() {
+        const container = document.getElementById('entriesList');
+        const recentEntries = this.entries.slice(0, 20); // Show last 20 entries
+
+        if (recentEntries.length === 0) {
+            container.innerHTML = '<p>No entries yet. Add your first activity above!</p>';
+            return;
+        }
+
+        container.innerHTML = recentEntries.map(entry => `
+            <div class="entry-item">
+                <div class="entry-content">
+                    <div class="entry-time">${formatDateTime(entry.timestamp)}</div>
+                    <div class="entry-activity">${escapeHtml(entry.activity)}</div>
+                    ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
+                </div>
+                <div class="entry-actions">
+                    <button class="btn btn-secondary" onclick="tracker.editEntry('${entry.id}')">Edit</button>
+                    <button class="btn btn-danger" onclick="tracker.deleteEntry('${entry.id}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Render description text as markdown
+     * @param {string} description - Description text
+     * @returns {string} HTML string
+     */
+    renderDescriptionMarkdown(description) {
+        if (this.markdownRenderer && description) {
+            return this.markdownRenderer.renderInlineWithClasses(description);
+        }
+        return escapeHtml(description);
+    }
+
+    /**
+     * Save entries to localStorage
+     */
+    saveEntries() {
+        localStorage.setItem('activityEntries', JSON.stringify(this.entries));
+    }
+
+    /**
+     * Save settings
+     */
+    saveSettings() {
+        this.settings = {
+            ...this.settings,
+            notificationInterval: parseInt(document.getElementById('notificationInterval').value),
+            startTime: document.getElementById('startTime').value,
+            endTime: document.getElementById('endTime').value,
+            pauseDuration: parseInt(document.getElementById('pauseDuration').value),
+            muteNotificationSound: document.getElementById('muteNotificationSound').checked,
+            notificationSoundType: document.getElementById('notificationSoundType').value,
+            workingDays: {
+                monday: document.getElementById('monday').checked,
+                tuesday: document.getElementById('tuesday').checked,
+                wednesday: document.getElementById('wednesday').checked,
+                thursday: document.getElementById('thursday').checked,
+                friday: document.getElementById('friday').checked,
+                saturday: document.getElementById('saturday').checked,
+                sunday: document.getElementById('sunday').checked
+            }
+        };
+
+        localStorage.setItem('activitySettings', JSON.stringify(this.settings));
+        this.startNotificationTimer();
+        showNotification('Settings saved successfully!', 'success');
+    }
+
+    /**
+     * Load settings into the UI
+     */
+    loadSettings() {
+        document.getElementById('notificationInterval').value = this.settings.notificationInterval;
+        document.getElementById('startTime').value = this.settings.startTime;
+        document.getElementById('endTime').value = this.settings.endTime;
+        document.getElementById('pauseDuration').value = this.settings.pauseDuration;
+        document.getElementById('muteNotificationSound').checked = this.settings.muteNotificationSound;
+        document.getElementById('notificationSoundType').value = this.settings.notificationSoundType;
+        
+        Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
+            document.getElementById(day).checked = checked;
+        });
+    }
+
+    /**
+     * Enable notifications
+     */
+    async enableNotifications() {
+        if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+            alert('This browser does not support notifications or service workers.');
+            this.updateDebugInfo();
+            return;
+        }
+
+        try {
+            console.log('Requesting notification permission...');
+            const permission = await Notification.requestPermission();
+            console.log('Permission result:', permission);
+            
+            setTimeout(() => {
                 this.updateNotificationStatus();
                 this.updateDebugInfo();
-                this.updatePauseButtonState();
+            }, 500);
+            
+            if (permission === 'granted') {
+                showNotification('Notifications enabled successfully!', 'success');
                 this.startNotificationTimer();
-                this.setDefaultReportDates();
-                this.initAudioContext();
                 
-                // Event listeners
-                document.getElementById('activityForm').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.addEntry();
-                });
-
-                document.getElementById('editForm').addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    this.updateEntry();
-                });
-
-                // Set current time by default
-                this.setCurrentTime();
-                document.getElementById('activity').focus();
-
-                // Check for local file protocol
-                if (window.location.protocol === 'file:') {
-                    console.warn('Running from local file - notifications may have limitations');
-                }
+                setTimeout(() => {
+                    this.testNotification(true);
+                }, 1000);
+            } else if (permission === 'denied') {
+                showNotification('Notifications were denied. Please check your browser settings and try again.', 'error');
+            } else {
+                showNotification('Notification permission was not granted. Please try again.', 'error');
             }
+        } catch (error) {
+            console.error('Error requesting notification permission:', error);
+            showNotification('Error requesting notification permission: ' + error.message, 'error');
+            this.updateDebugInfo();
+        }
+    }
 
-            initAudioContext() {
-                try {
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                } catch (error) {
-                    console.warn('Web Audio API not supported:', error);
-                    this.audioContext = null;
-                }
+    /**
+     * Show notification using service worker
+     * @param {string} title - Notification title
+     * @param {Object} options - Notification options
+     */
+    async showNotificationWithServiceWorker(title, options) {
+        if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+            return;
+        }
+
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, options);
+    }
+
+    /**
+     * Test notification
+     * @param {boolean} isAutoTest - Whether this is an automatic test
+     */
+    testNotification(isAutoTest = false) {
+        console.log('Testing notification, permission:', Notification.permission);
+        this.updateDebugInfo();
+        
+        // Play sound regardless of notification permission
+        this.playNotificationSound();
+        
+        if (Notification.permission !== 'granted') {
+            if (!isAutoTest) {
+                showNotification('Please enable notifications first! Current permission: ' + Notification.permission, 'error');
             }
+            return;
+        }
 
-            playNotificationSound() {
-                if (!this.audioContext || this.settings.muteNotificationSound) {
-                    return;
-                }
+        try {
+            const options = {
+                body: 'This is a test notification. If you can see this, notifications are working correctly!',
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+                tag: 'test-notification',
+                requireInteraction: false,
+                actions: [
+                    { action: 'reply', type: 'text', title: 'Log Activity', placeholder: 'e.g. coding' }
+                ]
+            };
+            this.showNotificationWithServiceWorker('Activity Tracker Test', options);
 
-                try {
-                    // Resume audio context if it's suspended (required by some browsers)
-                    if (this.audioContext.state === 'suspended') {
-                        this.audioContext.resume();
-                    }
-
-                    // Create a pleasant "bloop" sound
-                    const oscillator = this.audioContext.createOscillator();
-                    const gainNode = this.audioContext.createGain();
-                    
-                    oscillator.connect(gainNode);
-                    gainNode.connect(this.audioContext.destination);
-                    
-                    // Configure the sound - a pleasant rising tone
-                    oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.1);
-                    
-                    // Configure volume envelope for a smooth "bloop"
-                    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
-                    
-                    // Play the sound
-                    oscillator.start(this.audioContext.currentTime);
-                    oscillator.stop(this.audioContext.currentTime + 0.3);
-                    
-                    console.log('Notification sound played');
-                } catch (error) {
-                    console.warn('Error playing notification sound:', error);
-                }
+            if (!isAutoTest) {
+                showNotification('Test notification sent successfully!', 'success');
             }
+            console.log('Test notification created successfully');
+        } catch (error) {
+            console.error('Error creating test notification:', error);
+            showNotification('Error creating test notification: ' + error.message, 'error');
+            this.updateDebugInfo();
+        }
+    }
 
-            testNotificationSound() {
-                this.playNotificationSound();
-                this.showNotification('Test sound played!', 'success');
-            }
+    /**
+     * Refresh notification status
+     */
+    refreshNotificationStatus() {
+        this.updateNotificationStatus();
+        this.updateDebugInfo();
+        showNotification('Notification status refreshed', 'success');
+    }
 
-            addEntry(entry) {
-                let newEntry = entry;
-                if (!newEntry) {
-                    const activity = document.getElementById('activity').value;
-                    const description = document.getElementById('description').value;
-                    const timestamp = document.getElementById('timestamp').value;
+    /**
+     * Update notification status display
+     */
+    updateNotificationStatus() {
+        const statusEl = document.getElementById('notificationStatus');
+        const indicatorEl = document.getElementById('statusIndicator');
+        const textEl = document.getElementById('statusText');
 
-                    newEntry = {
-                        id: Date.now().toString(),
-                        activity,
-                        description,
-                        timestamp: new Date(timestamp).toISOString(),
-                        created: new Date().toISOString()
-                    };
-                }
+        console.log('Updating notification status, permission:', Notification.permission);
 
-                this.entries.unshift(newEntry);
-                this.saveEntries();
-                this.displayEntries();
-
-                if (!entry) {
-                    document.getElementById('activityForm').reset();
-                    this.setCurrentTime();
-                }
-                
-                this.showNotification('Entry added successfully!', 'success');
-            }
-
-            updateEntry() {
-                const id = document.getElementById('editId').value;
-                const activity = document.getElementById('editActivity').value;
-                const description = document.getElementById('editDescription').value;
-                const timestamp = document.getElementById('editTimestamp').value;
-
-                const entryIndex = this.entries.findIndex(entry => entry.id === id);
-                if (entryIndex !== -1) {
-                    this.entries[entryIndex] = {
-                        ...this.entries[entryIndex],
-                        activity,
-                        description,
-                        timestamp: new Date(timestamp).toISOString()
-                    };
-                    
-                    this.saveEntries();
-                    this.displayEntries();
-                    this.closeEditModal();
-                    this.showNotification('Entry updated successfully!', 'success');
-                }
-            }
-
-            deleteEntry(id) {
-                if (confirm('Are you sure you want to delete this entry?')) {
-                    this.entries = this.entries.filter(entry => entry.id !== id);
-                    this.saveEntries();
-                    this.displayEntries();
-                    this.showNotification('Entry deleted successfully!', 'success');
-                }
-            }
-
-            editEntry(id) {
-                const entry = this.entries.find(entry => entry.id === id);
-                if (entry) {
-                    document.getElementById('editId').value = entry.id;
-                    document.getElementById('editActivity').value = entry.activity;
-                    document.getElementById('editDescription').value = entry.description || '';
-                    document.getElementById('editTimestamp').value = 
-                        new Date(entry.timestamp).toISOString().slice(0, 16);
-                    
-                    document.getElementById('editModal').classList.add('active');
-                }
-            }
-
-            closeEditModal() {
-                document.getElementById('editModal').classList.remove('active');
-            }
-
-            displayEntries() {
-                const container = document.getElementById('entriesList');
-                const recentEntries = this.entries.slice(0, 20); // Show last 20 entries
-
-                if (recentEntries.length === 0) {
-                    container.innerHTML = '<p>No entries yet. Add your first activity above!</p>';
-                    return;
-                }
-
-                container.innerHTML = recentEntries.map(entry => `
-                    <div class="entry-item">
-                        <div class="entry-content">
-                            <div class="entry-time">${this.formatDateTime(entry.timestamp)}</div>
-                            <div class="entry-activity">${this.escapeHtml(entry.activity)}</div>
-                            ${entry.description ? `<div class="entry-description">${this.escapeHtml(entry.description)}</div>` : ''}
-                        </div>
-                        <div class="entry-actions">
-                            <button class="btn btn-secondary" onclick="tracker.editEntry('${entry.id}')">Edit</button>
-                            <button class="btn btn-danger" onclick="tracker.deleteEntry('${entry.id}')">Delete</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            saveEntries() {
-                localStorage.setItem('activityEntries', JSON.stringify(this.entries));
-            }
-
-            saveSettings() {
-                this.settings = {
-                    ...this.settings,
-                    notificationInterval: parseInt(document.getElementById('notificationInterval').value),
-                    startTime: document.getElementById('startTime').value,
-                    endTime: document.getElementById('endTime').value,
-                    pauseDuration: parseInt(document.getElementById('pauseDuration').value),
-                    muteNotificationSound: document.getElementById('muteNotificationSound').checked,
-                    workingDays: {
-                        monday: document.getElementById('monday').checked,
-                        tuesday: document.getElementById('tuesday').checked,
-                        wednesday: document.getElementById('wednesday').checked,
-                        thursday: document.getElementById('thursday').checked,
-                        friday: document.getElementById('friday').checked,
-                        saturday: document.getElementById('saturday').checked,
-                        sunday: document.getElementById('sunday').checked
-                    }
-                };
-
-                localStorage.setItem('activitySettings', JSON.stringify(this.settings));
-                this.startNotificationTimer();
-                this.showNotification('Settings saved successfully!', 'success');
-            }
-
-            loadSettings() {
-                document.getElementById('notificationInterval').value = this.settings.notificationInterval;
-                document.getElementById('startTime').value = this.settings.startTime;
-                document.getElementById('endTime').value = this.settings.endTime;
-                document.getElementById('pauseDuration').value = this.settings.pauseDuration;
-                document.getElementById('muteNotificationSound').checked = this.settings.muteNotificationSound;
-                
-                Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
-                    document.getElementById(day).checked = checked;
-                });
-            }
-
-            async enableNotifications() {
-                if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-                    alert('This browser does not support notifications or service workers.');
-                    this.updateDebugInfo();
-                    return;
-                }
-
-                try {
-                    console.log('Requesting notification permission...');
-                    const permission = await Notification.requestPermission();
-                    console.log('Permission result:', permission);
-                    
-                    setTimeout(() => {
-                        this.updateNotificationStatus();
-                        this.updateDebugInfo();
-                    }, 500);
-                    
-                    if (permission === 'granted') {
-                        this.showNotification('Notifications enabled successfully!', 'success');
-                        this.startNotificationTimer();
-                        
-                        setTimeout(() => {
-                            this.testNotification(true);
-                        }, 1000);
-                    } else if (permission === 'denied') {
-                        this.showNotification('Notifications were denied. Please check your browser settings and try again.', 'error');
-                    } else {
-                        this.showNotification('Notification permission was not granted. Please try again.', 'error');
-                    }
-                } catch (error) {
-                    console.error('Error requesting notification permission:', error);
-                    this.showNotification('Error requesting notification permission: ' + error.message, 'error');
-                    this.updateDebugInfo();
-                }
-            }
-
-            async showNotificationWithServiceWorker(title, options) {
-                if (!('serviceWorker' in navigator) || !('Notification' in window)) {
-                    return;
-                }
-
-                const registration = await navigator.serviceWorker.ready;
-                await registration.showNotification(title, options);
-            }
-
-            testNotification(isAutoTest = false) {
-                console.log('Testing notification, permission:', Notification.permission);
-                this.updateDebugInfo();
-                
-                // Play sound regardless of notification permission
-                this.playNotificationSound();
-                
-                if (Notification.permission !== 'granted') {
-                    if (!isAutoTest) {
-                        this.showNotification('Please enable notifications first! Current permission: ' + Notification.permission, 'error');
-                    }
-                    return;
-                }
-
-                try {
-                    const options = {
-                        body: 'This is a test notification. If you can see this, notifications are working correctly!',
-                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
-                        tag: 'test-notification',
-                        requireInteraction: false,
-                        actions: [
-                            { action: 'reply', type: 'text', title: 'Log Activity', placeholder: 'e.g. coding' }
-                        ]
-                    };
-                    this.showNotificationWithServiceWorker('Activity Tracker Test', options);
-
-                    if (!isAutoTest) {
-                        this.showNotification('Test notification sent successfully!', 'success');
-                    }
-                    console.log('Test notification created successfully');
-                } catch (error) {
-                    console.error('Error creating test notification:', error);
-                    this.showNotification('Error creating test notification: ' + error.message, 'error');
-                    this.updateDebugInfo();
-                }
-            }
-
-            refreshNotificationStatus() {
-                this.updateNotificationStatus();
-                this.updateDebugInfo();
-                this.showNotification('Notification status refreshed', 'success');
-            }
-
-            updateNotificationStatus() {
-                const statusEl = document.getElementById('notificationStatus');
-                const indicatorEl = document.getElementById('statusIndicator');
-                const textEl = document.getElementById('statusText');
-
-                console.log('Updating notification status, permission:', Notification.permission);
-
-                if (!('Notification' in window)) {
+        if (!('Notification' in window)) {
+            statusEl.className = 'notification-status notification-disabled';
+            indicatorEl.className = 'status-indicator status-inactive';
+            textEl.textContent = 'Notifications not supported in this browser';
+        } else {
+            switch (Notification.permission) {
+                case 'granted':
+                    statusEl.className = 'notification-status notification-enabled';
+                    indicatorEl.className = 'status-indicator status-active';
+                    textEl.textContent = 'Notifications are enabled and working';
+                    break;
+                case 'denied':
                     statusEl.className = 'notification-status notification-disabled';
                     indicatorEl.className = 'status-indicator status-inactive';
-                    textEl.textContent = 'Notifications not supported in this browser';
-                } else {
-                    switch (Notification.permission) {
-                        case 'granted':
-                            statusEl.className = 'notification-status notification-enabled';
-                            indicatorEl.className = 'status-indicator status-active';
-                            textEl.textContent = 'Notifications are enabled and working';
-                            break;
-                        case 'denied':
-                            statusEl.className = 'notification-status notification-disabled';
-                            indicatorEl.className = 'status-indicator status-inactive';
-                            textEl.textContent = 'Notifications are blocked - please enable them in browser settings';
-                            break;
-                        case 'default':
-                        default:
-                            statusEl.className = 'notification-status notification-warning';
-                            indicatorEl.className = 'status-indicator status-inactive';
-                            textEl.textContent = 'Notifications are disabled - click "Enable Notifications" to activate';
-                            break;
-                    }
-                }
-
-                if (window.location.protocol === 'file:') {
+                    textEl.textContent = 'Notifications are blocked - please enable them in browser settings';
+                    break;
+                case 'default':
+                default:
                     statusEl.className = 'notification-status notification-warning';
-                    textEl.textContent += ' (Note: Running from local file may limit notification functionality)';
-                }
+                    indicatorEl.className = 'status-indicator status-inactive';
+                    textEl.textContent = 'Notifications are disabled - click "Enable Notifications" to activate';
+                    break;
             }
+        }
 
-            updateDebugInfo() {
-                const debugEl = document.getElementById('debugText');
-                const info = [];
-                
-                info.push(`Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
-                info.push(`Protocol: ${window.location.protocol}`);
-                info.push(`Notification API: ${'Notification' in window ? 'Available' : 'Not Available'}`);
-                
-                if ('Notification' in window) {
-                    info.push(`Permission: ${Notification.permission}`);
-                    info.push(`Max Actions: ${Notification.maxActions || 'Unknown'}`);
-                }
-                
-                info.push(`Service Worker: ${'serviceWorker' in navigator ? 'Available' : 'Not Available'}`);
-                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                    info.push(`SW State: ${navigator.serviceWorker.controller.state}`);
-                }
-                info.push(`Web Audio API: ${this.audioContext ? 'Available' : 'Not Available'}`);
-                info.push(`Sound Muted: ${this.settings.muteNotificationSound ? 'Yes' : 'No'}`);
-                info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
-                
-                debugEl.innerHTML = info.join('<br>');
+        if (window.location.protocol === 'file:') {
+            statusEl.className = 'notification-status notification-warning';
+            textEl.textContent += ' (Note: Running from local file may limit notification functionality)';
+        }
+    }
+
+    /**
+     * Update debug information display
+     */
+    updateDebugInfo() {
+        const debugEl = document.getElementById('debugText');
+        const info = [];
+        
+        info.push(`Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
+        info.push(`Protocol: ${window.location.protocol}`);
+        info.push(`Notification API: ${'Notification' in window ? 'Available' : 'Not Available'}`);
+        
+        if ('Notification' in window) {
+            info.push(`Permission: ${Notification.permission}`);
+            info.push(`Max Actions: ${Notification.maxActions || 'Unknown'}`);
+        }
+        
+        info.push(`Service Worker: ${'serviceWorker' in navigator ? 'Available' : 'Not Available'}`);
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            info.push(`SW State: ${navigator.serviceWorker.controller.state}`);
+        }
+        info.push(`Web Audio API: ${this.audioContext ? 'Available' : 'Not Available'}`);
+        info.push(`Sound Muted: ${this.settings.muteNotificationSound ? 'Yes' : 'No'}`);
+        info.push(`Sound Type: ${this.settings.notificationSoundType}`);
+        info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
+        
+        debugEl.innerHTML = info.join('<br>');
+    }
+
+    /**
+     * Start notification timer
+     */
+    startNotificationTimer() {
+        if (this.notificationTimer) {
+            clearInterval(this.notificationTimer);
+        }
+
+        this.notificationTimer = setInterval(() => {
+            this.checkForNotification();
+        }, 60000); // Check every minute
+    }
+
+    /**
+     * Check if a notification should be sent
+     */
+    checkForNotification() {
+        // Check if notifications are paused
+        if (this.settings.notificationsPausedUntil) {
+            const now = new Date().getTime();
+            if (now < this.settings.notificationsPausedUntil) {
+                console.log('Notifications are paused.');
+                return;
+            } else {
+                this.unpauseNotifications(false);
             }
+        }
+        
+        if (Notification.permission !== 'granted') {
+            console.log('Skipping notification check - permission not granted');
+            return;
+        }
 
-            startNotificationTimer() {
-                if (this.notificationTimer) {
-                    clearInterval(this.notificationTimer);
-                }
+        const now = new Date();
+        const currentTime = now.getHours() * 60 + now.getMinutes();
+        const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
 
-                this.notificationTimer = setInterval(() => {
-                    this.checkForNotification();
-                }, 60000);
+        // Check if it's a working day
+        if (!this.settings.workingDays[dayName]) {
+            console.log('Skipping notification - not a working day');
+            return;
+        }
+
+        // Check if it's within working hours
+        const [startHour, startMin] = this.settings.startTime.split(':').map(Number);
+        const [endHour, endMin] = this.settings.endTime.split(':').map(Number);
+        const startTime = startHour * 60 + startMin;
+        const endTime = endHour * 60 + endMin;
+
+        if (currentTime < startTime || currentTime > endTime) {
+            console.log('Skipping notification - outside working hours');
+            return;
+        }
+
+        // Check if enough time has passed since last notification
+        const lastNotification = localStorage.getItem('lastNotificationTime');
+        const timeSinceLastNotification = now.getTime() - (lastNotification || 0);
+        const intervalMs = this.settings.notificationInterval * 60 * 1000;
+
+        if (intervalMs > 0 && timeSinceLastNotification >= intervalMs) {
+            console.log('Sending scheduled notification');
+            this.showActivityReminder();
+            localStorage.setItem('lastNotificationTime', now.getTime().toString());
+        }
+    }
+
+    /**
+     * Show activity reminder notification
+     */
+    showActivityReminder() {
+        // Play sound for activity reminder
+        this.playNotificationSound();
+        
+        try {
+            const options = {
+                body: 'What are you working on right now?',
+                icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+                tag: 'activity-reminder',
+                requireInteraction: true,
+                actions: [
+                    { action: 'reply', type: 'text', title: 'Log Activity', placeholder: 'e.g. coding' }
+                ]
+            };
+            this.showNotificationWithServiceWorker('Activity Tracker Reminder', options);
+        } catch (error) {
+            console.error('Error showing activity reminder:', error);
+        }
+    }
+
+    /**
+     * Set current time in the timestamp input
+     */
+    setCurrentTime() {
+        const timestamp = document.getElementById('timestamp');
+        if (timestamp) {
+            timestamp.value = getCurrentTimeForInput();
+        }
+    }
+
+    /**
+     * Toggle pause/resume notifications
+     * @param {boolean} showNotif - Whether to show notification
+     */
+    togglePause(showNotif = true) {
+        if (this.settings.notificationsPausedUntil) {
+            if (this.pauseManager) {
+                this.pauseManager.resume();
+            } else {
+                this.unpauseNotifications(showNotif);
             }
-
-            checkForNotification() {
-                if (this.settings.notificationsPausedUntil) {
-                    const now = new Date().getTime();
-                    if (now < this.settings.notificationsPausedUntil) {
-                        console.log('Notifications are paused.');
-                        return;
-                    } else {
-                        this.unpauseNotifications(false);
-                    }
+        } else {
+            if (this.pauseManager) {
+                this.pauseManager.startPause(this.settings.pauseDuration);
+            } else {
+                // Fallback to old method
+                const duration = this.settings.pauseDuration;
+                if (duration === -1) {
+                    this.settings.notificationsPausedUntil = Infinity;
+                } else {
+                    this.settings.notificationsPausedUntil = new Date().getTime() + duration * 60 * 1000;
                 }
-                
-                if (Notification.permission !== 'granted') {
-                    console.log('Skipping notification check - permission not granted');
-                    return;
-                }
-
-                const now = new Date();
-                const currentTime = now.getHours() * 60 + now.getMinutes();
-                const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][now.getDay()];
-
-                if (!this.settings.workingDays[dayName]) {
-                    console.log('Skipping notification - not a working day');
-                    return;
-                }
-
-                const [startHour, startMin] = this.settings.startTime.split(':').map(Number);
-                const [endHour, endMin] = this.settings.endTime.split(':').map(Number);
-                const startTime = startHour * 60 + startMin;
-                const endTime = endHour * 60 + endMin;
-
-                if (currentTime < startTime || currentTime > endTime) {
-                    console.log('Skipping notification - outside working hours');
-                    return;
-                }
-
-                const lastNotification = localStorage.getItem('lastNotificationTime');
-                const timeSinceLastNotification = now.getTime() - (lastNotification || 0);
-                const intervalMs = this.settings.notificationInterval * 60 * 1000;
-
-                if (intervalMs > 0 && timeSinceLastNotification >= intervalMs) {
-                    console.log('Sending scheduled notification');
-                    this.showActivityReminder();
-                    localStorage.setItem('lastNotificationTime', now.getTime().toString());
-                }
+                this.updatePauseButtonState();
+                this.saveSettings();
             }
+        }
+            
+        if (showNotif) {
+            const message = this.settings.notificationsPausedUntil ? 'Notifications paused' : 'Notifications resumed';
+            const type = this.settings.notificationsPausedUntil ? 'info' : 'success';
+            showNotification(message, type);
+        }
+    }
 
-            showActivityReminder() {
-                // Play sound for activity reminder
-                this.playNotificationSound();
-                
-                try {
-                    const options = {
-                        body: 'What are you working on right now?',
-                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
-                        tag: 'activity-reminder',
-                        requireInteraction: true,
-                        actions: [
-                            { action: 'reply', type: 'text', title: 'Log Activity', placeholder: 'e.g. coding' }
-                        ]
-                    };
-                    this.showNotificationWithServiceWorker('Activity Tracker Reminder', options);
-                } catch (error) {
-                    console.error('Error showing activity reminder:', error);
-                }
-            }
+    /**
+     * Unpause notifications
+     * @param {boolean} showNotification - Whether to show notification
+     */
+    unpauseNotifications(showNotif = true) {
+        this.settings.notificationsPausedUntil = null;
+        if (showNotif) {
+            showNotification('Notifications resumed', 'success');
+        }
+        this.updatePauseButtonState();
+        this.saveSettings();
+    }
 
-            generateReport() {
-                const startDate = document.getElementById('reportStartDate').value;
-                const endDate = document.getElementById('reportEndDate').value;
+    /**
+     * Update pause button state
+     */
+    updatePauseButtonState() {
+        if (this.pauseManager) {
+            this.pauseManager.updatePauseButtonDisplay();
+        }
+    }
 
-                if (!startDate || !endDate) {
-                    this.showNotification('Please select both start and end dates', 'error');
-                    return;
-                }
+    /**
+     * Clear all data
+     */
+    clearAllData() {
+        if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+            localStorage.removeItem('activityEntries');
+            localStorage.removeItem('activitySettings');
+            localStorage.removeItem('lastNotificationTime');
+            this.entries = [];
+            this.currentReportEntries = [];
+            this.displayEntries();
+            document.getElementById('reportResults').innerHTML = '';
+            showNotification('All data cleared successfully!', 'success');
+        }
+    }
 
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                end.setHours(23, 59, 59, 999);
+    /**
+     * Set default report dates (current week)
+     */
+    setDefaultReportDates() {
+        this.setWeeklyReport();
+    }
+}
 
-                const filteredEntries = this.entries.filter(entry => {
-                    const entryDate = new Date(entry.timestamp);
-                    return entryDate >= start && entryDate <= end;
-                });
 
-                this.currentReportEntries = filteredEntries;
-                this.displayReport(filteredEntries, start, end);
-            }
+// === reports.js ===
+/**
+ * Reports functionality for Activity Tracker
+ * Extends the ActivityTracker class with reporting capabilities
+ */
 
-            displayReport(entries, startDate, endDate) {
-                const container = document.getElementById('reportResults');
-                
-                if (entries.length === 0) {
-                    container.innerHTML = `
-                        <div class="report-summary">
-                            <h3>No entries found for the selected period</h3>
-                            <p>From ${this.formatDate(startDate)} to ${this.formatDate(endDate)}</p>
-                        </div>
-                    `;
-                    return;
-                }
+/**
+ * Initialize markdown renderer
+ */
+ActivityTracker.prototype.initMarkdownRenderer = function() {
+    if (typeof MarkdownRenderer !== 'undefined') {
+        this.markdownRenderer = new MarkdownRenderer();
+    }
+};
 
-                const entriesByDate = {};
-                entries.forEach(entry => {
-                    const date = new Date(entry.timestamp).toDateString();
-                    if (!entriesByDate[date]) {
-                        entriesByDate[date] = [];
-                    }
-                    entriesByDate[date].push(entry);
-                });
+/**
+ * Generate report based on selected date range
+ */
+ActivityTracker.prototype.generateReport = function() {
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
 
-                const totalEntries = entries.length;
-                const daysWithEntries = Object.keys(entriesByDate).length;
+    if (!startDate || !endDate) {
+        showNotification('Please select both start and end dates', 'error');
+        return;
+    }
 
-                container.innerHTML = `
-                    <div class="report-summary">
-                        <h3>Activity Report</h3>
-                        <p><strong>Period:</strong> ${this.formatDate(startDate)} to ${this.formatDate(endDate)}</p>
-                        <p><strong>Total Entries:</strong> ${totalEntries}</p>
-                        <p><strong>Active Days:</strong> ${daysWithEntries}</p>
-                    </div>
-                    
-                    ${Object.entries(entriesByDate)
-                        .sort(([a], [b]) => new Date(b) - new Date(a))
-                        .map(([date, dayEntries]) => `
-                            <div class="entry-item">
-                                <div class="entry-content">
-                                    <div class="entry-time"><strong>${date}</strong> (${dayEntries.length} entries)</div>
-                                    ${dayEntries
-                                        .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-                                        .map(entry => `
-                                            <div style="margin-left: 20px; margin-top: 10px;">
-                                                <div class="entry-time">${this.formatTime(entry.timestamp)}</div>
-                                                <div class="entry-activity">${this.escapeHtml(entry.activity)}</div>
-                                                ${entry.description ? `<div class="entry-description">${this.escapeHtml(entry.description)}</div>` : ''}
-                                            </div>
-                                        `).join('')}
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const filteredEntries = this.entries.filter(entry => {
+        const entryDate = new Date(entry.timestamp);
+        return entryDate >= start && entryDate <= end;
+    });
+
+    this.currentReportEntries = filteredEntries;
+    this.displayReport(filteredEntries, start, end);
+};
+
+/**
+ * Display report in the UI
+ * @param {Array} entries - Filtered entries
+ * @param {Date} startDate - Report start date
+ * @param {Date} endDate - Report end date
+ */
+ActivityTracker.prototype.displayReport = function(entries, startDate, endDate) {
+    const container = document.getElementById('reportResults');
+
+    // Initialize markdown renderer if not already done
+    if (!this.markdownRenderer && typeof MarkdownRenderer !== 'undefined') {
+        this.initMarkdownRenderer();
+    }
+
+    if (entries.length === 0) {
+        container.innerHTML = `
+            <div class="report-summary">
+                <h3>No entries found for the selected period</h3>
+                <p>From ${formatDate(startDate)} to ${formatDate(endDate)}</p>
+            </div>
+        `;
+        return;
+    }
+
+    const entriesByDate = {};
+    entries.forEach(entry => {
+        const date = new Date(entry.timestamp).toDateString();
+        if (!entriesByDate[date]) {
+            entriesByDate[date] = [];
+        }
+        entriesByDate[date].push(entry);
+    });
+
+    const totalEntries = entries.length;
+    const daysWithEntries = Object.keys(entriesByDate).length;
+    const averageEntriesPerDay = (totalEntries / daysWithEntries).toFixed(1);
+
+    container.innerHTML = `
+        <div class="report-format-tabs">
+            <button class="format-tab active" onclick="tracker.showReportFormat('html')">HTML View</button>
+            <button class="format-tab" onclick="tracker.showReportFormat('markdown')">Markdown Preview</button>
+        </div>
+        
+        <div id="htmlReport" class="report-format-content">
+            ${this.generateHTMLReportContent(entries, startDate, endDate, entriesByDate, totalEntries, daysWithEntries, averageEntriesPerDay)}
+        </div>
+        
+        <div id="markdownReport" class="report-format-content" style="display: none;">
+            <div class="markdown-preview" id="markdownPreview">
+                Loading markdown preview...
+            </div>
+        </div>
+    `;
+    
+    // Generate markdown preview asynchronously to avoid blocking
+    setTimeout(() => {
+        this.updateMarkdownPreview(entries, startDate, endDate);
+    }, 100);
+};
+
+/**
+ * Generate HTML report content
+ */
+ActivityTracker.prototype.generateHTMLReportContent = function(entries, startDate, endDate, entriesByDate, totalEntries, daysWithEntries, averageEntriesPerDay) {
+    return `
+        <div class="report-summary">
+            <h3>Activity Report</h3>
+            <p><strong>Period:</strong> ${formatDate(startDate)} to ${formatDate(endDate)}</p>
+            <p><strong>Total Entries:</strong> ${totalEntries}</p>
+            <p><strong>Active Days:</strong> ${daysWithEntries}</p>
+            <p><strong>Average Entries per Day:</strong> ${averageEntriesPerDay}</p>
+        </div>
+        
+        ${Object.entries(entriesByDate)
+            .sort(([a], [b]) => new Date(b) - new Date(a))
+            .map(([date, dayEntries]) => `
+                <div class="entry-item">
+                    <div class="entry-content">
+                        <div class="entry-time"><strong>${date}</strong> (${dayEntries.length} entries)</div>
+                        ${dayEntries
+                            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                            .map(entry => `
+                                <div style="margin-left: 20px; margin-top: 10px;">
+                                    <div class="entry-time">${formatTime(entry.timestamp)}</div>
+                                    <div class="entry-activity">${escapeHtml(entry.activity)}</div>
+                                    ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
                                 </div>
-                            </div>
-                        `).join('')}
-                `;
-            }
+                            `).join('')}
+                    </div>
+                </div>
+            `).join('')}
+    `;
+};
 
-            setWeeklyReport() {
-                const now = new Date();
-                const monday = new Date(now);
-                const dayOfWeek = now.getDay();
-                const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-                monday.setDate(now.getDate() + daysToMonday);
+/**
+ * Update markdown preview
+ */
+ActivityTracker.prototype.updateMarkdownPreview = function(entries, startDate, endDate) {
+    if (!this.markdownRenderer) return;
+    
+    const markdownContent = this.generateMarkdownReport(entries, startDate, endDate);
+    const htmlContent = this.markdownRenderer.renderWithClasses(markdownContent);
+    
+    const previewElement = document.getElementById('markdownPreview');
+    if (previewElement) {
+        previewElement.innerHTML = htmlContent;
+    }
+};
 
-                const friday = new Date(monday);
-                friday.setDate(monday.getDate() + 4);
+/**
+ * Show different report format
+ * @param {string} format - Format to show ('html' or 'markdown')
+ */
+ActivityTracker.prototype.showReportFormat = function(format) {
+    // Update tabs
+    document.querySelectorAll('.format-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelector(`[onclick*="'${format}'"]`).classList.add('active');
+    
+    // Update content
+    document.querySelectorAll('.report-format-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    
+    const targetContent = document.getElementById(`${format}Report`);
+    if (targetContent) {
+        targetContent.style.display = 'block';
+    }
+};
 
-                this.currentWeekStart = new Date(monday);
-                this.updateWeekDisplay();
+/**
+ * Set report to current week (Monday to Friday)
+ */
+ActivityTracker.prototype.setWeeklyReport = function() {
+    const now = new Date();
+    const monday = getWeekStart(now);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
 
-                document.getElementById('reportStartDate').value = monday.toISOString().split('T')[0];
-                document.getElementById('reportEndDate').value = friday.toISOString().split('T')[0];
-            }
+    this.currentWeekStart = new Date(monday);
+    this.updateWeekDisplay();
 
-            previousWeek() {
-                if (!this.currentWeekStart) {
-                    this.setWeeklyReport();
-                    return;
-                }
+    document.getElementById('reportStartDate').value = monday.toISOString().split('T')[0];
+    document.getElementById('reportEndDate').value = friday.toISOString().split('T')[0];
+};
 
-                this.currentWeekStart.setDate(this.currentWeekStart.getDate() - 7);
-                this.updateWeekFromCurrent();
-            }
+/**
+ * Navigate to previous week
+ */
+ActivityTracker.prototype.previousWeek = function() {
+    if (!this.currentWeekStart) {
+        this.setWeeklyReport();
+        return;
+    }
 
-            nextWeek() {
-                if (!this.currentWeekStart) {
-                    this.setWeeklyReport();
-                    return;
-                }
+    this.currentWeekStart.setDate(this.currentWeekStart.getDate() - 7);
+    this.updateWeekFromCurrent();
+};
 
-                this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
-                this.updateWeekFromCurrent();
-            }
+/**
+ * Navigate to next week
+ */
+ActivityTracker.prototype.nextWeek = function() {
+    if (!this.currentWeekStart) {
+        this.setWeeklyReport();
+        return;
+    }
 
-            updateWeekFromCurrent() {
-                const monday = new Date(this.currentWeekStart);
-                const friday = new Date(monday);
-                friday.setDate(monday.getDate() + 4);
+    this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
+    this.updateWeekFromCurrent();
+};
 
-                document.getElementById('reportStartDate').value = monday.toISOString().split('T')[0];
-                document.getElementById('reportEndDate').value = friday.toISOString().split('T')[0];
-                
-                this.updateWeekDisplay();
-            }
+/**
+ * Update date inputs from current week start
+ */
+ActivityTracker.prototype.updateWeekFromCurrent = function() {
+    const monday = new Date(this.currentWeekStart);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
 
-            updateWeekDisplay() {
-                if (!this.currentWeekStart) return;
-                
-                const monday = new Date(this.currentWeekStart);
-                const sunday = new Date(monday);
-                sunday.setDate(monday.getDate() + 6);
+    document.getElementById('reportStartDate').value = monday.toISOString().split('T')[0];
+    document.getElementById('reportEndDate').value = friday.toISOString().split('T')[0];
+    
+    this.updateWeekDisplay();
+};
 
-                const weekText = `Week of ${monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${sunday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`;
-                document.getElementById('weekDisplay').textContent = weekText;
-            }
+/**
+ * Update week display text
+ */
+ActivityTracker.prototype.updateWeekDisplay = function() {
+    if (!this.currentWeekStart) return;
+    
+    const monday = new Date(this.currentWeekStart);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
 
-            setDefaultReportDates() {
-                this.setWeeklyReport();
-            }
+    const weekText = `Week of ${monday.toLocaleDateString('en-GB', { 
+        day: 'numeric', 
+        month: 'short' 
+    })} - ${sunday.toLocaleDateString('en-GB', { 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric' 
+    })}`;
+    
+    document.getElementById('weekDisplay').textContent = weekText;
+};
 
-            downloadReport() {
-                const format = document.getElementById('downloadFormat').value;
-                const startDate = document.getElementById('reportStartDate').value;
-                const endDate = document.getElementById('reportEndDate').value;
+/**
+ * Download report in selected format
+ */
+ActivityTracker.prototype.downloadReport = function() {
+    const format = document.getElementById('downloadFormat').value;
+    const startDate = document.getElementById('reportStartDate').value;
+    const endDate = document.getElementById('reportEndDate').value;
 
-                if (!startDate || !endDate) {
-                    this.showNotification('Please generate a report first', 'error');
-                    return;
-                }
+    if (!startDate || !endDate) {
+        showNotification('Please generate a report first', 'error');
+        return;
+    }
 
-                if (this.currentReportEntries.length === 0) {
-                    this.showNotification('No entries to download. Generate a report first.', 'error');
-                    return;
-                }
+    if (this.currentReportEntries.length === 0) {
+        showNotification('No entries to download. Generate a report first.', 'error');
+        return;
+    }
 
-                const start = new Date(startDate);
-                const end = new Date(endDate);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-                let content, filename, mimeType;
+    let content, filename, mimeType;
 
-                switch (format) {
-                    case 'html':
-                        content = this.generateHTMLReport(this.currentReportEntries, start, end);
-                        filename = `activity-report-${startDate}-to-${endDate}.html`;
-                        mimeType = 'text/html';
-                        break;
-                    case 'markdown':
-                        content = this.generateMarkdownReport(this.currentReportEntries, start, end);
-                        filename = `activity-report-${startDate}-to-${endDate}.md`;
-                        mimeType = 'text/markdown';
-                        break;
-                    case 'csv':
-                        content = this.generateCSVReport(this.currentReportEntries, start, end);
-                        filename = `activity-report-${startDate}-to-${endDate}.csv`;
-                        mimeType = 'text/csv';
-                        break;
-                }
+    switch (format) {
+        case 'html':
+            content = this.generateHTMLReport(this.currentReportEntries, start, end);
+            filename = `activity-report-${startDate}-to-${endDate}.html`;
+            mimeType = 'text/html';
+            break;
+        case 'markdown':
+            content = this.generateMarkdownReport(this.currentReportEntries, start, end);
+            filename = `activity-report-${startDate}-to-${endDate}.md`;
+            mimeType = 'text/markdown';
+            break;
+        case 'csv':
+            content = this.generateCSVReport(this.currentReportEntries, start, end);
+            filename = `activity-report-${startDate}-to-${endDate}.csv`;
+            mimeType = 'text/csv';
+            break;
+        default:
+            showNotification('Unknown format selected', 'error');
+            return;
+    }
 
-                this.downloadFile(content, filename, mimeType);
-                this.showNotification(`Report downloaded as ${format.toUpperCase()}`, 'success');
-            }
+    downloadFile(content, filename, mimeType);
+    showNotification(`Report downloaded as ${format.toUpperCase()}`, 'success');
+};
 
-            generateHTMLReport(entries, startDate, endDate) {
-                const entriesByDate = {};
-                entries.forEach(entry => {
-                    const date = new Date(entry.timestamp).toDateString();
-                    if (!entriesByDate[date]) {
-                        entriesByDate[date] = [];
-                    }
-                    entriesByDate[date].push(entry);
-                });
+/**
+ * Generate HTML report
+ * @param {Array} entries - Report entries
+ * @param {Date} startDate - Start date
+ * @param {Date} endDate - End date
+ * @returns {string} HTML content
+ */
+ActivityTracker.prototype.generateHTMLReport = function(entries, startDate, endDate) {
+    const entriesByDate = {};
+    entries.forEach(entry => {
+        const date = new Date(entry.timestamp).toDateString();
+        if (!entriesByDate[date]) {
+            entriesByDate[date] = [];
+        }
+        entriesByDate[date].push(entry);
+    });
 
-                return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Activity Report</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .header { background: #667eea; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .summary { background: #e6fffa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #38b2ac; }
-        .day-section { background: #f7fafc; padding: 15px; margin-bottom: 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .entry { margin: 10px 0; padding: 10px; background: white; border-radius: 4px; }
-        .time { font-weight: 600; color: #667eea; }
-        .activity { font-size: 16px; margin: 5px 0; }
-        .description { color: #718096; font-size: 14px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            max-width: 800px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            line-height: 1.6;
+        }
+        .header { 
+            background: #667eea; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+        }
+        .summary { 
+            background: #e6fffa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            border-left: 4px solid #38b2ac; 
+        }
+        .day-section { 
+            background: #f7fafc; 
+            padding: 15px; 
+            margin-bottom: 15px; 
+            border-radius: 8px; 
+            border: 1px solid #e2e8f0; 
+        }
+        .entry { 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: white; 
+            border-radius: 4px; 
+            border-left: 3px solid #667eea;
+        }
+        .time { 
+            font-weight: 600; 
+            color: #667eea; 
+            font-size: 14px;
+        }
+        .activity { 
+            font-size: 16px; 
+            margin: 5px 0; 
+            font-weight: 500;
+        }
+        .description { 
+            color: #718096; 
+            font-size: 14px; 
+            font-style: italic;
+        }
+        h1, h2, h3 { margin-top: 0; }
+        @media print {
+            .header { background: #333 !important; }
+        }
     </style>
 </head>
 <body>
@@ -1290,9 +2803,10 @@
     
     <div class="summary">
         <h2>Summary</h2>
-        <p><strong>Period:</strong> ${this.formatDate(startDate)} to ${this.formatDate(endDate)}</p>
+        <p><strong>Period:</strong> ${formatDate(startDate)} to ${formatDate(endDate)}</p>
         <p><strong>Total Entries:</strong> ${entries.length}</p>
         <p><strong>Active Days:</strong> ${Object.keys(entriesByDate).length}</p>
+        <p><strong>Average per Day:</strong> ${(entries.length / Object.keys(entriesByDate).length).toFixed(1)} entries</p>
     </div>
 
     ${Object.entries(entriesByDate)
@@ -1304,368 +2818,531 @@
                     .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
                     .map(entry => `
                         <div class="entry">
-                            <div class="time">${this.formatTime(entry.timestamp)}</div>
-                            <div class="activity">${this.escapeHtml(entry.activity)}</div>
-                            ${entry.description ? `<div class="description">${this.escapeHtml(entry.description)}</div>` : ''}
+                            <div class="time">${formatTime(entry.timestamp)}</div>
+                            <div class="activity">${escapeHtml(entry.activity)}</div>
+                            ${entry.description ? `<div class="description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
                         </div>
                     `).join('')}
             </div>
         `).join('')}
+
+    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #718096; font-size: 14px;">
+        <p>Generated by Activity Tracker on ${new Date().toLocaleString('en-GB')}</p>
+    </footer>
 </body>
 </html>`;
-            }
+};
 
-            generateMarkdownReport(entries, startDate, endDate) {
-                const entriesByDate = {};
-                entries.forEach(entry => {
-                    const date = new Date(entry.timestamp).toDateString();
-                    if (!entriesByDate[date]) {
-                        entriesByDate[date] = [];
-                    }
-                    entriesByDate[date].push(entry);
-                });
-
-                let markdown = `# Activity Report\n\n`;
-                markdown += `**Generated:** ${new Date().toLocaleString('en-GB')}\n\n`;
-                markdown += `## Summary\n\n`;
-                markdown += `- **Period:** ${this.formatDate(startDate)} to ${this.formatDate(endDate)}\n`;
-                markdown += `- **Total Entries:** ${entries.length}\n`;
-                markdown += `- **Active Days:** ${Object.keys(entriesByDate).length}\n\n`;
-
-                Object.entries(entriesByDate)
-                    .sort(([a], [b]) => new Date(a) - new Date(b))
-                    .forEach(([date, dayEntries]) => {
-                        markdown += `## ${date} (${dayEntries.length} entries)\n\n`;
-                        dayEntries
-                            .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-                            .forEach(entry => {
-                                markdown += `### ${this.formatTime(entry.timestamp)} - ${entry.activity}\n\n`;
-                                if (entry.description) {
-                                    markdown += `${entry.description}\n\n`;
-                                }
-                            });
-                    });
-
-                return markdown;
-            }
-
-            generateCSVReport(entries, startDate, endDate) {
-                let csv = 'Date,Time,Activity,Description,Duration,Capped Start,Capped End\n';
-
-                const sortedEntries = entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-                const [workStartHour, workStartMin] = this.settings.startTime.split(':').map(Number);
-                const [workEndHour, workEndMin] = this.settings.endTime.split(':').map(Number);
-
-                sortedEntries.forEach((entry, index) => {
-                    const entryDate = new Date(entry.timestamp);
-                    const entryTime = this.formatTime(entry.timestamp);
-                    const date = entryDate.toLocaleDateString('en-GB');
-                    
-                    let duration = '';
-                    let cappedStart = this.formatTime(entry.timestamp);
-                    let cappedEnd = '';
-
-                    if (index < sortedEntries.length - 1) {
-                        const nextEntry = new Date(sortedEntries[index + 1].timestamp);
-                        const currentEntryDate = entryDate.toDateString();
-                        const nextEntryDate = nextEntry.toDateString();
-                        
-                        if (currentEntryDate === nextEntryDate) {
-                            const durationMs = nextEntry.getTime() - entryDate.getTime();
-                            const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-                            const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                            duration = `${durationHours}h ${durationMinutes}m`;
-                            cappedEnd = this.formatTime(nextEntry.toISOString());
-                        } else {
-                            const endOfWorkDay = new Date(entryDate);
-                            endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
-                            
-                            if (entryDate < endOfWorkDay) {
-                                const durationMs = endOfWorkDay.getTime() - entryDate.getTime();
-                                const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-                                const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                                duration = `${durationHours}h ${durationMinutes}m`;
-                                cappedEnd = `${workEndHour.toString().padStart(2, '0')}:${workEndMin.toString().padStart(2, '0')}`;
-                            }
-                        }
-                    } else {
-                        const endOfWorkDay = new Date(entryDate);
-                        endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
-                        
-                        if (entryDate < endOfWorkDay) {
-                            const durationMs = endOfWorkDay.getTime() - entryDate.getTime();
-                            const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-                            const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                            duration = `${durationHours}h ${durationMinutes}m`;
-                            cappedEnd = `${workEndHour.toString().padStart(2, '0')}:${workEndMin.toString().padStart(2, '0')}`;
-                        }
-                    }
-
-                    const startOfWorkDay = new Date(entryDate);
-                    startOfWorkDay.setHours(workStartHour, workStartMin, 0, 0);
-                    
-                    if (entryDate < startOfWorkDay) {
-                        cappedStart = `${workStartHour.toString().padStart(2, '0')}:${workStartMin.toString().padStart(2, '0')}`;
-                    }
-
-                    const escapeCsv = (str) => {
-                        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                            return `"${str.replace(/"/g, '""')}"`;
-                        }
-                        return str;
-                    };
-
-                    csv += `${date},${entryTime},${escapeCsv(entry.activity)},${escapeCsv(entry.description || '')},${duration},${cappedStart},${cappedEnd}\n`;
-                });
-
-                return csv;
-            }
-
-            downloadFile(content, filename, mimeType) {
-                const blob = new Blob([content], { type: mimeType });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-
-            clearAllData() {
-                if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
-                    localStorage.removeItem('activityEntries');
-                    localStorage.removeItem('activitySettings');
-                    localStorage.removeItem('lastNotificationTime');
-                    this.entries = [];
-                    this.currentReportEntries = [];
-                    this.displayEntries();
-                    document.getElementById('reportResults').innerHTML = '';
-                    this.showNotification('All data cleared successfully!', 'success');
-                }
-            }
-
-            setCurrentTime() {
-                const now = new Date();
-                now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-                document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
-            }
-
-            formatDateTime(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleString('en-GB', {
-                    weekday: 'short',
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-
-            formatDate(date) {
-                return date.toLocaleDateString('en-GB', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-            }
-
-            formatTime(timestamp) {
-                const date = new Date(timestamp);
-                return date.toLocaleTimeString('en-GB', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            }
-
-            escapeHtml(text) {
-                const div = document.createElement('div');
-                div.textContent = text;
-                return div.innerHTML;
-            }
-
-            showNotification(message, type = 'info') {
-                const notification = document.createElement('div');
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    padding: 15px 20px;
-                    border-radius: 8px;
-                    color: white;
-                    font-weight: 600;
-                    z-index: 10000;
-                    background: ${type === 'success' ? '#48bb78' : type === 'error' ? '#f56565' : '#667eea'};
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-                `;
-                notification.textContent = message;
-                document.body.appendChild(notification);
-
-                setTimeout(() => {
-                    notification.remove();
-                }, 3000);
-            }
-
-            togglePause(showNotification = true) {
-                if (this.settings.notificationsPausedUntil) {
-                    this.unpauseNotifications(showNotification);
-                } else {
-                    const duration = this.settings.pauseDuration;
-                    if (duration === -1) {
-                        this.settings.notificationsPausedUntil = Infinity;
-                    } else {
-                        this.settings.notificationsPausedUntil = new Date().getTime() + duration * 60 * 1000;
-                    }
-                    
-                    if (showNotification) {
-                        this.showNotification('Notifications paused', 'info');
-                    }
-                    this.updatePauseButtonState();
-                    this.saveSettings();
-                }
-            }
-
-            unpauseNotifications(showNotification = true) {
-                this.settings.notificationsPausedUntil = null;
-                if (showNotification) {
-                    this.showNotification('Notifications resumed', 'success');
-                }
-                this.updatePauseButtonState();
-                this.saveSettings();
-            }
-
-            updatePauseButtonState() {
-                const pauseButton = document.getElementById('pauseButton');
-                if (this.settings.notificationsPausedUntil) {
-                    pauseButton.textContent = 'Resume Alerts';
-                    pauseButton.style.background = '#e53e3e';
-                } else {
-                    pauseButton.textContent = 'Pause Alerts';
-                    pauseButton.style.background = '';
-                }
-            }
+/**
+ * Generate Markdown report
+ * @param {Array} entries - Report entries
+ * @param {Date} startDate - Start date
+ * @param {Date} endDate - End date
+ * @returns {string} Markdown content
+ */
+ActivityTracker.prototype.generateMarkdownReport = function(entries, startDate, endDate) {
+    const entriesByDate = {};
+    entries.forEach(entry => {
+        const date = new Date(entry.timestamp).toDateString();
+        if (!entriesByDate[date]) {
+            entriesByDate[date] = [];
         }
+        entriesByDate[date].push(entry);
+    });
 
-        let tracker;
+    let markdown = `# Activity Report\n\n`;
+    markdown += `**Generated:** ${new Date().toLocaleString('en-GB')}\n\n`;
+    markdown += `## Summary\n\n`;
+    markdown += `- **Period:** ${formatDate(startDate)} to ${formatDate(endDate)}\n`;
+    markdown += `- **Total Entries:** ${entries.length}\n`;
+    markdown += `- **Active Days:** ${Object.keys(entriesByDate).length}\n`;
+    markdown += `- **Average per Day:** ${(entries.length / Object.keys(entriesByDate).length).toFixed(1)} entries\n\n`;
+    markdown += `---\n\n`;
 
-        function showSection(sectionName, event) {
-            document.querySelectorAll('.section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(sectionName).classList.add('active');
+    Object.entries(entriesByDate)
+        .sort(([a], [b]) => new Date(a) - new Date(b))
+        .forEach(([date, dayEntries]) => {
+            markdown += `## ${date} (${dayEntries.length} entries)\n\n`;
+            dayEntries
+                .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+                .forEach((entry, index) => {
+                    markdown += `### ${index + 1}. ${formatTime(entry.timestamp)} - ${entry.activity}\n\n`;
+                    if (entry.description) {
+                        markdown += `> ${entry.description}\n\n`;
+                    }
+                });
+            markdown += `---\n\n`;
+        });
 
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
+    markdown += `*Report generated by Activity Tracker on ${new Date().toLocaleString('en-GB')}*\n`;
 
-            if (event && event.target) {
-                event.target.classList.add('active');
+    return markdown;
+};
+
+/**
+ * Generate CSV report with duration calculations
+ * @param {Array} entries - Report entries
+ * @param {Date} startDate - Start date
+ * @param {Date} endDate - End date
+ * @returns {string} CSV content
+ */
+ActivityTracker.prototype.generateCSVReport = function(entries, startDate, endDate) {
+    let csv = 'Date,Time,Activity,Description,Duration (minutes),Next Activity Time,Capped Start,Capped End\n';
+
+    const sortedEntries = entries.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    const [workStartHour, workStartMin] = this.settings.startTime.split(':').map(Number);
+    const [workEndHour, workEndMin] = this.settings.endTime.split(':').map(Number);
+
+    sortedEntries.forEach((entry, index) => {
+        const entryDate = new Date(entry.timestamp);
+        const entryTime = formatTime(entry.timestamp);
+        const date = entryDate.toLocaleDateString('en-GB');
+        
+        let durationMinutes = '';
+        let nextActivityTime = '';
+        let cappedStart = formatTime(entry.timestamp);
+        let cappedEnd = '';
+
+        // Calculate duration to next activity or end of work day
+        if (index < sortedEntries.length - 1) {
+            const nextEntry = new Date(sortedEntries[index + 1].timestamp);
+            const currentEntryDate = entryDate.toDateString();
+            const nextEntryDate = nextEntry.toDateString();
+            
+            if (currentEntryDate === nextEntryDate) {
+                // Next entry is same day
+                const durationMs = nextEntry.getTime() - entryDate.getTime();
+                durationMinutes = Math.floor(durationMs / (1000 * 60));
+                nextActivityTime = formatTime(nextEntry.toISOString());
+                cappedEnd = nextActivityTime;
             } else {
-                const button = document.querySelector(`.nav-btn[onclick*="'${sectionName}'"]`);
-                if (button) {
-                    button.classList.add('active');
+                // Next entry is different day, cap to end of work day
+                const endOfWorkDay = new Date(entryDate);
+                endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
+                
+                if (entryDate < endOfWorkDay) {
+                    const durationMs = endOfWorkDay.getTime() - entryDate.getTime();
+                    durationMinutes = Math.floor(durationMs / (1000 * 60));
+                    cappedEnd = `${workEndHour.toString().padStart(2, '0')}:${workEndMin.toString().padStart(2, '0')}`;
                 }
             }
-
-            if (sectionName === 'tracker') {
-                document.getElementById('activity').focus();
+        } else {
+            // Last entry, cap to end of work day
+            const endOfWorkDay = new Date(entryDate);
+            endOfWorkDay.setHours(workEndHour, workEndMin, 0, 0);
+            
+            if (entryDate < endOfWorkDay) {
+                const durationMs = endOfWorkDay.getTime() - entryDate.getTime();
+                durationMinutes = Math.floor(durationMs / (1000 * 60));
+                cappedEnd = `${workEndHour.toString().padStart(2, '0')}:${workEndMin.toString().padStart(2, '0')}`;
             }
         }
 
-        function addCurrentTime() {
-            tracker.setCurrentTime();
-        }
-
-        function generateReport() {
-            tracker.generateReport();
-        }
-
-        function setWeeklyReport() {
-            tracker.setWeeklyReport();
-        }
-
-        function previousWeek() {
-            tracker.previousWeek();
-        }
-
-        function nextWeek() {
-            tracker.nextWeek();
-        }
-
-        function downloadReport() {
-            tracker.downloadReport();
-        }
-
-        function saveSettings() {
-            tracker.saveSettings();
-        }
-
-        function enableNotifications() {
-            tracker.enableNotifications();
-        }
-
-        function testNotification() {
-            tracker.testNotification();
-        }
-
-        function testNotificationSound() {
-            tracker.testNotificationSound();
-        }
-
-        function refreshNotificationStatus() {
-            tracker.refreshNotificationStatus();
-        }
-
-        function clearAllData() {
-            tracker.clearAllData();
-        }
-
-        function closeEditModal() {
-            tracker.closeEditModal();
-        }
-
-        function togglePause() {
-            tracker.togglePause();
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            tracker = new ActivityTracker();
-
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('./sw.js').then(registration => {
-                    console.log('Service Worker registered with scope:', registration.scope);
-                    tracker.updateDebugInfo();
-                }).catch(error => {
-                    console.error('Service Worker registration failed:', error);
-                    tracker.updateDebugInfo();
-                });
-
-                navigator.serviceWorker.addEventListener('message', event => {
-                    if (event.data && event.data.type === 'add-entry') {
-                        tracker.addEntry(event.data.entry);
-                        tracker.showNotification('Activity logged from notification!', 'success');
-                    }
-                    if (event.data && event.data.type === 'navigate-to-tracker') {
-                        showSection('tracker');
-                    }
-                });
+        // Check if entry starts before work day
+        const startOfWorkDay = new Date(entryDate);
+        startOfWorkDay.setHours(workStartHour, workStartMin, 0, 0);
+        
+        if (entryDate < startOfWorkDay) {
+            cappedStart = `${workStartHour.toString().padStart(2, '0')}:${workStartMin.toString().padStart(2, '0')}`;
+            // Recalculate duration if start was capped
+            if (cappedEnd) {
+                const cappedStartTime = new Date(entryDate);
+                cappedStartTime.setHours(workStartHour, workStartMin, 0, 0);
+                const endTime = cappedEnd === nextActivityTime ? 
+                    new Date(sortedEntries[index + 1].timestamp) : 
+                    new Date(entryDate).setHours(workEndHour, workEndMin, 0, 0);
+                durationMinutes = Math.floor((endTime - cappedStartTime.getTime()) / (1000 * 60));
             }
+        }
 
-            if (window.location.hash === '#tracker') {
+        csv += `${date},${entryTime},${escapeCsv(entry.activity)},${escapeCsv(entry.description || '')},${durationMinutes},${nextActivityTime},${cappedStart},${cappedEnd}\n`;
+    });
+
+    return csv;
+};
+
+console.log('📊 Reports module loaded');
+
+
+// === main.js ===
+/**
+ * Main initialization and global functions for Activity Tracker
+ * This file handles app initialization, global event handlers, and UI functions
+ */
+
+// Global tracker instance
+let tracker;
+
+/**
+ * Show a specific section and update navigation
+ * @param {string} sectionName - Name of section to show
+ * @param {Event} event - Click event (optional)
+ */
+function showSection(sectionName, event) {
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show target section
+    document.getElementById(sectionName).classList.add('active');
+
+    // Update navigation buttons
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    if (event && event.target) {
+        event.target.classList.add('active');
+    } else {
+        const button = document.querySelector(`.nav-btn[onclick*="'${sectionName}'"]`);
+        if (button) {
+            button.classList.add('active');
+        }
+    }
+
+    // Focus on activity input when showing tracker
+    if (sectionName === 'tracker') {
+        setTimeout(() => {
+            const activityInput = document.getElementById('activity');
+            if (activityInput) {
+                activityInput.focus();
+            }
+        }, 100);
+    }
+}
+
+/**
+ * Add current time to timestamp input
+ */
+function addCurrentTime() {
+    if (tracker) {
+        tracker.setCurrentTime();
+    }
+}
+
+/**
+ * Generate report based on selected dates
+ */
+function generateReport() {
+    if (tracker) {
+        tracker.generateReport();
+    }
+}
+
+/**
+ * Set report to current week
+ */
+function setWeeklyReport() {
+    if (tracker) {
+        tracker.setWeeklyReport();
+    }
+}
+
+/**
+ * Navigate to previous week in reports
+ */
+function previousWeek() {
+    if (tracker) {
+        tracker.previousWeek();
+    }
+}
+
+/**
+ * Navigate to next week in reports
+ */
+function nextWeek() {
+    if (tracker) {
+        tracker.nextWeek();
+    }
+}
+
+/**
+ * Download current report
+ */
+function downloadReport() {
+    if (tracker) {
+        tracker.downloadReport();
+    }
+}
+
+/**
+ * Show report format (HTML or Markdown)
+ */
+function showReportFormat(format) {
+    if (tracker) {
+        tracker.showReportFormat(format);
+    }
+}
+
+/**
+ * Save settings
+ */
+function saveSettings() {
+    if (tracker) {
+        tracker.saveSettings();
+    }
+}
+
+/**
+ * Enable notifications
+ */
+function enableNotifications() {
+    if (tracker) {
+        tracker.enableNotifications();
+    }
+}
+
+/**
+ * Test notification
+ */
+function testNotification() {
+    if (tracker) {
+        tracker.testNotification();
+    }
+}
+
+/**
+ * Test notification sound
+ */
+function testNotificationSound() {
+    if (tracker) {
+        tracker.testNotificationSound();
+    }
+}
+
+/**
+ * Refresh notification status
+ */
+function refreshNotificationStatus() {
+    if (tracker) {
+        tracker.refreshNotificationStatus();
+    }
+}
+
+/**
+ * Clear all application data
+ */
+function clearAllData() {
+    if (tracker) {
+        tracker.clearAllData();
+    }
+}
+
+/**
+ * Close edit modal
+ */
+function closeEditModal() {
+    if (tracker) {
+        tracker.closeEditModal();
+    }
+}
+
+/**
+ * Toggle pause/resume for notifications
+ */
+function togglePause() {
+    if (tracker) {
+        tracker.togglePause();
+    }
+}
+
+/**
+ * Initialize the application when DOM is loaded
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🚀 Initializing Activity Tracker...');
+    
+    // Create tracker instance
+    tracker = new ActivityTracker();
+    
+    // Register service worker if supported
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => {
+                console.log('✅ Service Worker registered with scope:', registration.scope);
+                if (tracker) {
+                    tracker.updateDebugInfo();
+                }
+            })
+            .catch(error => {
+                console.error('❌ Service Worker registration failed:', error);
+                if (tracker) {
+                    tracker.updateDebugInfo();
+                }
+            });
+
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'add-entry') {
+                if (tracker) {
+                    tracker.addEntry(event.data.entry);
+                    showNotification('Activity logged from notification!', 'success');
+                }
+            }
+            if (event.data && event.data.type === 'navigate-to-tracker') {
                 showSection('tracker');
-                history.replaceState(null, document.title, window.location.pathname + window.location.search);
             }
         });
+    }
 
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                closeEditModal();
+    // Handle hash navigation (if coming from notification)
+    if (window.location.hash === '#tracker') {
+        showSection('tracker');
+        // Clean up the hash
+        history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+
+    console.log('✅ Activity Tracker initialized successfully');
+});
+
+/**
+ * Handle modal clicks (close when clicking outside)
+ */
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal')) {
+        closeEditModal();
+    }
+});
+
+/**
+ * Handle keyboard shortcuts
+ */
+document.addEventListener('keydown', (e) => {
+    // Esc key closes modals
+    if (e.key === 'Escape') {
+        closeEditModal();
+    }
+    
+    // Ctrl/Cmd + Enter submits the activity form when focused
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const activeElement = document.activeElement;
+        if (activeElement && (activeElement.id === 'activity' || activeElement.id === 'description')) {
+            const form = document.getElementById('activityForm');
+            if (form) {
+                form.dispatchEvent(new Event('submit'));
             }
-        });
+        }
+    }
+});
+
+/**
+ * Handle visibility change to pause/resume notifications when tab is hidden
+ */
+document.addEventListener('visibilitychange', () => {
+    if (tracker) {
+        // Update debug info when tab becomes visible
+        if (!document.hidden) {
+            tracker.updateDebugInfo();
+        }
+    }
+});
+
+/**
+ * Handle online/offline events
+ */
+window.addEventListener('online', () => {
+    console.log('📶 Connection restored');
+    showNotification('Connection restored', 'success');
+});
+
+window.addEventListener('offline', () => {
+    console.log('📶 Connection lost');
+    showNotification('Working offline', 'info');
+});
+
+/**
+ * Handle beforeunload to warn about unsaved data
+ */
+window.addEventListener('beforeunload', (e) => {
+    // Only show warning if there's unsaved form data
+    const activityInput = document.getElementById('activity');
+    if (activityInput && activityInput.value.trim()) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved activity data. Are you sure you want to leave?';
+        return e.returnValue;
+    }
+});
+
+/**
+ * Handle page unload cleanup
+ */
+window.addEventListener('unload', () => {
+    if (tracker && tracker.pauseManager) {
+        tracker.pauseManager.destroy();
+    }
+});
+
+/**
+ * Add PWA install prompt handling
+ */
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    console.log('💾 PWA install prompt available');
+    // Prevent Chrome 67 and earlier from automatically showing the prompt
+    e.preventDefault();
+    // Save the event so it can be triggered later
+    deferredPrompt = e;
+    
+    // Show custom install button/notification if desired
+    showNotification('This app can be installed on your device!', 'info');
+});
+
+window.addEventListener('appinstalled', () => {
+    console.log('💾 PWA was installed');
+    showNotification('Activity Tracker installed successfully!', 'success');
+    deferredPrompt = null;
+});
+
+/**
+ * Error handling for uncaught errors
+ */
+window.addEventListener('error', (e) => {
+    console.error('❌ Uncaught error:', e.error);
+    showNotification('An unexpected error occurred. Please refresh the page.', 'error');
+});
+
+window.addEventListener('unhandledrejection', (e) => {
+    console.error('❌ Unhandled promise rejection:', e.reason);
+    showNotification('An unexpected error occurred. Please refresh the page.', 'error');
+});
+
+/**
+ * Performance monitoring
+ */
+window.addEventListener('load', () => {
+    // Log performance timing
+    if (window.performance && window.performance.timing) {
+        const timing = window.performance.timing;
+        const loadTime = timing.loadEventEnd - timing.navigationStart;
+        console.log(`⚡ Page loaded in ${loadTime}ms`);
+    }
+});
+
+// Export for testing purposes
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        showSection,
+        addCurrentTime,
+        generateReport,
+        setWeeklyReport,
+        previousWeek,
+        nextWeek,
+        downloadReport,
+        saveSettings,
+        enableNotifications,
+        testNotification,
+        testNotificationSound,
+        refreshNotificationStatus,
+        clearAllData,
+        closeEditModal,
+        togglePause
+    };
+}
+
+
     </script>
 </body>
 </html>

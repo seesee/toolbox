@@ -100,6 +100,15 @@ function downloadReport() {
 }
 
 /**
+ * Show report format (HTML or Markdown)
+ */
+function showReportFormat(format) {
+    if (tracker) {
+        tracker.showReportFormat(format);
+    }
+}
+
+/**
  * Save settings
  */
 function saveSettings() {
@@ -285,6 +294,15 @@ window.addEventListener('beforeunload', (e) => {
         e.preventDefault();
         e.returnValue = 'You have unsaved activity data. Are you sure you want to leave?';
         return e.returnValue;
+    }
+});
+
+/**
+ * Handle page unload cleanup
+ */
+window.addEventListener('unload', () => {
+    if (tracker && tracker.pauseManager) {
+        tracker.pauseManager.destroy();
     }
 });
 

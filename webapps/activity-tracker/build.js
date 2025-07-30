@@ -43,6 +43,15 @@ class ActivityTrackerBuilder {
                 path.join(this.srcDir, 'sw.js'),
                 path.join(this.distDir, 'sw.js')
             );
+
+            const faviconPath = path.join(this.srcDir, 'favicon.ico');
+            if (await fs.pathExists(faviconPath)) {
+                await fs.copy(
+                    faviconPath,
+                    path.join(this.distDir, 'favicon.ico')
+                );
+                console.log('📄 Favicon copied');
+            } 
             
             console.log('✅ Build completed successfully!');
             console.log(`📁 Output: ${this.distDir}/index.html`);
@@ -64,7 +73,11 @@ class ActivityTrackerBuilder {
         // Read files in specific order
         const files = [
             'utils.js',
+            'sounds.js',
+            'pauseManager.js',
+            'markdownRenderer.js',
             'ActivityTracker.js', 
+            'reports.js', 
             'main.js'
         ];
         
@@ -86,7 +99,7 @@ class ActivityTrackerBuilder {
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const build = '01'; // Could be incremented for multiple builds per day
+        const build = Math.floor(Date.now() / 1000) % 100000; // Last 5 digits of timestamp
         
         return `V${year}.${month}.${day}.${build}`;
     }
