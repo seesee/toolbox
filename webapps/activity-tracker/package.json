@@ -1,0 +1,28 @@
+{
+  "name": "activity-tracker",
+  "version": "0.2025.07.30.01",
+  "description": "A personal activity tracking application with notifications",
+  "main": "dist/index.html",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js && python -m http.server 8000 --directory dist",
+    "serve": "python -m http.server 8000 --directory dist",
+    "clean": "rm -rf dist && mkdir -p dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "fs-extra": "^11.1.1"
+  },
+  "keywords": [
+    "activity-tracker",
+    "productivity",
+    "notifications",
+    "pwa"
+  ],
+  "author": "Chris Carline",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/seesee/toolbox.git"
+  }
+}

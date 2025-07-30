@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<!-- {{VERSION}} -->
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Activity Tracker</title>
+    <style>
+        {{CSS}}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Activity Tracker</h1>
+            <p>Track your daily activities with automatic reminders</p>
+            <div class="nav">
+                <button class="nav-btn active" onclick="showSection('tracker', event)">Tracker</button>
+                <button class="nav-btn" onclick="showSection('reports', event)">Reports</button>
+                <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
+                <button id="pauseButton" class="nav-btn" onclick="togglePause()">Pause Alerts</button>
+            </div>
+        </div>
+
+        <!-- Tracker Section -->
+        <div id="tracker" class="section active">
+            <h2>Activity Entry</h2>
+            <form id="activityForm">
+                <div class="form-group">
+                    <label for="activity">What are you doing?</label>
+                    <input type="text" id="activity" required placeholder="e.g., Writing report, Meeting with team" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="description">Description (optional)</label>
+                    <textarea id="description" rows="3" placeholder="Additional details about this activity"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="timestamp">Time</label>
+                    <input type="datetime-local" id="timestamp" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Entry</button>
+                <button type="button" class="btn btn-secondary" onclick="addCurrentTime()">Use Current Time</button>
+            </form>
+
+            <div class="entries-list">
+                <h3>Recent Entries</h3>
+                <div id="entriesList"></div>
+            </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div id="reports" class="section">
+            <h2>Activity Reports</h2>
+            
+            <div class="report-navigation">
+                <button class="btn btn-secondary" onclick="previousWeek()">← Previous Week</button>
+                <div class="week-display" id="weekDisplay">Week of ...</div>
+                <button class="btn btn-secondary" onclick="nextWeek()">Next Week →</button>
+            </div>
+
+            <div class="report-filters">
+                <div class="form-group">
+                    <label for="reportStartDate">Start Date</label>
+                    <input type="date" id="reportStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="reportEndDate">End Date</label>
+                    <input type="date" id="reportEndDate">
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
+                    <button class="btn btn-secondary" onclick="setWeeklyReport()">This Week</button>
+                </div>
+            </div>
+
+            <div class="download-section">
+                <h3>Download Report</h3>
+                <p>Generate and download the current report in your preferred format</p>
+                <div style="margin-top: 15px;">
+                    <div class="form-group" style="display: inline-block; width: 200px; margin-right: 15px;">
+                        <select id="downloadFormat">
+                            <option value="html">HTML Report</option>
+                            <option value="markdown">Markdown</option>
+                            <option value="csv">CSV (with timings)</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" onclick="downloadReport()">Download Report</button>
+                </div>
+            </div>
+
+            <div id="reportResults"></div>
+        </div>
+
+        <!-- Settings Section -->
+        <div id="settings" class="section">
+            <h2>Settings</h2>
+            
+            <div class="notification-status" id="notificationStatus">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span id="statusText">Checking notification status...</span>
+            </div>
+
+            <div class="settings-grid">
+                <div class="settings-section">
+                    <h3>Notification Settings</h3>
+                    <div class="notification-buttons">
+                        <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
+                        <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
+                        <button class="btn btn-secondary" onclick="refreshNotificationStatus()">Refresh Status</button>
+                        <button class="btn btn-secondary" onclick="testNotificationSound()">Test Sound</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="notificationInterval">Reminder Interval (minutes)</label>
+                        <select id="notificationInterval">
+                            <option value="1">1 minute</option>
+                            <option value="2">2 minutes</option>
+                            <option value="5">5 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="pauseDuration">Auto-resume alerts after</label>
+                        <select id="pauseDuration">
+                            <option value="15">15 minutes</option>
+                            <option value="60">1 hour</option>
+                            <option value="240">4 hours</option>
+                            <option value="1440">24 hours</option>
+                            <option value="-1">Never</option>
+                        </select>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="muteNotificationSound">
+                        <label for="muteNotificationSound">Mute notification sound</label>
+                    </div>
+                    
+                    <div class="debug-info" id="debugInfo">
+                        <strong>Debug Information:</strong><br>
+                        <span id="debugText">Loading...</span>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Working Hours</h3>
+                    <div class="form-group">
+                        <label for="startTime">Start Time</label>
+                        <input type="time" id="startTime" value="08:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">End Time</label>
+                        <input type="time" id="endTime" value="18:00">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Working Days</h3>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="monday" checked>
+                        <label for="monday">Monday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="tuesday" checked>
+                        <label for="tuesday">Tuesday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="wednesday" checked>
+                        <label for="wednesday">Wednesday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="thursday" checked>
+                        <label for="thursday">Thursday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="friday" checked>
+                        <label for="friday">Friday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="saturday">
+                        <label for="saturday">Saturday</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="sunday">
+                        <label for="sunday">Sunday</label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3>Edit Entry</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editActivity">Activity</label>
+                    <input type="text" id="editActivity" required>
+                </div>
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTimestamp">Time</label>
+                    <input type="datetime-local" id="editTimestamp" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Entry</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        {{JAVASCRIPT}}
+    </script>
+</body>
+</html>
