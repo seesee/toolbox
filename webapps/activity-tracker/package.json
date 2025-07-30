@@ -4,14 +4,22 @@
   "description": "A personal activity tracking application with notifications",
   "main": "dist/index.html",
   "scripts": {
-    "build": "node build.js",
+    "build": "node build.js --verbose",
+    "build:dev": "node build.js --no-minify --verbose", 
+    "build:prod": "node build.js",
+    "postbuild": "./postbuild.sh",
+    "dev:unminified": "node build.js --no-minify && npm run serve",
     "dev": "node build.js && npm run serve",
     "serve": "python3 -m http.server 8000 --directory dist || python -m http.server 8000 --directory dist || npx serve dist -p 8000",
     "clean": "rm -rf dist && mkdir -p dist"
   },
   "dependencies": {},
   "devDependencies": {
-    "fs-extra": "^11.1.1"
+    "fs-extra": "^11.1.1",
+    "fs-extra": "^11.1.1",
+    "terser": "^5.19.2",
+    "clean-css": "^5.3.2",
+    "html-minifier-terser": "^7.2.0"
   },
   "keywords": [
     "activity-tracker",
