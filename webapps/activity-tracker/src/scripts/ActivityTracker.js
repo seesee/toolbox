@@ -55,6 +55,7 @@ class ActivityTracker {
      */
     init() {
         this.loadSettings();
+        this.initMarkdownRenderer();
         this.displayEntries();
         this.updateNotificationStatus();
         this.updateDebugInfo();
@@ -63,7 +64,6 @@ class ActivityTracker {
         this.setDefaultReportDates();
         this.initSoundManager();
         this.initPauseManager();
-        this.initMarkdownRenderer();
         
         // Event listeners
         this.attachEventListeners();
@@ -272,6 +272,11 @@ class ActivityTracker {
      * @returns {string} HTML string
      */
     renderDescriptionMarkdown(description) {
+        // Initialize markdown renderer if not already done
+        if (!this.markdownRenderer && typeof MarkdownRenderer !== 'undefined') {
+            this.initMarkdownRenderer();
+        }
+
         if (this.markdownRenderer && description) {
             return this.markdownRenderer.renderInlineWithClasses(description);
         }

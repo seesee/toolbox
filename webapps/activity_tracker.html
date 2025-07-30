@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V2025.07.30.1031 -->
+<!-- V2025.07.30.2086 -->
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
@@ -1792,6 +1792,7 @@ class ActivityTracker {
      */
     init() {
         this.loadSettings();
+        this.initMarkdownRenderer();
         this.displayEntries();
         this.updateNotificationStatus();
         this.updateDebugInfo();
@@ -1800,7 +1801,6 @@ class ActivityTracker {
         this.setDefaultReportDates();
         this.initSoundManager();
         this.initPauseManager();
-        this.initMarkdownRenderer();
         
         // Event listeners
         this.attachEventListeners();
@@ -2009,6 +2009,11 @@ class ActivityTracker {
      * @returns {string} HTML string
      */
     renderDescriptionMarkdown(description) {
+        // Initialize markdown renderer if not already done
+        if (!this.markdownRenderer && typeof MarkdownRenderer !== 'undefined') {
+            this.initMarkdownRenderer();
+        }
+
         if (this.markdownRenderer && description) {
             return this.markdownRenderer.renderInlineWithClasses(description);
         }
