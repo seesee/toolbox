@@ -1,6 +1,7 @@
 const CACHE_NAME = 'activity-tracker-cache-v1';
 const URLS_TO_CACHE = [
   './activity_tracker.html',
+  './favicon.ico'
 ];
 
 self.addEventListener('install', event => {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- V0.2025.07.29-20.24.25 -->
+<!-- V0.2025.07.30.01 -->
 <html lang="en-GB">
 <head>
     <meta charset="UTF-8">
@@ -475,6 +475,7 @@
                         <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
                         <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
                         <button class="btn btn-secondary" onclick="refreshNotificationStatus()">Refresh Status</button>
+                        <button class="btn btn-secondary" onclick="testNotificationSound()">Test Sound</button>
                     </div>
                     <div class="form-group">
                         <label for="notificationInterval">Reminder Interval (minutes)</label>
@@ -498,6 +499,10 @@
                             <option value="1440">24 hours</option>
                             <option value="-1">Never</option>
                         </select>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="muteNotificationSound">
+                        <label for="muteNotificationSound">Mute notification sound</label>
                     </div>
                     
                     <div class="debug-info" id="debugInfo">
@@ -610,11 +615,13 @@
                     },
                     pauseDuration: 60,
                     notificationsPausedUntil: null,
+                    muteNotificationSound: false,
                     ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
                 };
                 this.notificationTimer = null;
                 this.currentReportEntries = [];
                 this.currentWeekStart = null;
+                this.audioContext = null;
                 this.init();
             }
 
@@ -626,6 +633,7 @@
                 this.updatePauseButtonState();
                 this.startNotificationTimer();
                 this.setDefaultReportDates();
+                this.initAudioContext();
                 
                 // Event listeners
                 document.getElementById('activityForm').addEventListener('submit', (e) => {
@@ -646,6 +654,58 @@
                 if (window.location.protocol === 'file:') {
                     console.warn('Running from local file - notifications may have limitations');
                 }
+            }
+
+            initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (error) {
+                    console.warn('Web Audio API not supported:', error);
+                    this.audioContext = null;
+                }
+            }
+
+            playNotificationSound() {
+                if (!this.audioContext || this.settings.muteNotificationSound) {
+                    return;
+                }
+
+                try {
+                    // Resume audio context if it's suspended (required by some browsers)
+                    if (this.audioContext.state === 'suspended') {
+                        this.audioContext.resume();
+                    }
+
+                    // Create a pleasant "bloop" sound
+                    const oscillator = this.audioContext.createOscillator();
+                    const gainNode = this.audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    // Configure the sound - a pleasant rising tone
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(400, this.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(600, this.audioContext.currentTime + 0.1);
+                    
+                    // Configure volume envelope for a smooth "bloop"
+                    gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+                    
+                    // Play the sound
+                    oscillator.start(this.audioContext.currentTime);
+                    oscillator.stop(this.audioContext.currentTime + 0.3);
+                    
+                    console.log('Notification sound played');
+                } catch (error) {
+                    console.warn('Error playing notification sound:', error);
+                }
+            }
+
+            testNotificationSound() {
+                this.playNotificationSound();
+                this.showNotification('Test sound played!', 'success');
             }
 
             addEntry(entry) {
@@ -759,6 +819,7 @@
                     startTime: document.getElementById('startTime').value,
                     endTime: document.getElementById('endTime').value,
                     pauseDuration: parseInt(document.getElementById('pauseDuration').value),
+                    muteNotificationSound: document.getElementById('muteNotificationSound').checked,
                     workingDays: {
                         monday: document.getElementById('monday').checked,
                         tuesday: document.getElementById('tuesday').checked,
@@ -780,6 +841,7 @@
                 document.getElementById('startTime').value = this.settings.startTime;
                 document.getElementById('endTime').value = this.settings.endTime;
                 document.getElementById('pauseDuration').value = this.settings.pauseDuration;
+                document.getElementById('muteNotificationSound').checked = this.settings.muteNotificationSound;
                 
                 Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
                     document.getElementById(day).checked = checked;
@@ -834,6 +896,9 @@
             testNotification(isAutoTest = false) {
                 console.log('Testing notification, permission:', Notification.permission);
                 this.updateDebugInfo();
+                
+                // Play sound regardless of notification permission
+                this.playNotificationSound();
                 
                 if (Notification.permission !== 'granted') {
                     if (!isAutoTest) {
@@ -926,6 +991,8 @@
                 if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                     info.push(`SW State: ${navigator.serviceWorker.controller.state}`);
                 }
+                info.push(`Web Audio API: ${this.audioContext ? 'Available' : 'Not Available'}`);
+                info.push(`Sound Muted: ${this.settings.muteNotificationSound ? 'Yes' : 'No'}`);
                 info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
                 
                 debugEl.innerHTML = info.join('<br>');
@@ -980,7 +1047,7 @@
                 const timeSinceLastNotification = now.getTime() - (lastNotification || 0);
                 const intervalMs = this.settings.notificationInterval * 60 * 1000;
 
-                if (timeSinceLastNotification >= intervalMs) {
+                if (intervalMs > 0 && timeSinceLastNotification >= intervalMs) {
                     console.log('Sending scheduled notification');
                     this.showActivityReminder();
                     localStorage.setItem('lastNotificationTime', now.getTime().toString());
@@ -988,6 +1055,9 @@
             }
 
             showActivityReminder() {
+                // Play sound for activity reminder
+                this.playNotificationSound();
+                
                 try {
                     const options = {
                         body: 'What are you working on right now?',
@@ -1540,6 +1610,10 @@
 
         function testNotification() {
             tracker.testNotification();
+        }
+
+        function testNotificationSound() {
+            tracker.testNotificationSound();
         }
 
         function refreshNotificationStatus() {
