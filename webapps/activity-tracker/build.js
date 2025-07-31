@@ -183,7 +183,10 @@ class ActivityTrackerBuilder {
                         'enableNotifications', 'testNotification', 'testNotificationSound',
                         'refreshNotificationStatus', 'clearAllData', 'closeEditModal',
                         'togglePause', 'saveReportTemplates', 'resetReportTemplates',
-                        'exportDatabase', 'importDatabase', 'handleImportFile', 'runServiceWorkerTest'
+                        'exportDatabase', 'importDatabase', 'handleImportFile', 'runServiceWorkerTest',
+                        'openTemplateManager', 'closeTemplateManager', 'addNewTemplate', 'resetToDefaults',
+                        'saveCurrentTemplate', 'deleteCurrentTemplate', 'duplicateCurrentTemplate',
+                        'refreshTemplatePreview', 'saveAllTemplates', 'switchPreviewTab', 'switchReportPreviewTab', 'switchTemplateTab'
                     ]
                 },
                 format: {

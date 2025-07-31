@@ -244,6 +244,114 @@ function handleImportFile(event) {
 }
 
 /**
+ * Open template manager overlay
+ */
+function openTemplateManager() {
+    if (tracker) {
+        tracker.openTemplateManager();
+    }
+}
+
+/**
+ * Close template manager overlay
+ */
+function closeTemplateManager() {
+    if (tracker) {
+        tracker.closeTemplateManager();
+    }
+}
+
+/**
+ * Add new template in manager
+ */
+function addNewTemplate() {
+    if (tracker) {
+        tracker.addNewTemplate();
+    }
+}
+
+/**
+ * Reset all templates to defaults
+ */
+function resetToDefaults() {
+    if (tracker) {
+        tracker.resetToDefaults();
+    }
+}
+
+/**
+ * Save current template in editor
+ */
+function saveCurrentTemplate() {
+    if (tracker) {
+        tracker.saveCurrentTemplate();
+    }
+}
+
+/**
+ * Delete current template in editor
+ */
+function deleteCurrentTemplate() {
+    if (tracker) {
+        tracker.deleteCurrentTemplate();
+    }
+}
+
+/**
+ * Duplicate current template in editor
+ */
+function duplicateCurrentTemplate() {
+    if (tracker) {
+        tracker.duplicateCurrentTemplate();
+    }
+}
+
+/**
+ * Refresh template preview
+ */
+function refreshTemplatePreview() {
+    if (tracker) {
+        tracker.refreshTemplatePreview();
+    }
+}
+
+/**
+ * Save all templates and close manager
+ */
+function saveAllTemplates() {
+    if (tracker) {
+        tracker.saveAllTemplates();
+    }
+}
+
+/**
+ * Switch preview tab in template manager
+ */
+function switchPreviewTab(tabType) {
+    if (tracker) {
+        tracker.switchPreviewTab(tabType);
+    }
+}
+
+/**
+ * Switch preview tab in reports section
+ */
+function switchReportPreviewTab(tabType) {
+    if (tracker) {
+        tracker.switchReportPreviewTab(tabType);
+    }
+}
+
+/**
+ * Switch template editor tab (Editor/Preview)
+ */
+function switchTemplateTab(tabType) {
+    if (tracker) {
+        tracker.switchTemplateTab(tabType);
+    }
+}
+
+/**
  * Run comprehensive service worker diagnostic test
  */
 async function runServiceWorkerTest() {
@@ -455,24 +563,20 @@ window.addEventListener('offline', () => {
 });
 
 /**
- * Handle beforeunload to warn about unsaved data
+ * Handle beforeunload for cleanup and unsaved data warning
  */
 window.addEventListener('beforeunload', (e) => {
+    // Clean up pause manager
+    if (tracker && tracker.pauseManager) {
+        tracker.pauseManager.destroy();
+    }
+    
     // Only show warning if there's unsaved form data
     const activityInput = document.getElementById('activity');
     if (activityInput && activityInput.value.trim()) {
         e.preventDefault();
         e.returnValue = 'You have unsaved activity data. Are you sure you want to leave?';
         return e.returnValue;
-    }
-});
-
-/**
- * Handle page unload cleanup
- */
-window.addEventListener('unload', () => {
-    if (tracker && tracker.pauseManager) {
-        tracker.pauseManager.destroy();
     }
 });
 

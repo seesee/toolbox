@@ -141,16 +141,6 @@ Object.assign(ActivityTracker.prototype, {
             return;
         }
 
-        // Add debugging
-        console.log('Current report data:', this.currentReportData);
-        console.log('Days structure:', this.currentReportData.days);
-        if (this.currentReportData.days && this.currentReportData.days[0]) {
-            console.log('First day entries:', this.currentReportData.days[0].entries);
-            if (this.currentReportData.days[0].entries && this.currentReportData.days[0].entries[0]) {
-                console.log('First entry:', this.currentReportData.days[0].entries[0]);
-            }
-        }
-
         const templateKey = document.getElementById('reportTemplate').value;
         const templates = this.getReportTemplates();
         const template = templates[templateKey];
@@ -160,12 +150,31 @@ Object.assign(ActivityTracker.prototype, {
             return;
         }
 
-        const renderedContent = this.renderReport(template.template, this.currentReportData);
+        // Check which tab is active
+        const renderedTab = document.getElementById('reportPreviewTabRendered');
+        const isRenderedView = renderedTab && renderedTab.classList.contains('active');
 
-        if (template.type === 'html') {
-            previewEl.innerHTML = `<iframe srcdoc="${this.templatingEngine.escapeHtml(renderedContent)}" style="width: 100%; height: 450px; border: none;"></iframe>`;
-        } else {
-            previewEl.innerHTML = `<pre>${this.templatingEngine.escapeHtml(renderedContent)}</pre>`;
+        try {
+            const renderedContent = this.renderReport(template.template, this.currentReportData);
+            
+            if (isRenderedView) {
+                // Show rendered view
+                if (template.type === 'html') {
+                    previewEl.innerHTML = `<iframe srcdoc="${this.templatingEngine.escapeHtml(renderedContent)}" style="width: 100%; height: 450px; border: none;"></iframe>`;
+                } else if (template.type === 'markdown' && this.markdownRenderer) {
+                    // Render markdown to HTML
+                    const htmlContent = this.markdownRenderer.render(renderedContent);
+                    previewEl.innerHTML = htmlContent;
+                } else {
+                    // Show as formatted text
+                    previewEl.innerHTML = `<pre>${this.templatingEngine.escapeHtml(renderedContent)}</pre>`;
+                }
+            } else {
+                // Show source view
+                previewEl.innerHTML = `<pre>${this.templatingEngine.escapeHtml(renderedContent)}</pre>`;
+            }
+        } catch (error) {
+            previewEl.textContent = 'Error generating preview: ' + error.message;
         }
     },
 

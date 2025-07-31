@@ -60,6 +60,7 @@ class ActivityTracker {
         this.initMarkdownRenderer();
         this.initReportTemplates();
         this.loadReportTemplatesIntoEditor();
+        this.initTemplatePreviewGrid();
         this.displayEntries();
         this.updateNotificationStatus();
         this.updateDebugInfo();
@@ -1105,5 +1106,542 @@ class ActivityTracker {
             console.error('Error importing database:', error);
             showNotification('Error importing database: ' + error.message, 'error');
         }
+    }
+
+    /**
+     * Initialize template preview grid in settings - removed as no longer needed
+     */
+    initTemplatePreviewGrid() {
+        // No longer needed - template preview grid removed from settings
+    }
+
+    /**
+     * Open template manager overlay
+     */
+    openTemplateManager() {
+        this.templateManagerState = {
+            templates: { ...this.getReportTemplates() },
+            currentTemplateId: null,
+            hasUnsavedChanges: false,
+            originalTemplates: { ...this.getReportTemplates() }
+        };
+
+        const overlay = document.getElementById('templateManagerOverlay');
+        if (overlay) {
+            overlay.classList.add('active');
+            this.populateTemplateList();
+            this.clearTemplateEditor();
+        }
+    }
+
+    /**
+     * Close template manager overlay
+     */
+    closeTemplateManager() {
+        if (this.templateManagerState && this.templateManagerState.hasUnsavedChanges) {
+            if (!confirm('You have unsaved changes. Are you sure you want to close without saving?')) {
+                return;
+            }
+        }
+
+        const overlay = document.getElementById('templateManagerOverlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+        }
+        
+        this.templateManagerState = null;
+    }
+
+    /**
+     * Populate template list in manager
+     */
+    populateTemplateList() {
+        const templateList = document.getElementById('templateList');
+        if (!templateList || !this.templateManagerState) return;
+
+        const templates = this.templateManagerState.templates;
+        const defaultTemplate = this.settings.defaultTemplate || 'detailed-html';
+        
+        templateList.innerHTML = '';
+        
+        Object.keys(templates).forEach(templateId => {
+            const template = templates[templateId];
+            const isDefault = templateId === defaultTemplate;
+            const isActive = templateId === this.templateManagerState.currentTemplateId;
+            
+            const item = document.createElement('div');
+            item.className = `template-list-item ${isActive ? 'active' : ''} ${isDefault ? 'default' : ''}`;
+            item.onclick = () => this.selectTemplate(templateId);
+            
+            item.innerHTML = `
+                <div class="template-list-item-name">${template.name}</div>
+                <div class="template-list-item-desc">${template.description}</div>
+                <div class="template-list-item-type">${template.type}</div>
+            `;
+            
+            templateList.appendChild(item);
+        });
+    }
+
+    /**
+     * Select template for editing
+     */
+    selectTemplate(templateId) {
+        if (this.templateManagerState && this.templateManagerState.hasUnsavedChanges) {
+            if (!confirm('You have unsaved changes. Continue without saving?')) {
+                return;
+            }
+        }
+
+        this.templateManagerState.currentTemplateId = templateId;
+        this.templateManagerState.hasUnsavedChanges = false;
+        
+        this.populateTemplateList();
+        this.loadTemplateIntoEditor(templateId);
+        this.refreshTemplatePreview();
+    }
+
+    /**
+     * Load template into editor form
+     */
+    loadTemplateIntoEditor(templateId) {
+        const template = this.templateManagerState.templates[templateId];
+        if (!template) return;
+
+        document.getElementById('templateEditorTitle').textContent = `Editing: ${template.name}`;
+        document.getElementById('templateEditorActions').style.display = 'flex';
+        document.getElementById('templateEditorTabs').style.display = 'flex';
+        
+        // Show editor tab by default
+        this.switchTemplateTab('editor');
+
+        document.getElementById('templateName').value = template.name;
+        document.getElementById('templateDescription').value = template.description;
+        document.getElementById('templateType').value = template.type;
+        document.getElementById('templateContent').value = template.template;
+        
+        const defaultTemplate = this.settings.defaultTemplate || 'detailed-html';
+        document.getElementById('templateIsDefault').checked = templateId === defaultTemplate;
+
+        // Add change listeners
+        ['templateName', 'templateDescription', 'templateType', 'templateContent', 'templateIsDefault'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', () => {
+                    this.templateManagerState.hasUnsavedChanges = true;
+                });
+            }
+        });
+    }
+
+    /**
+     * Clear template editor
+     */
+    clearTemplateEditor() {
+        document.getElementById('templateEditorTitle').textContent = 'Select a template to edit';
+        document.getElementById('templateEditorActions').style.display = 'none';
+        document.getElementById('templateEditorTabs').style.display = 'none';
+        document.getElementById('templateEditorForm').style.display = 'none';
+        document.getElementById('templatePreviewPanel').style.display = 'none';
+        document.getElementById('templatePreviewContent').innerHTML = '<p class="template-preview-placeholder">Select a template to see preview</p>';
+    }
+
+    /**
+     * Add new template
+     */
+    addNewTemplate() {
+        const templateId = 'custom-' + Date.now();
+        const newTemplate = {
+            name: 'New Template',
+            description: 'Custom template',
+            type: 'html',
+            template: '# {{report.startDate}} - {{report.endDate}}\n\n{{#each entry = entries}}\n- {{entry.activity}}\n{{/each}}'
+        };
+
+        this.templateManagerState.templates[templateId] = newTemplate;
+        this.templateManagerState.hasUnsavedChanges = true;
+        
+        this.populateTemplateList();
+        this.selectTemplate(templateId);
+    }
+
+    /**
+     * Save current template
+     */
+    saveCurrentTemplate() {
+        if (!this.templateManagerState || !this.templateManagerState.currentTemplateId) return;
+
+        const templateId = this.templateManagerState.currentTemplateId;
+        const name = document.getElementById('templateName').value.trim();
+        const description = document.getElementById('templateDescription').value.trim();
+        const type = document.getElementById('templateType').value;
+        const content = document.getElementById('templateContent').value;
+        const isDefault = document.getElementById('templateIsDefault').checked;
+
+        if (!name || !content) {
+            showNotification('Template name and content are required', 'error');
+            return;
+        }
+
+        // Update template
+        this.templateManagerState.templates[templateId] = {
+            name,
+            description,
+            type,
+            template: content
+        };
+
+        // Update default template setting
+        if (isDefault) {
+            this.settings.defaultTemplate = templateId;
+        } else if (this.settings.defaultTemplate === templateId) {
+            this.settings.defaultTemplate = 'detailed-html';
+        }
+
+        this.templateManagerState.hasUnsavedChanges = false;
+        
+        this.populateTemplateList();
+        this.refreshTemplatePreview();
+        
+        showNotification('Template saved', 'success');
+    }
+
+    /**
+     * Delete current template
+     */
+    deleteCurrentTemplate() {
+        if (!this.templateManagerState || !this.templateManagerState.currentTemplateId) return;
+
+        const templateId = this.templateManagerState.currentTemplateId;
+        const template = this.templateManagerState.templates[templateId];
+        
+        if (!confirm(`Delete template "${template.name}"? This cannot be undone.`)) {
+            return;
+        }
+
+        // Don't allow deleting default templates
+        if (window.ReportTemplates && window.ReportTemplates[templateId]) {
+            showNotification('Cannot delete default templates', 'error');
+            return;
+        }
+
+        delete this.templateManagerState.templates[templateId];
+        
+        // Clear default if this was it
+        if (this.settings.defaultTemplate === templateId) {
+            this.settings.defaultTemplate = 'detailed-html';
+        }
+
+        this.templateManagerState.hasUnsavedChanges = true;
+        this.templateManagerState.currentTemplateId = null;
+        
+        this.populateTemplateList();
+        this.clearTemplateEditor();
+        
+        showNotification('Template deleted', 'success');
+    }
+
+    /**
+     * Duplicate current template
+     */
+    duplicateCurrentTemplate() {
+        if (!this.templateManagerState || !this.templateManagerState.currentTemplateId) return;
+
+        const originalId = this.templateManagerState.currentTemplateId;
+        const original = this.templateManagerState.templates[originalId];
+        const newId = 'custom-' + Date.now();
+        
+        const duplicate = {
+            name: original.name + ' (Copy)',
+            description: original.description,
+            type: original.type,
+            template: original.template
+        };
+
+        this.templateManagerState.templates[newId] = duplicate;
+        this.templateManagerState.hasUnsavedChanges = true;
+        
+        this.populateTemplateList();
+        this.selectTemplate(newId);
+        
+        showNotification('Template duplicated', 'success');
+    }
+
+    /**
+     * Reset all templates to defaults
+     */
+    resetToDefaults() {
+        if (!confirm('Reset all templates to defaults? This will delete all custom templates.')) {
+            return;
+        }
+
+        this.templateManagerState.templates = { ...window.ReportTemplates };
+        this.settings.defaultTemplate = 'detailed-html';
+        this.templateManagerState.hasUnsavedChanges = true;
+        this.templateManagerState.currentTemplateId = null;
+        
+        this.populateTemplateList();
+        this.clearTemplateEditor();
+        
+        showNotification('Templates reset to defaults', 'success');
+    }
+
+    /**
+     * Generate test data for template preview
+     */
+    generateTestData() {
+        const now = new Date();
+        const startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const endDate = now;
+        
+        // Create test entries across multiple days
+        const day1 = new Date(startDate);
+        const day2 = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+        const day3 = new Date(startDate.getTime() + 48 * 60 * 60 * 1000);
+        
+        const day1Entries = [
+            {
+                id: '1',
+                timestamp: day1.toISOString(),
+                activity: 'Planning project roadmap',
+                description: 'Defined key milestones and deliverables for Q3',
+                duration: 45,
+                endTime: new Date(day1.getTime() + 45 * 60 * 1000).toISOString()
+            },
+            {
+                id: '2', 
+                timestamp: new Date(day1.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+                activity: 'Team standup meeting',
+                description: 'Discussed progress and blocked items',
+                duration: 30,
+                endTime: new Date(day1.getTime() + 2 * 60 * 60 * 1000 + 30 * 60 * 1000).toISOString()
+            }
+        ];
+
+        const day2Entries = [
+            {
+                id: '3',
+                timestamp: day2.toISOString(),
+                activity: 'Code review',
+                description: 'Reviewed pull requests for **authentication module**',
+                duration: 60,
+                endTime: new Date(day2.getTime() + 60 * 60 * 1000).toISOString()
+            }
+        ];
+
+        const day3Entries = [
+            {
+                id: '4',
+                timestamp: day3.toISOString(),
+                activity: 'Documentation update',
+                description: 'Updated API documentation with new endpoints',
+                duration: 90,
+                endTime: new Date(day3.getTime() + 90 * 60 * 1000).toISOString()
+            }
+        ];
+
+        const allEntries = [...day1Entries, ...day2Entries, ...day3Entries];
+        const totalDuration = allEntries.reduce((sum, entry) => sum + entry.duration, 0);
+
+        return {
+            report: {
+                startDate: startDate.toISOString(),
+                endDate: endDate.toISOString(),
+                totalEntries: allEntries.length,
+                totalDuration: totalDuration,
+                activeDays: 3
+            },
+            entries: allEntries,
+            days: [
+                {
+                    date: day1.toDateString(),
+                    entries: day1Entries,
+                    totalDuration: day1Entries.reduce((sum, entry) => sum + entry.duration, 0)
+                },
+                {
+                    date: day2.toDateString(),
+                    entries: day2Entries,
+                    totalDuration: day2Entries.reduce((sum, entry) => sum + entry.duration, 0)
+                },
+                {
+                    date: day3.toDateString(),
+                    entries: day3Entries,
+                    totalDuration: day3Entries.reduce((sum, entry) => sum + entry.duration, 0)
+                }
+            ]
+        };
+    }
+
+    /**
+     * Refresh template preview with test data
+     */
+    refreshTemplatePreview() {
+        if (!this.templateManagerState || !this.templateManagerState.currentTemplateId) return;
+
+        const templateId = this.templateManagerState.currentTemplateId;
+        const template = this.templateManagerState.templates[templateId];
+        const previewElement = document.getElementById('templatePreviewContent');
+        
+        if (!template || !previewElement) return;
+
+        // Get current template content from editor (if modified)
+        const templateContent = document.getElementById('templateContent');
+        const currentTemplate = {
+            ...template,
+            template: templateContent ? templateContent.value : template.template
+        };
+
+        // Check which tab is active
+        const renderedTab = document.getElementById('previewTabRendered');
+        const isRenderedView = renderedTab && renderedTab.classList.contains('active');
+
+        try {
+            const testData = this.generateTestData();
+            
+            // Use the same templating engine as the reports section
+            if (!this.templatingEngine) {
+                this.templatingEngine = new TemplatingEngine();
+            }
+            
+            const renderedContent = this.templatingEngine.render(currentTemplate.template, testData);
+            
+            if (isRenderedView) {
+                // For HTML templates, render as HTML with styling
+                if (currentTemplate.type === 'html') {
+                    const iframe = document.createElement('iframe');
+                    iframe.style.width = '100%';
+                    iframe.style.height = '400px';
+                    iframe.style.border = 'none';
+                    iframe.style.borderRadius = '4px';
+                    
+                    previewElement.innerHTML = '';
+                    previewElement.appendChild(iframe);
+                    
+                    // Write content to iframe to preserve styling
+                    iframe.contentDocument.open();
+                    iframe.contentDocument.write(renderedContent);
+                    iframe.contentDocument.close();
+                    return;
+                }
+                
+                // For markdown templates, render markdown
+                if (currentTemplate.type === 'markdown' && this.markdownRenderer) {
+                    const htmlContent = this.markdownRenderer.render(renderedContent);
+                    previewElement.innerHTML = `<div class="markdown-preview">${htmlContent}</div>`;
+                    return;
+                }
+                
+                // For other formats, show as formatted text
+                previewElement.innerHTML = `<pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${this.escapeHtml(renderedContent)}</pre>`;
+            } else {
+                // Show source view
+                previewElement.innerHTML = `<pre style="white-space: pre-wrap; font-family: monospace; font-size: 12px;">${this.escapeHtml(renderedContent)}</pre>`;
+            }
+            
+        } catch (error) {
+            previewElement.innerHTML = `<div style="color: #e53e3e; padding: 20px; text-align: center;">
+                <strong>Error generating preview:</strong><br>
+                <code style="background: #fed7d7; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 8px;">${error.message}</code>
+            </div>`;
+        }
+    }
+
+    /**
+     * Escape HTML characters (keep this utility method)
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    /**
+     * Switch preview tab in template manager
+     */
+    switchPreviewTab(tabType) {
+        // Update tab appearance
+        document.getElementById('previewTabRendered').classList.toggle('active', tabType === 'rendered');
+        document.getElementById('previewTabSource').classList.toggle('active', tabType === 'source');
+        
+        // Refresh preview with new view mode
+        this.refreshTemplatePreview();
+    }
+
+    /**
+     * Switch preview tab in reports section
+     */
+    switchReportPreviewTab(tabType) {
+        // Update tab appearance
+        document.getElementById('reportPreviewTabRendered').classList.toggle('active', tabType === 'rendered');
+        document.getElementById('reportPreviewTabSource').classList.toggle('active', tabType === 'source');
+        
+        // Refresh the current report preview
+        this.previewReport();
+    }
+
+    /**
+     * Switch template editor tab (Editor/Preview)
+     */
+    switchTemplateTab(tabType) {
+        // Update tab appearance
+        document.getElementById('tabEditor').classList.toggle('active', tabType === 'editor');
+        document.getElementById('tabPreview').classList.toggle('active', tabType === 'preview');
+        
+        // Show/hide appropriate panels
+        document.getElementById('templateEditorForm').style.display = tabType === 'editor' ? 'flex' : 'none';
+        document.getElementById('templatePreviewPanel').style.display = tabType === 'preview' ? 'flex' : 'none';
+        
+        // Refresh preview when switching to preview tab
+        if (tabType === 'preview') {
+            this.refreshTemplatePreview();
+        }
+    }
+
+    /**
+     * Save all templates and close manager
+     */
+    saveAllTemplates() {
+        if (!this.templateManagerState) return;
+
+        // Save current template if editing
+        if (this.templateManagerState.currentTemplateId) {
+            this.saveCurrentTemplate();
+        }
+
+        // Save templates to localStorage
+        const customTemplates = {};
+        Object.keys(this.templateManagerState.templates).forEach(templateId => {
+            // Only save custom templates (not default ones)
+            if (!window.ReportTemplates || !window.ReportTemplates[templateId]) {
+                customTemplates[templateId] = this.templateManagerState.templates[templateId];
+            }
+        });
+
+        localStorage.setItem('customReportTemplates', JSON.stringify(customTemplates));
+        localStorage.setItem('activitySettings', JSON.stringify(this.settings));
+
+        // Update template preview grid
+        this.initTemplatePreviewGrid();
+        
+        // Update template dropdown in reports
+        const reportTemplate = document.getElementById('reportTemplate');
+        if (reportTemplate) {
+            const currentValue = reportTemplate.value;
+            reportTemplate.innerHTML = '';
+            
+            Object.keys(this.templateManagerState.templates).forEach(templateId => {
+                const template = this.templateManagerState.templates[templateId];
+                const option = document.createElement('option');
+                option.value = templateId;
+                option.textContent = template.name;
+                reportTemplate.appendChild(option);
+            });
+            
+            // Restore selection or set default
+            reportTemplate.value = currentValue || this.settings.defaultTemplate || 'detailed-html';
+        }
+
+        this.closeTemplateManager();
+        showNotification('All templates saved successfully!', 'success');
     }
 }

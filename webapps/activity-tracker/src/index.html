@@ -68,8 +68,7 @@
                     <label for="reportEndDate">End Date</label>
                     <input type="date" id="reportEndDate">
                 </div>
-                <div class="form-group">
-                    <label>&nbsp;</label>
+                <div class="form-group form-group-buttons">
                     <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
                     <button class="btn btn-secondary" onclick="setWeeklyReport()">This Week</button>
                 </div>
@@ -88,7 +87,13 @@
             </div>
 
             <div id="reportPreviewContainer" class="report-preview-container">
-                <h3>Report Preview</h3>
+                <div class="report-preview-header">
+                    <h3>Report Preview</h3>
+                    <div class="preview-format-tabs">
+                        <button class="preview-tab active" id="reportPreviewTabRendered" onclick="switchReportPreviewTab('rendered')">Rendered</button>
+                        <button class="preview-tab" id="reportPreviewTabSource" onclick="switchReportPreviewTab('source')">Source</button>
+                    </div>
+                </div>
                 <div id="reportPreview" class="report-preview-content">
                     Select a date range and generate a report to see a preview.
                 </div>
@@ -214,12 +219,11 @@
 
                 <div class="settings-section">
                     <h3>Report Templates</h3>
-                    <p>Customise the templates used for report generation. Use placeholders like <code>{{DATE}}</code>, <code>{{SUMMARY}}</code>, and <code>{{ENTRIES}}</code>.</p>
-                    <div id="report-templates-editor">
-                        <!-- Textareas for templates will be dynamically added here -->
+                    <p>Manage templates for report generation. Create custom templates or modify existing ones.</p>
+                    <div class="template-actions">
+                        <button class="btn btn-primary" onclick="openTemplateManager()">Manage Templates</button>
+                        <button class="btn btn-secondary" onclick="resetReportTemplates()">Reset to Default</button>
                     </div>
-                    <button class="btn btn-primary" onclick="saveReportTemplates()">Save Templates</button>
-                    <button class="btn btn-secondary" onclick="resetReportTemplates()">Reset to Default</button>
                 </div>
 
                 <div class="settings-section">
@@ -237,6 +241,9 @@
             <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
         </div>
     </div>
+
+    <!-- Notification Stack Container -->
+    <div id="notificationStack" class="notification-stack"></div>
 
     <!-- Edit Modal -->
     <div id="editModal" class="modal">
@@ -259,6 +266,100 @@
                 <button type="submit" class="btn btn-primary">Update Entry</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Template Management Overlay -->
+    <div id="templateManagerOverlay" class="template-overlay">
+        <div class="template-overlay-content">
+            <div class="template-manager-header">
+                <h2>Template Manager</h2>
+                <button class="btn-close" onclick="closeTemplateManager()">&times;</button>
+            </div>
+            
+            <div class="template-manager-body">
+                <div class="template-list-panel">
+                    <h3>Templates</h3>
+                    <div class="template-list" id="templateList">
+                        <!-- Template list items will be added here -->
+                    </div>
+                    <div class="template-list-actions">
+                        <button class="btn btn-primary" onclick="addNewTemplate()">Add Template</button>
+                        <button class="btn btn-secondary" onclick="resetToDefaults()">Reset All</button>
+                    </div>
+                </div>
+                
+                <div class="template-editor-panel">
+                    <div class="template-editor-header">
+                        <h3 id="templateEditorTitle">Select a template to edit</h3>
+                        <div class="template-editor-actions" id="templateEditorActions" style="display: none;">
+                            <button class="btn btn-success" onclick="saveCurrentTemplate()">Save</button>
+                            <button class="btn btn-danger" onclick="deleteCurrentTemplate()">Delete</button>
+                            <button class="btn btn-secondary" onclick="duplicateCurrentTemplate()">Duplicate</button>
+                        </div>
+                    </div>
+                    
+                    <div class="template-editor-tabs" id="templateEditorTabs" style="display: none;">
+                        <button class="template-tab active" id="tabEditor" onclick="switchTemplateTab('editor')">Editor</button>
+                        <button class="template-tab" id="tabPreview" onclick="switchTemplateTab('preview')">Preview</button>
+                    </div>
+                    
+                    <div class="template-editor-content">
+                        <div class="template-editor-form" id="templateEditorForm" style="display: none;">
+                            <div class="form-group">
+                                <label for="templateName">Template Name</label>
+                                <input type="text" id="templateName" placeholder="e.g., My Custom Template">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="templateDescription">Description</label>
+                                <input type="text" id="templateDescription" placeholder="Brief description of the template">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="templateType">Output Type</label>
+                                <select id="templateType">
+                                    <option value="html">HTML</option>
+                                    <option value="markdown">Markdown</option>
+                                    <option value="csv">CSV</option>
+                                    <option value="text">Plain Text</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="templateContent">Template Content</label>
+                                <textarea id="templateContent" rows="20" placeholder="Enter your template content here..."></textarea>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="templateIsDefault">
+                                <label for="templateIsDefault">Set as default template</label>
+                            </div>
+                        </div>
+                        
+                        <div class="template-preview-panel" id="templatePreviewPanel" style="display: none;">
+                            <div class="template-preview-header">
+                                <h4>Preview</h4>
+                                <div class="template-preview-controls">
+                                    <div class="preview-format-tabs">
+                                        <button class="preview-tab active" id="previewTabRendered" onclick="switchPreviewTab('rendered')">Rendered</button>
+                                        <button class="preview-tab" id="previewTabSource" onclick="switchPreviewTab('source')">Source</button>
+                                    </div>
+                                    <button class="btn btn-secondary btn-small" onclick="refreshTemplatePreview()">Refresh</button>
+                                </div>
+                            </div>
+                            <div class="template-preview-content" id="templatePreviewContent">
+                                <p class="template-preview-placeholder">Select a template to see preview</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="template-manager-footer">
+                <button class="btn btn-primary" onclick="saveAllTemplates()">Save All Changes</button>
+                <button class="btn btn-secondary" onclick="closeTemplateManager()">Close</button>
+            </div>
         </div>
     </div>
 
