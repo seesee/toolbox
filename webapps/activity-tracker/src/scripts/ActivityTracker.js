@@ -772,4 +772,87 @@ class ActivityTracker {
             showNotification('All data cleared successfully!', 'success');
         }
     }
+
+    /**
+     * Export database as JSON backup file
+     */
+    exportDatabase() {
+        try {
+            const backupData = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                entries: this.entries,
+                settings: this.settings
+            };
+
+            const jsonData = JSON.stringify(backupData, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `activity-tracker-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showNotification('Database exported successfully!', 'success');
+        } catch (error) {
+            console.error('Error exporting database:', error);
+            showNotification('Error exporting database: ' + error.message, 'error');
+        }
+    }
+
+    /**
+     * Import database from JSON backup file
+     */
+    importDatabase(fileData) {
+        try {
+            const backupData = JSON.parse(fileData);
+            
+            // Validate backup data structure
+            if (!backupData.entries || !Array.isArray(backupData.entries)) {
+                throw new Error('Invalid backup file: missing or invalid entries data');
+            }
+
+            // Confirm import action
+            const entriesCount = backupData.entries.length;
+            const backupDate = backupData.timestamp ? new Date(backupData.timestamp).toLocaleDateString('en-GB') : 'unknown date';
+            
+            if (!confirm(`Import ${entriesCount} entries from backup created on ${backupDate}? This will replace all current data.`)) {
+                return;
+            }
+
+            // Validate entries format
+            const validEntries = backupData.entries.filter(entry => 
+                entry && typeof entry === 'object' && entry.timestamp
+            );
+
+            if (validEntries.length !== backupData.entries.length) {
+                console.warn(`Filtered out ${backupData.entries.length - validEntries.length} invalid entries`);
+            }
+
+            // Import data
+            this.entries = validEntries;
+            localStorage.setItem('activityEntries', JSON.stringify(this.entries));
+
+            // Import settings if available
+            if (backupData.settings && typeof backupData.settings === 'object') {
+                this.settings = { ...this.settings, ...backupData.settings };
+                localStorage.setItem('activitySettings', JSON.stringify(this.settings));
+                this.loadSettings(); // Reload settings UI
+            }
+
+            // Update display
+            this.displayEntries();
+            this.currentReportEntries = [];
+            document.getElementById('reportPreview').innerHTML = '';
+
+            showNotification(`Database imported successfully! Restored ${validEntries.length} entries.`, 'success');
+        } catch (error) {
+            console.error('Error importing database:', error);
+            showNotification('Error importing database: ' + error.message, 'error');
+        }
+    }
 }

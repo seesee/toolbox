@@ -220,6 +220,16 @@
                     <button class="btn btn-primary" onclick="saveReportTemplates()">Save Templates</button>
                     <button class="btn btn-secondary" onclick="resetReportTemplates()">Reset to Default</button>
                 </div>
+
+                <div class="settings-section">
+                    <h3>Database Backup</h3>
+                    <p>Export your activity data as a backup file, or import from a previous backup.</p>
+                    <div class="backup-buttons">
+                        <button class="btn btn-primary" onclick="exportDatabase()">Export Database</button>
+                        <button class="btn btn-secondary" onclick="importDatabase()">Import Database</button>
+                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                    </div>
+                </div>
             </div>
 
             <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>

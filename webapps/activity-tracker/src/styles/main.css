@@ -349,6 +349,12 @@ body {
     flex-wrap: wrap;
 }
 
+.backup-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
 .debug-info {
     background: #f7fafc;
     padding: 15px;

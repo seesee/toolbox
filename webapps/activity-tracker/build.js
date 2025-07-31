@@ -179,7 +179,8 @@ class ActivityTrackerBuilder {
                         'previousWeek', 'nextWeek', 'downloadReport', 'saveSettings',
                         'enableNotifications', 'testNotification', 'testNotificationSound',
                         'refreshNotificationStatus', 'clearAllData', 'closeEditModal',
-                        'togglePause', 'saveReportTemplates', 'resetReportTemplates'
+                        'togglePause', 'saveReportTemplates', 'resetReportTemplates',
+                        'exportDatabase', 'importDatabase', 'handleImportFile'
                     ]
                 },
                 format: {

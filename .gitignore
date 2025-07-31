@@ -5,6 +5,8 @@ __pycache__/
 .DS_Store
 .prompt
 package-lock.json
+CLAUDE.md
+.tiles_history
 
 node_modules/
 

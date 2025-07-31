@@ -198,6 +198,52 @@ function resetReportTemplates() {
 }
 
 /**
+ * Export database as backup file
+ */
+function exportDatabase() {
+    if (tracker) {
+        tracker.exportDatabase();
+    }
+}
+
+/**
+ * Trigger file picker for database import
+ */
+function importDatabase() {
+    const fileInput = document.getElementById('importFile');
+    if (fileInput) {
+        fileInput.click();
+    }
+}
+
+/**
+ * Handle import file selection
+ */
+function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+        showNotification('Please select a valid JSON backup file.', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (tracker) {
+            tracker.importDatabase(e.target.result);
+        }
+        // Clear the file input so the same file can be selected again if needed
+        event.target.value = '';
+    };
+    reader.onerror = function() {
+        showNotification('Error reading backup file.', 'error');
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+}
+
+/**
  * Initialize the application when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -387,6 +433,9 @@ if (typeof module !== 'undefined' && module.exports) {
         refreshNotificationStatus,
         clearAllData,
         closeEditModal,
-        togglePause
+        togglePause,
+        exportDatabase,
+        importDatabase,
+        handleImportFile
     };
 }
