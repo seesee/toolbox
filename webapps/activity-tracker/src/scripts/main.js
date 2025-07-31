@@ -144,6 +144,78 @@ function testNotificationSound() {
 }
 
 /**
+ * Preview notification sound when selection changes
+ */
+function previewNotificationSound() {
+    const soundType = document.getElementById('notificationSoundType').value;
+    const muted = document.getElementById('muteNotificationSound').checked;
+    
+    if (tracker && tracker.soundManager && !muted) {
+        tracker.soundManager.playSound(soundType, false);
+    }
+}
+
+/**
+ * Show template guide modal
+ */
+function showTemplateGuide() {
+    const modal = document.getElementById('templateGuideModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+/**
+ * Close template guide modal
+ */
+function closeTemplateGuide() {
+    const modal = document.getElementById('templateGuideModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Copy report content to clipboard
+ */
+function copyReportToClipboard() {
+    const reportPreview = document.getElementById('reportPreview');
+    const isRenderedView = document.getElementById('reportPreviewTabRendered').classList.contains('active');
+    
+    let textToCopy = '';
+    
+    if (isRenderedView) {
+        // For rendered view, try to get clean text content
+        const iframe = reportPreview.querySelector('iframe');
+        if (iframe && iframe.contentDocument) {
+            textToCopy = iframe.contentDocument.body.innerText || iframe.contentDocument.body.textContent;
+        } else {
+            textToCopy = reportPreview.innerText || reportPreview.textContent;
+        }
+    } else {
+        // For source view, get the raw content
+        textToCopy = reportPreview.innerText || reportPreview.textContent;
+    }
+    
+    if (textToCopy && textToCopy.trim()) {
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            showNotification('Report copied to clipboard!', 'success');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = textToCopy;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            showNotification('Report copied to clipboard!', 'success');
+        });
+    } else {
+        showNotification('No report content to copy', 'error');
+    }
+}
+
+/**
  * Refresh notification status
  */
 function refreshNotificationStatus() {
@@ -648,6 +720,10 @@ if (typeof module !== 'undefined' && module.exports) {
         exportDatabase,
         importDatabase,
         handleImportFile,
-        runServiceWorkerTest
+        runServiceWorkerTest,
+        previewNotificationSound,
+        showTemplateGuide,
+        closeTemplateGuide,
+        copyReportToClipboard
     };
 }

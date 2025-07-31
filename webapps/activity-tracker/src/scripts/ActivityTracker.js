@@ -69,6 +69,7 @@ class ActivityTracker {
         this.setWeeklyReport();
         this.initSoundManager();
         this.initPauseManager();
+        this.initPomodoroManager();
         
         // Event listeners
         this.attachEventListeners();
@@ -462,12 +463,24 @@ class ActivityTracker {
                 friday: document.getElementById('friday').checked,
                 saturday: document.getElementById('saturday').checked,
                 sunday: document.getElementById('sunday').checked
-            }
+            },
+            // Pomodoro settings
+            pomodoroEnabled: document.getElementById('pomodoroEnabled')?.checked || false,
+            pomodoroWorkDuration: parseInt(document.getElementById('pomodoroWorkDuration')?.value) || 25,
+            pomodoroBreakDuration: parseInt(document.getElementById('pomodoroBreakDuration')?.value) || 5,
+            pomodoroAutoLog: document.getElementById('pomodoroAutoLog')?.checked !== false,
+            pomodoroLongBreak: document.getElementById('pomodoroLongBreak')?.checked || false
         };
 
         localStorage.setItem('activitySettings', JSON.stringify(this.settings));
         this.applyTheme();
         this.startNotificationTimer();
+        
+        // Update Pomodoro manager if it exists
+        if (this.pomodoroManager) {
+            this.pomodoroManager.loadSettings();
+        }
+        
         showNotification('Settings saved successfully!', 'success');
     }
 
@@ -638,10 +651,10 @@ class ActivityTracker {
 
         try {
             const options = {
-                body: 'This is a test notification. If you can see this, notifications are working correctly!',
+                body: 'This is a test notification. Try entering an activity in the text field below!',
                 icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23667eea"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
                 tag: 'test-notification',
-                requireInteraction: false,
+                requireInteraction: true,
                 actions: [
                     { action: 'reply', type: 'text', title: 'Log Activity', placeholder: 'e.g. coding' }
                 ]
@@ -773,7 +786,7 @@ class ActivityTracker {
             }
         }
         
-        info.push(`Web Audio API: ${this.audioContext ? 'Available' : 'Not Available'}`);
+        info.push(`Audio Support: ${this.soundManager && this.soundManager.audioContext ? 'Yes' : 'No'}`);
         info.push(`Sound Muted: ${this.settings.muteNotificationSound ? 'Yes' : 'No'}`);
         info.push(`Sound Type: ${this.settings.notificationSoundType}`);
         info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
@@ -950,6 +963,18 @@ class ActivityTracker {
         const timestamp = document.getElementById('timestamp');
         if (timestamp) {
             timestamp.value = getCurrentTimeForInput();
+        }
+    }
+
+    /**
+     * Initialize Pomodoro Manager
+     */
+    initPomodoroManager() {
+        if (typeof PomodoroManager !== 'undefined') {
+            this.pomodoroManager = new PomodoroManager(this);
+            console.log('🍅 Pomodoro Manager initialized');
+        } else {
+            console.warn('PomodoroManager class not found');
         }
     }
 

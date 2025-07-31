@@ -52,46 +52,57 @@
         <!-- Reports Section -->
         <div id="reports" class="section">
             <h2>Activity Reports</h2>
-            
-            <div class="report-navigation">
-                <button class="btn btn-secondary" onclick="previousWeek()">← Previous Week</button>
-                <div class="week-display" id="weekDisplay">Week of ...</div>
-                <button class="btn btn-secondary" onclick="nextWeek()">Next Week →</button>
-            </div>
 
-            <div class="report-filters">
-                <div class="form-group">
-                    <label for="reportStartDate">Start Date</label>
-                    <input type="date" id="reportStartDate">
+            <!-- Report Generation -->
+            <div class="reports-grid">
+                <div class="reports-section">
+                    <h3>Date Range</h3>
+                    <p class="settings-description">Select the time period for your report</p>
+                    <div class="form-group">
+                        <label for="reportStartDate" title="Choose the start date for your report">Start Date</label>
+                        <input type="date" id="reportStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="reportEndDate" title="Choose the end date for your report">End Date</label>
+                        <input type="date" id="reportEndDate">
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-primary" onclick="generateReport()" title="Generate report for the selected date range">Generate Report</button>
+                        <button class="btn btn-secondary" onclick="setWeeklyReport()" title="Set date range to current week">This Week</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="reportEndDate">End Date</label>
-                    <input type="date" id="reportEndDate">
-                </div>
-                <div class="form-group form-group-buttons">
-                    <button class="btn btn-primary" onclick="generateReport()">Generate Report</button>
-                    <button class="btn btn-secondary" onclick="setWeeklyReport()">This Week</button>
-                </div>
-            </div>
 
-            <div class="download-section">
-                <h3>Download Report</h3>
-                <p>Select a template and download the current report.</p>
-                <div style="margin-top: 15px;">
-                    <div class="form-group" style="display: inline-block; width: 250px; margin-right: 15px;">
-                        <label for="reportTemplate">Report Template</label>
+                <div class="reports-section">
+                    <h3>Template & Download</h3>
+                    <p class="settings-description">Choose format and download your report</p>
+                    <div class="form-group">
+                        <label for="reportTemplate" title="Select the format for your report">Report Template</label>
                         <select id="reportTemplate" onchange="tracker.previewReport()"></select>
                     </div>
-                    <button class="btn btn-success" onclick="downloadReport()">Download Report</button>
+                    <div class="download-actions">
+                        <button class="btn btn-success" onclick="downloadReport()" title="Download the generated report">Download Report</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Week Navigation -->
+            <div class="report-navigation-section">
+                <div class="report-navigation">
+                    <button class="btn btn-secondary" onclick="previousWeek()">← Previous Week</button>
+                    <div class="week-display" id="weekDisplay">Week of ...</div>
+                    <button class="btn btn-secondary" onclick="nextWeek()">Next Week →</button>
                 </div>
             </div>
 
             <div id="reportPreviewContainer" class="report-preview-container">
                 <div class="report-preview-header">
                     <h3>Report Preview</h3>
-                    <div class="preview-format-tabs">
-                        <button class="preview-tab active" id="reportPreviewTabRendered" onclick="switchReportPreviewTab('rendered')">Rendered</button>
-                        <button class="preview-tab" id="reportPreviewTabSource" onclick="switchReportPreviewTab('source')">Source</button>
+                    <div class="preview-controls">
+                        <div class="preview-format-tabs">
+                            <button class="preview-tab active" id="reportPreviewTabRendered" onclick="switchReportPreviewTab('rendered')" title="View the formatted report output">Rendered</button>
+                            <button class="preview-tab" id="reportPreviewTabSource" onclick="switchReportPreviewTab('source')" title="View the raw source code of the report">Source</button>
+                        </div>
+                        <button class="btn-copy-report" id="copyReportBtn" onclick="copyReportToClipboard()" title="Copy report content to clipboard" style="display: none;">Copy Report</button>
                     </div>
                 </div>
                 <div id="reportPreview" class="report-preview-content">
@@ -121,11 +132,11 @@
             </div>
 
             <!-- Main Settings Grid -->
-            <div class="settings-grid">
+            <div class="settings-grid settings-grid-two-col">
                 <div class="settings-section">
                     <h3>Notification Settings</h3>
                     <div class="form-group">
-                        <label for="notificationInterval">Reminder Interval</label>
+                        <label for="notificationInterval" title="How often you'll receive activity reminder notifications">Reminder Interval</label>
                         <select id="notificationInterval">
                             <option value="1">1 minute</option>
                             <option value="2">2 minutes</option>
@@ -135,89 +146,164 @@
                             <option value="60" selected>1 hour</option>
                             <option value="90">1.5 hours</option>
                             <option value="120">2 hours</option>
+                            <option value="180">3 hours</option>
+                            <option value="240">4 hours</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="pauseDuration">Auto-resume alerts after</label>
+                        <label for="pauseDuration" title="How long alerts remain paused before automatically resuming">Auto-resume alerts after</label>
                         <select id="pauseDuration">
+                            <option value="1">1 minute</option>
+                            <option value="2">2 minutes</option>
+                            <option value="5">5 minutes</option>
                             <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
                             <option value="60">1 hour</option>
+                            <option value="90">1.5 hours</option>
+                            <option value="120">2 hours</option>
+                            <option value="180">3 hours</option>
                             <option value="240">4 hours</option>
+                            <option value="480">8 hours</option>
                             <option value="1440">24 hours</option>
                             <option value="-1">Never</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="notificationSoundType">Notification Sound</label>
-                        <select id="notificationSoundType">
+                        <label for="notificationSoundType" title="Choose the sound that plays with notifications">Notification Sound</label>
+                        <select id="notificationSoundType" onchange="previewNotificationSound()">
+                            <option value="bubble">Bubble Pop</option>
                             <option value="classic">Classic Bloop</option>
-                            <option value="gentle">Gentle Chime</option>
-                            <option value="urgent">Urgent Ping</option>
-                            <option value="digital">Digital Beep</option>
-                            <option value="nature">Nature Drop</option>
-                            <option value="mechanical">Mechanical Click</option>
-                            <option value="spacey">Spacey Wobble</option>
                             <option value="corporate">Corporate Ding</option>
+                            <option value="cosmic">Cosmic Blip</option>
+                            <option value="digital">Digital Beep</option>
+                            <option value="ethereal">Ethereal Hum</option>
+                            <option value="failsafe">Failsafe</option>
+                            <option value="forest">Forest Chirp</option>
+                            <option value="gentle">Gentle Chime</option>
+                            <option value="glass">Glass Tap</option>
+                            <option value="mechanical">Mechanical Click</option>
+                            <option value="metal">Metal Ting</option>
+                            <option value="nature">Nature Drop</option>
+                            <option value="ocean">Ocean Wave</option>
+                            <option value="piano">Piano Note</option>
+                            <option value="retro">Retro Arcade</option>
+                            <option value="spacey">Spacey Wobble</option>
+                            <option value="bell">Temple Bell</option>
+                            <option value="whistle">Train Whistle</option>
+                            <option value="urgent">Urgent Ping</option>
+                            <option value="wood">Wood Block</option>
                         </select>
                     </div>
                     <div class="settings-toggles">
                         <div class="checkbox-group">
                             <input type="checkbox" id="muteNotificationSound">
-                            <label for="muteNotificationSound">Mute notification sound</label>
+                            <label for="muteNotificationSound" title="Disable notification sounds while keeping visual notifications">Mute notification sound</label>
                         </div>
                         <div class="checkbox-group">
                             <input type="checkbox" id="darkMode">
-                            <label for="darkMode">Enable dark mode</label>
+                            <label for="darkMode" title="Switch between light and dark color themes">Enable dark mode</label>
                         </div>
                     </div>
                 </div>
 
                 <div class="settings-section">
-                    <h3>Working Hours</h3>
-                    <p class="settings-description">Set your active working hours for notifications</p>
-                    <div class="time-inputs">
-                        <div class="form-group">
-                            <label for="startTime">Start Time</label>
-                            <input type="time" id="startTime" value="08:00">
+                    <h3>Working Schedule</h3>
+                    <p class="settings-description">Set your active working hours and days for notifications</p>
+                    
+                    <div class="schedule-section">
+                        <h4>Working Hours</h4>
+                        <div class="time-inputs">
+                            <div class="form-group">
+                                <label for="startTime" title="When your work day starts">Start Time</label>
+                                <input type="time" id="startTime" value="08:00">
+                            </div>
+                            <div class="form-group">
+                                <label for="endTime" title="When your work day ends">End Time</label>
+                                <input type="time" id="endTime" value="18:00">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="endTime">End Time</label>
-                            <input type="time" id="endTime" value="18:00">
+                    </div>
+
+                    <div class="schedule-section">
+                        <h4>Working Days</h4>
+                        <div class="working-days-grid">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="monday" checked>
+                                <label for="monday">Monday</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="tuesday" checked>
+                                <label for="tuesday">Tuesday</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="wednesday" checked>
+                                <label for="wednesday">Wednesday</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="thursday" checked>
+                                <label for="thursday">Thursday</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="friday" checked>
+                                <label for="friday">Friday</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="saturday">
+                                <label for="saturday">Saturday</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="sunday">
+                                <label for="sunday">Sunday</label>
+                            </div>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="settings-section">
-                    <h3>Working Days</h3>
-                    <p class="settings-description">Choose which days to receive notifications</p>
-                    <div class="working-days-grid">
+            <!-- Pomodoro Mode Section -->
+            <div class="pomodoro-section">
+                <div class="settings-card">
+                    <h3>Pomodoro Mode</h3>
+                    <p class="card-description">Structured work/break intervals with automatic notifications</p>
+                    <div class="pomodoro-settings">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="monday" checked>
-                            <label for="monday">Monday</label>
+                            <input type="checkbox" id="pomodoroEnabled">
+                            <label for="pomodoroEnabled" title="Enable Pomodoro timing mode with work and break alerts">Enable Pomodoro Mode</label>
                         </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="tuesday" checked>
-                            <label for="tuesday">Tuesday</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="wednesday" checked>
-                            <label for="wednesday">Wednesday</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="thursday" checked>
-                            <label for="thursday">Thursday</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="friday" checked>
-                            <label for="friday">Friday</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="saturday">
-                            <label for="saturday">Saturday</label>
-                        </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="sunday">
-                            <label for="sunday">Sunday</label>
+                        
+                        <div class="pomodoro-config" id="pomodoroConfig" style="display: none;">
+                            <div class="pomodoro-timers">
+                                <div class="form-group">
+                                    <label for="pomodoroWorkDuration" title="Length of work periods in minutes">Work Duration (minutes)</label>
+                                    <select id="pomodoroWorkDuration">
+                                        <option value="15">15 minutes</option>
+                                        <option value="20">20 minutes</option>
+                                        <option value="25" selected>25 minutes</option>
+                                        <option value="30">30 minutes</option>
+                                        <option value="45">45 minutes</option>
+                                        <option value="60">60 minutes</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pomodoroBreakDuration" title="Length of break periods in minutes">Break Duration (minutes)</label>
+                                    <select id="pomodoroBreakDuration">
+                                        <option value="3">3 minutes</option>
+                                        <option value="5" selected>5 minutes</option>
+                                        <option value="10">10 minutes</option>
+                                        <option value="15">15 minutes</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="pomodoro-options">
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="pomodoroAutoLog" checked>
+                                    <label for="pomodoroAutoLog" title="Automatically create activity log entries for work/break periods">Auto-log activities</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="pomodoroLongBreak">
+                                    <label for="pomodoroLongBreak" title="Take a longer break every 4 cycles">Long break every 4 cycles</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -230,8 +316,9 @@
                         <h3>Report Templates</h3>
                         <p class="card-description">Manage templates for report generation</p>
                         <div class="card-actions">
-                            <button class="btn btn-primary" onclick="openTemplateManager()">Manage Templates</button>
-                            <button class="btn btn-secondary" onclick="resetReportTemplates()">Reset to Default</button>
+                            <button class="btn btn-primary" onclick="openTemplateManager()" title="Open the template editor to create and modify report templates">Manage Templates</button>
+                            <button class="btn btn-secondary" onclick="resetReportTemplates()" title="Restore all templates to their original default versions">Reset to Default</button>
+                            <button class="btn btn-info" onclick="showTemplateGuide()" title="View help documentation for template syntax and available data">Template Guide</button>
                         </div>
                     </div>
 
@@ -377,6 +464,67 @@
             <div class="template-manager-footer">
                 <button class="btn btn-primary" onclick="saveAllTemplates()">Save All Changes</button>
                 <button class="btn btn-secondary" onclick="closeTemplateManager()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template Guide Modal -->
+    <div id="templateGuideModal" class="modal">
+        <div class="modal-content template-guide-content">
+            <div class="modal-header">
+                <h3>Template Guide</h3>
+                <button class="btn-close" onclick="closeTemplateGuide()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4>Template Syntax</h4>
+                <p>Templates use a simple variable substitution syntax with double curly braces:</p>
+                <ul>
+                    <li><code>{{variable}}</code> - Simple variable substitution</li>
+                    <li><code>{{#each array}}</code> ... <code>{{/each}}</code> - Loop through arrays</li>
+                    <li><code>{{#if condition}}</code> ... <code>{{/if}}</code> - Conditional content</li>
+                </ul>
+
+                <h4>Available Data</h4>
+                <p>The following data is available in your templates:</p>
+                <ul>
+                    <li><code>{{reportTitle}}</code> - The report title</li>
+                    <li><code>{{startDate}}</code> - Report start date (formatted)</li>
+                    <li><code>{{endDate}}</code> - Report end date (formatted)</li>
+                    <li><code>{{totalEntries}}</code> - Total number of activity entries</li>
+                    <li><code>{{entries}}</code> - Array of all activity entries</li>
+                </ul>
+
+                <h4>Entry Properties</h4>
+                <p>Each entry in the <code>{{#each entries}}</code> loop has:</p>
+                <ul>
+                    <li><code>{{activity}}</code> - The activity name</li>
+                    <li><code>{{description}}</code> - Activity description</li>
+                    <li><code>{{timestamp}}</code> - When the activity was logged</li>
+                    <li><code>{{formattedTime}}</code> - Nicely formatted time (e.g., "2:30 PM")</li>
+                    <li><code>{{formattedDate}}</code> - Nicely formatted date (e.g., "Jan 15, 2025")</li>
+                </ul>
+
+                <h4>Example Template</h4>
+                <pre><code># {{reportTitle}}
+From {{startDate}} to {{endDate}}
+
+Total activities: {{totalEntries}}
+
+{{#each entries}}
+## {{formattedTime}} - {{activity}}
+{{#if description}}
+*{{description}}*
+{{/if}}
+
+{{/each}}</code></pre>
+
+                <h4>Tips</h4>
+                <ul>
+                    <li>Use HTML templates for rich formatting with CSS styles</li>
+                    <li>Use Markdown templates for simple, readable formatting</li>
+                    <li>CSV templates are great for data analysis in spreadsheets</li>
+                    <li>Test your templates with the preview feature</li>
+                </ul>
             </div>
         </div>
     </div>

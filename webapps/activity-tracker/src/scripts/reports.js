@@ -136,8 +136,11 @@ Object.assign(ActivityTracker.prototype, {
         const previewEl = document.getElementById('reportPreview');
         if (!previewEl) return;
 
+        const copyBtn = document.getElementById('copyReportBtn');
+        
         if (!this.currentReportData || this.currentReportEntries.length === 0) {
             previewEl.innerHTML = 'No data for the selected period. Generate a report first.';
+            if (copyBtn) copyBtn.style.display = 'none';
             return;
         }
 
@@ -147,6 +150,7 @@ Object.assign(ActivityTracker.prototype, {
 
         if (!template) {
             previewEl.textContent = 'Error: Selected report template not found.';
+            if (copyBtn) copyBtn.style.display = 'none';
             return;
         }
 
@@ -173,8 +177,11 @@ Object.assign(ActivityTracker.prototype, {
                 // Show source view
                 previewEl.innerHTML = `<pre>${this.templatingEngine.escapeHtml(renderedContent)}</pre>`;
             }
+            // Show copy button when there's content
+            if (copyBtn) copyBtn.style.display = 'inline-block';
         } catch (error) {
             previewEl.textContent = 'Error generating preview: ' + error.message;
+            if (copyBtn) copyBtn.style.display = 'none';
         }
     },
 

@@ -6,7 +6,8 @@
 const CACHE_NAME = 'activity-tracker-v1';
 const urlsToCache = [
     './',
-    './index.html'
+    './index.html',
+    './activity_tracker.html'
 ];
 
 /**
@@ -19,7 +20,24 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('📦 Opened cache');
-                return cache.addAll(urlsToCache);
+                // Try to cache files individually with error handling
+                return Promise.allSettled(
+                    urlsToCache.map(url => {
+                        return cache.add(url).catch(error => {
+                            console.warn(`⚠️ Failed to cache ${url}:`, error.message);
+                            // Don't let individual cache failures break the whole install
+                            return null;
+                        });
+                    })
+                ).then(results => {
+                    const successful = results.filter(result => result.status === 'fulfilled').length;
+                    const failed = results.filter(result => result.status === 'rejected').length;
+                    console.log(`📦 Cache results: ${successful} successful, ${failed} failed`);
+                });
+            })
+            .catch(error => {
+                console.error('❌ Cache installation failed:', error);
+                // Continue with SW installation even if caching fails
             })
     );
     
@@ -54,13 +72,35 @@ self.addEventListener('activate', (event) => {
  * Fetch event handler for offline functionality
  */
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Return cached version or fetch from network
-                return response || fetch(event.request);
-            })
-    );
+    // Only handle http/https requests, skip file:// protocol
+    if (event.request.url.startsWith('http')) {
+        event.respondWith(
+            caches.match(event.request)
+                .then((response) => {
+                    // Return cached version or fetch from network
+                    if (response) {
+                        return response;
+                    }
+                    
+                    return fetch(event.request).catch(error => {
+                        console.warn('⚠️ Fetch failed for:', event.request.url, error.message);
+                        // Return a basic offline response for navigation requests
+                        if (event.request.mode === 'navigate') {
+                            return new Response('App offline', { 
+                                status: 200, 
+                                statusText: 'OK',
+                                headers: { 'Content-Type': 'text/html' }
+                            });
+                        }
+                        throw error;
+                    });
+                })
+                .catch(error => {
+                    console.warn('⚠️ Cache match failed for:', event.request.url, error.message);
+                    return fetch(event.request);
+                })
+        );
+    }
 });
 
 /**
@@ -78,7 +118,9 @@ self.addEventListener('notificationclick', (event) => {
             clients.matchAll({ type: 'window' }).then((clientList) => {
                 // If app is already open, focus it
                 for (const client of clientList) {
-                    if (client.url.includes('activity-tracker') || client.url.includes('index.html')) {
+                    if (client.url.includes('activity-tracker') || 
+                        client.url.includes('index.html') || 
+                        client.url.includes('activity_tracker.html')) {
                         client.focus();
                         client.postMessage({ type: 'navigate-to-tracker' });
                         return;
@@ -87,7 +129,7 @@ self.addEventListener('notificationclick', (event) => {
                 
                 // If app is not open, open it
                 if (clients.openWindow) {
-                    return clients.openWindow('./index.html#tracker');
+                    return clients.openWindow(getAppUrl() + '#tracker');
                 }
             })
         );
@@ -123,7 +165,9 @@ self.addEventListener('notificationactionclick', (event) => {
                     
                     // Send to existing clients
                     for (const client of clientList) {
-                        if (client.url.includes('activity-tracker') || client.url.includes('index.html')) {
+                        if (client.url.includes('activity-tracker') || 
+                            client.url.includes('index.html') || 
+                            client.url.includes('activity_tracker.html')) {
                             client.postMessage({ 
                                 type: 'add-entry', 
                                 entry: entry 
@@ -134,7 +178,7 @@ self.addEventListener('notificationactionclick', (event) => {
                     
                     // If no existing client, store in indexedDB or localStorage via a new window
                     if (!messageSent) {
-                        return clients.openWindow('./index.html').then((client) => {
+                        return clients.openWindow(getAppUrl()).then((client) => {
                             // Wait a bit for the page to load, then send the message
                             setTimeout(() => {
                                 client.postMessage({ 
@@ -257,9 +301,29 @@ function broadcastMessage(message) {
 function isAppOpen() {
     return clients.matchAll({ type: 'window' }).then((clientList) => {
         return clientList.some((client) => 
-            client.url.includes('activity-tracker') || client.url.includes('index.html')
+            client.url.includes('activity-tracker') || 
+            client.url.includes('index.html') ||
+            client.url.includes('activity_tracker.html')
         );
     });
+}
+
+/**
+ * Utility function to determine the correct app URL based on current context
+ * @returns {string} The appropriate app URL
+ */
+function getAppUrl() {
+    // Try to determine the correct filename based on the service worker location
+    const swUrl = self.location.href;
+    const basePath = swUrl.substring(0, swUrl.lastIndexOf('/') + 1);
+    
+    // Check if we're in a subdirectory or root deployment
+    if (swUrl.includes('/activity-tracker/') || swUrl.includes('/dist/')) {
+        return './index.html';
+    } else {
+        // Likely deployed at root level, use activity_tracker.html
+        return './activity_tracker.html';
+    }
 }
 
 console.log('🔧 Service Worker loaded');
