@@ -8,8 +8,7 @@
     "build:dev": "node build.js --no-minify --verbose", 
     "build:prod": "node build.js",
     "postbuild": "./postbuild.sh",
-    "dev:unminified": "node build.js --no-minify && npm run serve",
-    "dev": "node build.js && npm run serve",
+    "dev": "node build.js --no-minify --verbose && npm run serve",
     "serve": "python3 -m http.server 8000 --directory dist || python -m http.server 8000 --directory dist || npx serve dist -p 8000",
     "clean": "rm -rf dist && mkdir -p dist"
   },

@@ -117,6 +117,8 @@ class ActivityTrackerBuilder {
             'sounds.js',
             'pauseManager.js',
             'markdownRenderer.js',
+            'templating.js',
+            'report-templates.js',
             'ActivityTracker.js', 
             'reports.js', 
             'main.js'
@@ -144,6 +146,8 @@ class ActivityTrackerBuilder {
             'sounds.js',
             'pauseManager.js',
             'markdownRenderer.js',
+            'templating.js',
+            'report-templates.js',
             'ActivityTracker.js', 
             'reports.js', 
             'main.js'
@@ -163,7 +167,8 @@ class ActivityTrackerBuilder {
         try {
             const result = await minifyJS(combinedJS, {
                 compress: {
-                    drop_console: ['log'], // Remove console.log but keep console.error/warn
+                    // Only drop console logs if minification is fully enabled
+                    drop_console: this.minify ? ['log'] : false,
                     drop_debugger: true,
                     passes: 2
                 },
@@ -174,7 +179,7 @@ class ActivityTrackerBuilder {
                         'previousWeek', 'nextWeek', 'downloadReport', 'saveSettings',
                         'enableNotifications', 'testNotification', 'testNotificationSound',
                         'refreshNotificationStatus', 'clearAllData', 'closeEditModal',
-                        'togglePause', 'showReportFormat'
+                        'togglePause', 'saveReportTemplates', 'resetReportTemplates'
                     ]
                 },
                 format: {

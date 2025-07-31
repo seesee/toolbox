@@ -108,15 +108,6 @@ function downloadReport() {
 }
 
 /**
- * Show report format (HTML or Markdown)
- */
-function showReportFormat(format) {
-    if (tracker) {
-        tracker.showReportFormat(format);
-    }
-}
-
-/**
  * Save settings
  */
 function saveSettings() {
@@ -185,6 +176,24 @@ function closeEditModal() {
 function togglePause() {
     if (tracker) {
         tracker.togglePause();
+    }
+}
+
+/**
+ * Saves the customized report templates from the settings page.
+ */
+function saveReportTemplates() {
+    if (tracker) {
+        tracker.saveReportTemplates();
+    }
+}
+
+/**
+ * Resets report templates to their default values.
+ */
+function resetReportTemplates() {
+    if (tracker) {
+        tracker.resetReportTemplates();
     }
 }
 

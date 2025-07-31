@@ -487,6 +487,37 @@ body {
     border-bottom-color: #667eea;
 }
 
+.report-preview-container {
+    margin-top: 20px;
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.report-preview-content {
+    margin-top: 10px;
+    background: white;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+    max-height: 500px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+.dark-mode .report-preview-container {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+.dark-mode .report-preview-content {
+    background: #1a202c;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
 /* Ensure transitions work smoothly for pause button */
 .nav-btn {
     transition: all 0.3s ease, background 1s ease-out;
@@ -633,4 +664,31 @@ body.dark-mode {
     color: #667eea;
     border-bottom-color: #667eea;
 }
+
+#report-templates-editor .template-group {
+    margin-bottom: 15px;
+}
+
+#report-templates-editor label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+#report-templates-editor textarea {
+    width: 100%;
+    min-height: 150px;
+    font-family: monospace;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #e2e8f0;
+}
+
+.dark-mode #report-templates-editor textarea {
+    background: #1a202c;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
 

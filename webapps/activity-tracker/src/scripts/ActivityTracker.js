@@ -57,12 +57,14 @@ class ActivityTracker {
     init() {
         this.loadSettings();
         this.initMarkdownRenderer();
+        this.initReportTemplates();
+        this.loadReportTemplatesIntoEditor();
         this.displayEntries();
         this.updateNotificationStatus();
         this.updateDebugInfo();
         this.updatePauseButtonState();
         this.startNotificationTimer();
-        this.setDefaultReportDates();
+        this.setWeeklyReport();
         this.initSoundManager();
         this.initPauseManager();
         
@@ -76,6 +78,81 @@ class ActivityTracker {
         // Check for local file protocol
         if (window.location.protocol === 'file:') {
             console.warn('Running from local file - notifications may have limitations');
+        }
+    }
+
+    /**
+     * Get current report templates, from localStorage or defaults.
+     */
+    getReportTemplates() {
+        const storedTemplates = localStorage.getItem('reportTemplates');
+        if (storedTemplates) {
+            try {
+                return JSON.parse(storedTemplates);
+            } catch (e) {
+                console.error("Error parsing custom report templates from localStorage", e);
+                // Fallback to default if parsing fails
+                return window.ReportTemplates || {};
+            }
+        }
+        return window.ReportTemplates || {};
+    }
+
+    /**
+     * Load the report templates into the editor in the settings page.
+     */
+    loadReportTemplatesIntoEditor() {
+        const editorContainer = document.getElementById('report-templates-editor');
+        if (!editorContainer) return;
+
+        const templates = this.getReportTemplates();
+        editorContainer.innerHTML = Object.keys(templates).map(key => `
+            <div class="template-group">
+                <label for="template-${key}">${templates[key].name}</label>
+                <textarea id="template-${key}" data-key="${key}">${escapeHtml(templates[key].template)}</textarea>
+            </div>
+        `).join('');
+    }
+
+    /**
+     * Save the report templates from the editor to localStorage.
+     */
+    saveReportTemplates() {
+        const editorContainer = document.getElementById('report-templates-editor');
+        if (!editorContainer) return;
+
+        const customTemplates = this.getReportTemplates();
+        const textareas = editorContainer.querySelectorAll('textarea');
+
+        textareas.forEach(textarea => {
+            const key = textarea.dataset.key;
+            if (customTemplates[key]) {
+                customTemplates[key].template = textarea.value;
+            }
+        });
+
+        localStorage.setItem('reportTemplates', JSON.stringify(customTemplates));
+        showNotification('Report templates saved successfully!', 'success');
+        
+        // Refresh report section to reflect changes
+        this.initReportTemplates();
+        if (this.currentReportData) {
+            this.previewReport();
+        }
+    }
+
+    /**
+     * Reset report templates to their default values.
+     */
+    resetReportTemplates() {
+        if (confirm('Are you sure you want to reset all report templates to their default values?')) {
+            localStorage.removeItem('reportTemplates');
+            this.loadReportTemplatesIntoEditor();
+            this.initReportTemplates();
+            if (this.currentReportData) {
+                this.previewReport();
+            }
+            showNotification('Report templates have been reset to default.', 'success');
         }
     }
 
@@ -691,15 +768,8 @@ class ActivityTracker {
             this.entries = [];
             this.currentReportEntries = [];
             this.displayEntries();
-            document.getElementById('reportResults').innerHTML = '';
+            document.getElementById('reportPreview').innerHTML = '';
             showNotification('All data cleared successfully!', 'success');
         }
-    }
-
-    /**
-     * Set default report dates (current week)
-     */
-    setDefaultReportDates() {
-        this.setWeeklyReport();
     }
 }
