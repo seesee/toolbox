@@ -20,6 +20,9 @@ class ActivityTrackerBuilder {
         await fs.ensureDir(this.distDir);
         
         try {
+            // Get version for this build first
+            const version = this.getVersion();
+            
             // Read HTML template
             const htmlTemplate = await fs.readFile(
                 path.join(this.srcDir, 'index.html'), 
@@ -30,7 +33,7 @@ class ActivityTrackerBuilder {
             const css = this.minify ? await this.readAndMinifyCSS() : await this.readCSS();
             
             // Read and combine JavaScript
-            const js = this.minify ? await this.readAndMinifyJavaScript() : await this.readJavaScript();
+            const js = this.minify ? await this.readAndMinifyJavaScript(version) : await this.readJavaScript(version);
             
             if (this.verbose) {
                 console.log(`📊 CSS size: ${Math.round(css.length / 1024)}KB`);
@@ -42,7 +45,7 @@ class ActivityTrackerBuilder {
             let html = htmlTemplate
                 .replace('{{CSS}}', css)
                 .replace('{{JAVASCRIPT}}', js)
-                .replace('{{VERSION}}', this.getVersion());
+                .replace('{{VERSION}}', version);
             
             // Minify HTML if requested
             if (this.minify) {
@@ -108,7 +111,7 @@ class ActivityTrackerBuilder {
         return result.styles;
     }
     
-    async readJavaScript() {
+    async readJavaScript(version) {
         const scriptsDir = path.join(this.srcDir, 'scripts');
         
         // Read files in specific order
@@ -124,7 +127,7 @@ class ActivityTrackerBuilder {
             'main.js'
         ];
         
-        let combinedJS = '';
+        let combinedJS = `// Application version\nconst APP_VERSION = '${version}';\n\n`;
         
         for (const file of files) {
             const filePath = path.join(scriptsDir, file);
@@ -137,7 +140,7 @@ class ActivityTrackerBuilder {
         return combinedJS;
     }
     
-    async readAndMinifyJavaScript() {
+    async readAndMinifyJavaScript(version) {
         const scriptsDir = path.join(this.srcDir, 'scripts');
         
         // Read files in specific order
@@ -153,7 +156,7 @@ class ActivityTrackerBuilder {
             'main.js'
         ];
         
-        let combinedJS = '';
+        let combinedJS = `const APP_VERSION = '${version}';\n`;
         
         for (const file of files) {
             const filePath = path.join(scriptsDir, file);
@@ -223,9 +226,50 @@ class ActivityTrackerBuilder {
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, '0');
         const day = String(now.getDate()).padStart(2, '0');
-        const build = Math.floor(Date.now() / 1000) % 100000; // Last 5 digits of timestamp
+        const dateKey = `${year}.${month}.${day}`;
         
-        return `V${year}.${month}.${day}.${build}`;
+        // Load version history from file
+        const versionFile = path.join(__dirname, '.version-history.json');
+        let versionHistory = {};
+        
+        try {
+            if (fs.existsSync(versionFile)) {
+                versionHistory = JSON.parse(fs.readFileSync(versionFile, 'utf8'));
+            }
+        } catch (error) {
+            console.warn('Could not read version history, starting fresh');
+            versionHistory = {};
+        }
+        
+        // Get current build number for today, or start at 1
+        const currentBuild = (versionHistory[dateKey] || 0) + 1;
+        const buildNumber = String(currentBuild).padStart(2, '0');
+        
+        // Update version history
+        versionHistory[dateKey] = currentBuild;
+        
+        // Clean up old entries (keep last 30 days)
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        Object.keys(versionHistory).forEach(key => {
+            const [y, m, d] = key.split('.').map(Number);
+            const entryDate = new Date(y, m - 1, d);
+            if (entryDate < thirtyDaysAgo) {
+                delete versionHistory[key];
+            }
+        });
+        
+        // Save updated version history
+        try {
+            fs.writeFileSync(versionFile, JSON.stringify(versionHistory, null, 2));
+        } catch (error) {
+            console.warn('Could not save version history:', error.message);
+        }
+        
+        const version = `${year}.${month}.${day}.${buildNumber}`;
+        console.log(`📋 Version: ${version} (build ${currentBuild} for ${dateKey})`);
+        
+        return version;
     }
 }
 

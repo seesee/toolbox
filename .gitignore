@@ -7,6 +7,7 @@ __pycache__/
 package-lock.json
 CLAUDE.md
 .tiles_history
+.version-history.json
 
 node_modules/
 

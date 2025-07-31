@@ -215,7 +215,12 @@ class ActivityTracker {
         settingsInputs.forEach(inputId => {
             const element = document.getElementById(inputId);
             if (element) {
-                const eventType = element.type === 'checkbox' ? 'change' : 'input';
+                let eventType;
+                if (element.type === 'checkbox' || element.tagName.toLowerCase() === 'select') {
+                    eventType = 'change';
+                } else {
+                    eventType = 'input';
+                }
                 element.addEventListener(eventType, () => {
                     this.autoSaveSettings();
                 });
@@ -251,6 +256,9 @@ class ActivityTracker {
         if (this.settings.notificationsEnabled) {
             this.startNotificationTimer();
         }
+
+        // Update about section to reflect changes
+        this.updateDebugInfo();
 
         // Show brief confirmation
         showNotification('Settings saved automatically', 'success', 1500);
@@ -663,11 +671,15 @@ class ActivityTracker {
     }
 
     /**
-     * Update debug information display
+     * Update about information display
      */
     updateDebugInfo() {
         const debugEl = document.getElementById('debugText');
         const info = [];
+        
+        // Application version
+        info.push(`Version: ${typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'Unknown'}`);
+        info.push('');
         
         info.push(`Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
         info.push(`Protocol: ${window.location.protocol}`);
