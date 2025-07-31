@@ -109,18 +109,23 @@
                 <span id="statusText">Checking notification status...</span>
             </div>
 
+            <!-- Notification Control Buttons -->
+            <div class="settings-buttons-section">
+                <div class="notification-buttons">
+                    <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
+                    <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
+                    <button class="btn btn-secondary" onclick="refreshNotificationStatus()">Refresh Status</button>
+                    <button class="btn btn-secondary" onclick="testNotificationSound()">Test Sound</button>
+                    <button class="btn btn-secondary" onclick="runServiceWorkerTest()">Test Service Worker</button>
+                </div>
+            </div>
+
+            <!-- Main Settings Grid -->
             <div class="settings-grid">
                 <div class="settings-section">
                     <h3>Notification Settings</h3>
-                    <div class="notification-buttons">
-                        <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
-                        <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
-                        <button class="btn btn-secondary" onclick="refreshNotificationStatus()">Refresh Status</button>
-                        <button class="btn btn-secondary" onclick="testNotificationSound()">Test Sound</button>
-                        <button class="btn btn-secondary" onclick="runServiceWorkerTest()">Test Service Worker</button>
-                    </div>
                     <div class="form-group">
-                        <label for="notificationInterval">Reminder Interval (minutes)</label>
+                        <label for="notificationInterval">Reminder Interval</label>
                         <select id="notificationInterval">
                             <option value="1">1 minute</option>
                             <option value="2">2 minutes</option>
@@ -142,98 +147,111 @@
                             <option value="-1">Never</option>
                         </select>
                     </div>
-                <div class="form-group">
-                    <label for="notificationSoundType">Notification Sound</label>
-                    <select id="notificationSoundType">
-                        <option value="classic">Classic Bloop</option>
-                        <option value="gentle">Gentle Chime</option>
-                        <option value="urgent">Urgent Ping</option>
-                        <option value="digital">Digital Beep</option>
-                        <option value="nature">Nature Drop</option>
-                        <option value="mechanical">Mechanical Click</option>
-                        <option value="spacey">Spacey Wobble</option>
-                        <option value="corporate">Corporate Ding</option>
-                    </select>
-                </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="muteNotificationSound">
-                        <label for="muteNotificationSound">Mute notification sound</label>
+                    <div class="form-group">
+                        <label for="notificationSoundType">Notification Sound</label>
+                        <select id="notificationSoundType">
+                            <option value="classic">Classic Bloop</option>
+                            <option value="gentle">Gentle Chime</option>
+                            <option value="urgent">Urgent Ping</option>
+                            <option value="digital">Digital Beep</option>
+                            <option value="nature">Nature Drop</option>
+                            <option value="mechanical">Mechanical Click</option>
+                            <option value="spacey">Spacey Wobble</option>
+                            <option value="corporate">Corporate Ding</option>
+                        </select>
                     </div>
-                    
-                    <div class="debug-info" id="debugInfo">
-                        <strong>About:</strong><br>
-                        <span id="debugText">Loading...</span>
+                    <div class="settings-toggles">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="muteNotificationSound">
+                            <label for="muteNotificationSound">Mute notification sound</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="darkMode">
+                            <label for="darkMode">Enable dark mode</label>
+                        </div>
                     </div>
                 </div>
 
                 <div class="settings-section">
                     <h3>Working Hours</h3>
-                    <div class="form-group">
-                        <label for="startTime">Start Time</label>
-                        <input type="time" id="startTime" value="08:00">
-                    </div>
-                    <div class="form-group">
-                        <label for="endTime">End Time</label>
-                        <input type="time" id="endTime" value="18:00">
+                    <p class="settings-description">Set your active working hours for notifications</p>
+                    <div class="time-inputs">
+                        <div class="form-group">
+                            <label for="startTime">Start Time</label>
+                            <input type="time" id="startTime" value="08:00">
+                        </div>
+                        <div class="form-group">
+                            <label for="endTime">End Time</label>
+                            <input type="time" id="endTime" value="18:00">
+                        </div>
                     </div>
                 </div>
 
                 <div class="settings-section">
                     <h3>Working Days</h3>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="monday" checked>
-                        <label for="monday">Monday</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="tuesday" checked>
-                        <label for="tuesday">Tuesday</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="wednesday" checked>
-                        <label for="wednesday">Wednesday</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="thursday" checked>
-                        <label for="thursday">Thursday</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="friday" checked>
-                        <label for="friday">Friday</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="saturday">
-                        <label for="saturday">Saturday</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="sunday">
-                        <label for="sunday">Sunday</label>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h3>Appearance</h3>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="darkMode">
-                        <label for="darkMode">Enable Dark Mode</label>
+                    <p class="settings-description">Choose which days to receive notifications</p>
+                    <div class="working-days-grid">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="monday" checked>
+                            <label for="monday">Monday</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="tuesday" checked>
+                            <label for="tuesday">Tuesday</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="wednesday" checked>
+                            <label for="wednesday">Wednesday</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="thursday" checked>
+                            <label for="thursday">Thursday</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="friday" checked>
+                            <label for="friday">Friday</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="saturday">
+                            <label for="saturday">Saturday</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="sunday">
+                            <label for="sunday">Sunday</label>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="settings-section">
-                    <h3>Report Templates</h3>
-                    <p>Manage templates for report generation. Create custom templates or modify existing ones.</p>
-                    <div class="template-actions">
-                        <button class="btn btn-primary" onclick="openTemplateManager()">Manage Templates</button>
-                        <button class="btn btn-secondary" onclick="resetReportTemplates()">Reset to Default</button>
+            <!-- Data Management Section -->
+            <div class="data-management-section">
+                <div class="data-management-grid">
+                    <div class="settings-card">
+                        <h3>Report Templates</h3>
+                        <p class="card-description">Manage templates for report generation</p>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" onclick="openTemplateManager()">Manage Templates</button>
+                            <button class="btn btn-secondary" onclick="resetReportTemplates()">Reset to Default</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h3>Database Backup</h3>
+                        <p class="card-description">Export or import your activity data</p>
+                        <div class="card-actions">
+                            <button class="btn btn-primary" onclick="exportDatabase()">Export Database</button>
+                            <button class="btn btn-secondary" onclick="importDatabase()">Import Database</button>
+                            <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="settings-section">
-                    <h3>Database Backup</h3>
-                    <p>Export your activity data as a backup file, or import from a previous backup.</p>
-                    <div class="backup-buttons">
-                        <button class="btn btn-primary" onclick="exportDatabase()">Export Database</button>
-                        <button class="btn btn-secondary" onclick="importDatabase()">Import Database</button>
-                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleImportFile(event)">
-                    </div>
+            <!-- About Section -->
+            <div class="about-section">
+                <div class="debug-info" id="debugInfo">
+                    <strong>About:</strong><br>
+                    <span id="debugText">Loading...</span>
                 </div>
             </div>
 
