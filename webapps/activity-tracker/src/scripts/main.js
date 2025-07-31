@@ -43,6 +43,14 @@ function showSection(sectionName, event) {
             }
         }, 100);
     }
+
+    // Auto-generate report if switching to reports tab and it's empty
+    if (sectionName === 'reports') {
+        const reportResults = document.getElementById('reportResults');
+        if (tracker && (!reportResults || !reportResults.innerHTML.trim())) {
+            tracker.setWeeklyReport(); // This will now auto-generate
+        }
+    }
 }
 
 /**

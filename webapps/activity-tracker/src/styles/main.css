@@ -518,3 +518,119 @@ body {
         min-width: 150px;
     }
 }
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    color: #e2e8f0;
+}
+
+.dark-mode .header,
+.dark-mode .section {
+    background: rgba(45, 55, 72, 0.85);
+    backdrop-filter: blur(10px);
+    color: #e2e8f0;
+}
+
+.dark-mode .form-group label {
+    color: #a0aec0;
+}
+
+.dark-mode .form-group input,
+.dark-mode .form-group select,
+.dark-mode .form-group textarea {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+.dark-mode .form-group input:focus,
+.dark-mode .form-group select:focus,
+.dark-mode .form-group textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.dark-mode .entry-item {
+    background: #2d3748;
+    border-color: #4a5568;
+}
+
+.dark-mode .entry-description {
+    color: #a0aec0;
+}
+
+.dark-mode .settings-section {
+    background: #1a202c;
+    border-color: #4a5568;
+}
+
+.dark-mode .settings-section h3 {
+    color: #e2e8f0;
+}
+
+.dark-mode .report-filters {
+    background: #2d3748;
+}
+
+.dark-mode .week-display {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+.dark-mode .report-summary {
+    background: #2c5282;
+    color: #bee3f8;
+    border-left-color: #63b3ed;
+}
+
+.dark-mode .download-section {
+    background: #2f855a;
+    color: #c6f6d5;
+    border-left-color: #68d391;
+}
+
+.dark-mode .modal-content {
+    background: #2d3748;
+}
+
+.dark-mode .debug-info {
+    background: #1a202c;
+    border-left-color: #667eea;
+}
+
+.dark-mode .markdown-preview {
+    background: #1a202c;
+    border-color: #4a5568;
+}
+
+.dark-mode .markdown-preview .md-h1,
+.dark-mode .markdown-preview .md-h2,
+.dark-mode .markdown-preview .md-h3 {
+    color: #e2e8f0;
+}
+
+.dark-mode .markdown-preview .md-blockquote {
+    color: #a0aec0;
+    background: rgba(102, 126, 234, 0.1);
+    border-left-color: #667eea;
+}
+
+.dark-mode .markdown-preview .md-code {
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+.dark-mode .format-tab {
+    color: #a0aec0;
+}
+
+.dark-mode .format-tab:hover {
+    color: #e2e8f0;
+}
+
+.dark-mode .format-tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+

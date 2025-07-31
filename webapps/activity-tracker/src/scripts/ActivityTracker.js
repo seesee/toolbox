@@ -37,6 +37,7 @@ class ActivityTracker {
             notificationsPausedUntil: null,
             muteNotificationSound: false,
             notificationSoundType: "classic",
+            darkMode: false,
             ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
         };
 
@@ -172,6 +173,7 @@ class ActivityTracker {
         if (!entry) {
             document.getElementById('activityForm').reset();
             this.setCurrentTime();
+            document.getElementById('activity').focus();
         }
         
         showNotification('Entry added successfully!', 'success');
@@ -302,6 +304,7 @@ class ActivityTracker {
             pauseDuration: parseInt(document.getElementById('pauseDuration').value),
             muteNotificationSound: document.getElementById('muteNotificationSound').checked,
             notificationSoundType: document.getElementById('notificationSoundType').value,
+            darkMode: document.getElementById('darkMode').checked,
             workingDays: {
                 monday: document.getElementById('monday').checked,
                 tuesday: document.getElementById('tuesday').checked,
@@ -314,6 +317,7 @@ class ActivityTracker {
         };
 
         localStorage.setItem('activitySettings', JSON.stringify(this.settings));
+        this.applyTheme();
         this.startNotificationTimer();
         showNotification('Settings saved successfully!', 'success');
     }
@@ -328,10 +332,24 @@ class ActivityTracker {
         document.getElementById('pauseDuration').value = this.settings.pauseDuration;
         document.getElementById('muteNotificationSound').checked = this.settings.muteNotificationSound;
         document.getElementById('notificationSoundType').value = this.settings.notificationSoundType;
+        document.getElementById('darkMode').checked = this.settings.darkMode;
         
         Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
             document.getElementById(day).checked = checked;
         });
+
+        this.applyTheme();
+    }
+
+    /**
+     * Apply the current theme (light/dark)
+     */
+    applyTheme() {
+        if (this.settings.darkMode) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
     }
 
     /**
@@ -578,6 +596,7 @@ class ActivityTracker {
     showActivityReminder() {
         // Play sound for activity reminder
         this.playNotificationSound();
+        this.setCurrentTime();
         
         try {
             const options = {

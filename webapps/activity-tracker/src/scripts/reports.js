@@ -182,6 +182,7 @@ ActivityTracker.prototype.setWeeklyReport = function() {
 
     document.getElementById('reportStartDate').value = monday.toISOString().split('T')[0];
     document.getElementById('reportEndDate').value = friday.toISOString().split('T')[0];
+    this.generateReport();
 };
 
 /**
@@ -195,6 +196,7 @@ ActivityTracker.prototype.previousWeek = function() {
 
     this.currentWeekStart.setDate(this.currentWeekStart.getDate() - 7);
     this.updateWeekFromCurrent();
+    this.generateReport();
 };
 
 /**
@@ -208,6 +210,7 @@ ActivityTracker.prototype.nextWeek = function() {
 
     this.currentWeekStart.setDate(this.currentWeekStart.getDate() + 7);
     this.updateWeekFromCurrent();
+    this.generateReport();
 };
 
 /**
