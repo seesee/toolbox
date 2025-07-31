@@ -4,7 +4,7 @@ A toolbox containing handy scripts/apps/pages/utils etc.
 ## Web Apps
 All webapps are self-contained and run in-browser using local storage. No
 tracking or other nonsense is included. Everything is 100% private and 
-completely offline.
+can work completely offline (just save as file, or host it yourself).
 
 ### Activity Tracker
 [Activity Tracker](https://seesee.github.io/toolbox/webapps/activity_tracker.html) 
