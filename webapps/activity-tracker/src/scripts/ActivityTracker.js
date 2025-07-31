@@ -35,6 +35,7 @@ class ActivityTracker {
             },
             pauseDuration: 60,
             notificationsPausedUntil: null,
+            notificationsEnabled: true,
             muteNotificationSound: false,
             notificationSoundType: "classic",
             darkMode: false,
@@ -191,6 +192,68 @@ class ActivityTracker {
             e.preventDefault();
             this.updateEntry();
         });
+
+        // Auto-save settings when changed
+        this.attachSettingsListeners();
+    }
+
+    /**
+     * Attach event listeners to settings inputs for auto-save
+     */
+    attachSettingsListeners() {
+        const settingsInputs = [
+            'notificationInterval',
+            'startTime', 
+            'endTime',
+            'pauseDuration',
+            'muteNotificationSound',
+            'notificationSoundType',
+            'darkMode',
+            'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
+        ];
+
+        settingsInputs.forEach(inputId => {
+            const element = document.getElementById(inputId);
+            if (element) {
+                const eventType = element.type === 'checkbox' ? 'change' : 'input';
+                element.addEventListener(eventType, () => {
+                    this.autoSaveSettings();
+                });
+            }
+        });
+    }
+
+    /**
+     * Auto-save settings when inputs change
+     */
+    autoSaveSettings() {
+        // Update settings from UI
+        this.settings.notificationInterval = parseInt(document.getElementById('notificationInterval').value);
+        this.settings.startTime = document.getElementById('startTime').value;
+        this.settings.endTime = document.getElementById('endTime').value;
+        this.settings.pauseDuration = parseInt(document.getElementById('pauseDuration').value);
+        this.settings.muteNotificationSound = document.getElementById('muteNotificationSound').checked;
+        this.settings.notificationSoundType = document.getElementById('notificationSoundType').value;
+        this.settings.darkMode = document.getElementById('darkMode').checked;
+
+        // Update working days
+        ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(day => {
+            this.settings.workingDays[day] = document.getElementById(day).checked;
+        });
+
+        // Apply theme immediately
+        this.applyTheme();
+
+        // Save to localStorage
+        this.saveSettings();
+
+        // Restart notification timer if interval changed
+        if (this.settings.notificationsEnabled) {
+            this.startNotificationTimer();
+        }
+
+        // Show brief confirmation
+        showNotification('Settings saved automatically', 'success', 1500);
     }
 
     /**
@@ -430,7 +493,7 @@ class ActivityTracker {
     }
 
     /**
-     * Enable notifications
+     * Toggle notifications on/off
      */
     async enableNotifications() {
         if (!('Notification' in window) || !('serviceWorker' in navigator)) {
@@ -439,17 +502,26 @@ class ActivityTracker {
             return;
         }
 
+        // If notifications are currently enabled, disable them
+        if (this.settings.notificationsEnabled && Notification.permission === 'granted') {
+            this.settings.notificationsEnabled = false;
+            this.saveSettings();
+            this.stopNotificationTimer();
+            showNotification('Notifications disabled', 'success');
+            this.updateNotificationStatus();
+            this.updateDebugInfo();
+            return;
+        }
+
+        // If notifications are disabled, enable them
         try {
             console.log('Requesting notification permission...');
             const permission = await Notification.requestPermission();
             console.log('Permission result:', permission);
             
-            setTimeout(() => {
-                this.updateNotificationStatus();
-                this.updateDebugInfo();
-            }, 500);
-            
             if (permission === 'granted') {
+                this.settings.notificationsEnabled = true;
+                this.saveSettings();
                 showNotification('Notifications enabled successfully!', 'success');
                 this.startNotificationTimer();
                 
@@ -461,6 +533,11 @@ class ActivityTracker {
             } else {
                 showNotification('Notification permission was not granted. Please try again.', 'error');
             }
+            
+            setTimeout(() => {
+                this.updateNotificationStatus();
+                this.updateDebugInfo();
+            }, 500);
         } catch (error) {
             console.error('Error requesting notification permission:', error);
             showNotification('Error requesting notification permission: ' + error.message, 'error');
@@ -539,30 +616,42 @@ class ActivityTracker {
         const statusEl = document.getElementById('notificationStatus');
         const indicatorEl = document.getElementById('statusIndicator');
         const textEl = document.getElementById('statusText');
+        const enableBtn = document.querySelector('button[onclick="enableNotifications()"]');
 
-        console.log('Updating notification status, permission:', Notification.permission);
+        console.log('Updating notification status, permission:', Notification.permission, 'enabled:', this.settings.notificationsEnabled);
 
         if (!('Notification' in window)) {
             statusEl.className = 'notification-status notification-disabled';
             indicatorEl.className = 'status-indicator status-inactive';
             textEl.textContent = 'Notifications not supported in this browser';
+            if (enableBtn) enableBtn.textContent = 'Not Supported';
         } else {
             switch (Notification.permission) {
                 case 'granted':
-                    statusEl.className = 'notification-status notification-enabled';
-                    indicatorEl.className = 'status-indicator status-active';
-                    textEl.textContent = 'Notifications are enabled and working';
+                    if (this.settings.notificationsEnabled) {
+                        statusEl.className = 'notification-status notification-enabled';
+                        indicatorEl.className = 'status-indicator status-active';
+                        textEl.textContent = 'Notifications are enabled and working';
+                        if (enableBtn) enableBtn.textContent = 'Disable Notifications';
+                    } else {
+                        statusEl.className = 'notification-status notification-warning';
+                        indicatorEl.className = 'status-indicator status-inactive';
+                        textEl.textContent = 'Notifications are disabled by user';
+                        if (enableBtn) enableBtn.textContent = 'Enable Notifications';
+                    }
                     break;
                 case 'denied':
                     statusEl.className = 'notification-status notification-disabled';
                     indicatorEl.className = 'status-indicator status-inactive';
                     textEl.textContent = 'Notifications are blocked - please enable them in browser settings';
+                    if (enableBtn) enableBtn.textContent = 'Enable Notifications';
                     break;
                 case 'default':
                 default:
                     statusEl.className = 'notification-status notification-warning';
                     indicatorEl.className = 'status-indicator status-inactive';
                     textEl.textContent = 'Notifications are disabled - click "Enable Notifications" to activate';
+                    if (enableBtn) enableBtn.textContent = 'Enable Notifications';
                     break;
             }
         }
@@ -615,9 +704,25 @@ class ActivityTracker {
     }
 
     /**
+     * Stop notification timer
+     */
+    stopNotificationTimer() {
+        if (this.notificationTimer) {
+            clearInterval(this.notificationTimer);
+            this.notificationTimer = null;
+        }
+    }
+
+    /**
      * Check if a notification should be sent
      */
     checkForNotification() {
+        // Check if notifications are disabled by user
+        if (!this.settings.notificationsEnabled) {
+            console.log('Skipping notification check - notifications disabled by user');
+            return;
+        }
+
         // Check if notifications are paused
         if (this.settings.notificationsPausedUntil) {
             const now = new Date().getTime();

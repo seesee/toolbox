@@ -139,14 +139,13 @@ class PauseManager {
      * @param {number} percentage - Percentage drained (0-100)
      */
     applyDrainingEffect(percentage) {
-        // Create a gradient that "drains" from bottom to top
+        // Create a gradient that "drains" from right to left (starts full on right, drains to left)
         const drained = `rgba(229, 62, 62, 0.3)`; // Light red for drained area
         const full = `#e53e3e`; // Full red for remaining area
 
-        // Calculate where the drain line should be
-        const drainLevel = 100 - percentage;
-
-        this.pauseButton.style.background = `linear-gradient(to top, ${drained} 0%, ${drained} ${percentage}%, ${full} ${percentage}%, ${full} 100%)`;
+        // Calculate where the drain line should be (percentage is how much has been consumed)
+        // We want to start full from the right and drain to the left
+        this.pauseButton.style.background = `linear-gradient(to left, ${drained} 0%, ${drained} ${percentage}%, ${full} ${percentage}%, ${full} 100%)`;
         this.pauseButton.style.transition = 'background 1s ease-out';
         
         // Add a subtle pulse effect when nearly drained

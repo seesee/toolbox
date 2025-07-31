@@ -62,7 +62,7 @@ function escapeHtml(text) {
  * @param {string} message - Message to display
  * @param {string} type - Type of notification (info, success, error)
  */
-function showNotification(message, type = 'info') {
+function showNotification(message, type = 'info', duration = 3000) {
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;
@@ -107,7 +107,7 @@ function showNotification(message, type = 'info') {
     notification.textContent = message;
     document.body.appendChild(notification);
 
-    // Remove notification after 3 seconds with slide-out animation
+    // Remove notification after specified duration with slide-out animation
     setTimeout(() => {
         notification.style.animation = 'slideOut 0.3s ease-in';
         setTimeout(() => {
@@ -115,7 +115,7 @@ function showNotification(message, type = 'info') {
                 notification.remove();
             }
         }, 300);
-    }, 3000);
+    }, duration);
 }
 
 /**

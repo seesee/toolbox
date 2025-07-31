@@ -529,6 +529,12 @@ body {
     transition: all 0.3s ease, background 1s ease-out;
 }
 
+/* Fixed width for pause button to prevent wiggling */
+#pauseButton {
+    min-width: 180px;
+    text-align: center;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 10px;
