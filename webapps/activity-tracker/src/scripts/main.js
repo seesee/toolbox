@@ -244,6 +244,67 @@ function handleImportFile(event) {
 }
 
 /**
+ * Run comprehensive service worker diagnostic test
+ */
+async function runServiceWorkerTest() {
+    if (!tracker) {
+        showNotification('Tracker not initialized', 'error');
+        return;
+    }
+    
+    showNotification('Running Service Worker diagnostics...', 'info');
+    
+    try {
+        const diagnostics = await tracker.runServiceWorkerDiagnostics();
+        
+        let message = 'Service Worker Diagnostics:\n\n';
+        message += `Available: ${diagnostics.available}\n`;
+        message += `Protocol: ${diagnostics.protocol}\n`;
+        message += `Platform: ${diagnostics.platform}\n`;
+        
+        if (diagnostics.registration) {
+            message += `Registration: Active\n`;
+            message += `Scope: ${diagnostics.registration.scope}\n`;
+        } else {
+            message += `Registration: None\n`;
+        }
+        
+        if (diagnostics.controller) {
+            message += `Controller: Active (${diagnostics.controller.state})\n`;
+        } else {
+            message += `Controller: None\n`;
+        }
+        
+        if (diagnostics.communication) {
+            message += `Communication: ${diagnostics.communication}\n`;
+        }
+        
+        if (diagnostics.swVersion) {
+            message += `SW Version: ${diagnostics.swVersion}\n`;
+        }
+        
+        if (diagnostics.error) {
+            message += `Error: ${diagnostics.error}\n`;
+        }
+        
+        // Show detailed results in console and user notification
+        console.log('🔍 Service Worker Diagnostics:', diagnostics);
+        alert(message);
+        
+        const status = diagnostics.available && diagnostics.registration ? 'success' : 'warning';
+        const summary = diagnostics.available && diagnostics.registration ? 
+            'Service Worker is working correctly' : 
+            'Service Worker issues detected (see console)';
+            
+        showNotification(summary, status);
+        
+    } catch (error) {
+        console.error('Diagnostic test failed:', error);
+        showNotification('Diagnostic test failed: ' + error.message, 'error');
+    }
+}
+
+/**
  * Initialize the application when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', () => {
@@ -254,32 +315,78 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Register service worker if supported
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js')
-            .then(registration => {
-                console.log('✅ Service Worker registered with scope:', registration.scope);
-                if (tracker) {
-                    tracker.updateDebugInfo();
-                }
-            })
-            .catch(error => {
-                console.error('❌ Service Worker registration failed:', error);
-                if (tracker) {
-                    tracker.updateDebugInfo();
-                }
-            });
+        // Check if we're on a supported protocol
+        if (window.location.protocol === 'file:') {
+            console.log('🔍 Service Worker not registering: file:// protocol detected');
+            console.log('ℹ️  App will function normally without Service Worker');
+        } else {
+            console.log('🔧 Registering Service Worker...');
+            
+            navigator.serviceWorker.register('./sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registered with scope:', registration.scope);
+                    
+                    // Handle updates
+                    registration.addEventListener('updatefound', () => {
+                        console.log('🔄 Service Worker update found');
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('🔄 New Service Worker installed, refresh recommended');
+                                    showNotification('App updated! Refresh for latest version.', 'info', 10000);
+                                }
+                            });
+                        }
+                    });
+                    
+                    if (tracker) {
+                        tracker.updateDebugInfo();
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Service Worker registration failed:', error);
+                    console.log('ℹ️  App will function normally without Service Worker');
+                    
+                    // Check for common macOS issues
+                    if (navigator.platform.includes('Mac') && error.name === 'SecurityError') {
+                        console.warn('🍎 macOS Security Error: This may be due to strict security settings');
+                        console.warn('💡 Try serving over HTTP/HTTPS instead of file://');
+                    }
+                    
+                    if (tracker) {
+                        tracker.updateDebugInfo();
+                    }
+                });
+        }
 
         // Listen for messages from service worker
         navigator.serviceWorker.addEventListener('message', event => {
+            console.log('💬 Message from SW:', event.data);
+            
             if (event.data && event.data.type === 'add-entry') {
                 if (tracker) {
                     tracker.addEntry(event.data.entry);
                     showNotification('Activity logged from notification!', 'success');
                 }
             }
+            
             if (event.data && event.data.type === 'navigate-to-tracker') {
                 showSection('tracker');
             }
         });
+
+        // Listen for service worker control changes
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('🔄 Service Worker controller changed');
+            if (tracker) {
+                tracker.updateDebugInfo();
+            }
+        });
+
+    } else {
+        console.log('❌ Service Worker not supported in this browser');
+        console.log('ℹ️  App will function normally without Service Worker');
     }
 
     // Handle hash navigation (if coming from notification)
@@ -436,6 +543,7 @@ if (typeof module !== 'undefined' && module.exports) {
         togglePause,
         exportDatabase,
         importDatabase,
-        handleImportFile
+        handleImportFile,
+        runServiceWorkerTest
     };
 }

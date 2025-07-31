@@ -183,7 +183,7 @@ class ActivityTrackerBuilder {
                         'enableNotifications', 'testNotification', 'testNotificationSound',
                         'refreshNotificationStatus', 'clearAllData', 'closeEditModal',
                         'togglePause', 'saveReportTemplates', 'resetReportTemplates',
-                        'exportDatabase', 'importDatabase', 'handleImportFile'
+                        'exportDatabase', 'importDatabase', 'handleImportFile', 'runServiceWorkerTest'
                     ]
                 },
                 format: {

@@ -554,17 +554,67 @@ class ActivityTracker {
     }
 
     /**
-     * Show notification using service worker
+     * Show notification with fallback support
      * @param {string} title - Notification title
      * @param {Object} options - Notification options
      */
     async showNotificationWithServiceWorker(title, options) {
-        if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+        if (!('Notification' in window)) {
+            console.warn('Notifications not supported');
             return;
         }
 
-        const registration = await navigator.serviceWorker.ready;
-        await registration.showNotification(title, options);
+        if (Notification.permission !== 'granted') {
+            console.warn('Notification permission not granted');
+            return;
+        }
+
+        try {
+            // Try service worker approach first
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.showNotification(title, options);
+                console.log('✅ Notification shown via Service Worker');
+                return;
+            }
+        } catch (error) {
+            console.warn('Service Worker notification failed, falling back to direct notification:', error);
+        }
+
+        // Fallback: Use direct Notification API (limited functionality)
+        try {
+            // Remove service worker specific options for fallback
+            const fallbackOptions = {
+                body: options.body,
+                icon: options.icon,
+                tag: options.tag,
+                requireInteraction: options.requireInteraction
+                // Note: actions are not supported in direct notifications
+            };
+
+            const notification = new Notification(title, fallbackOptions);
+            
+            // Handle click events for fallback notifications
+            notification.onclick = () => {
+                window.focus();
+                notification.close();
+            };
+
+            console.log('✅ Notification shown via direct API (limited features)');
+            
+            // Auto-close after some time if not set to require interaction
+            if (!options.requireInteraction) {
+                setTimeout(() => {
+                    notification.close();
+                }, 5000);
+            }
+
+        } catch (directError) {
+            console.error('Both Service Worker and direct notification failed:', directError);
+            
+            // Last resort: show in-app notification
+            showNotification('Activity reminder: ' + (options.body || 'Time to log your activity!'), 'info', 8000);
+        }
     }
 
     /**
@@ -682,6 +732,7 @@ class ActivityTracker {
         info.push('');
         
         info.push(`Browser: ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
+        info.push(`Platform: ${navigator.platform || 'Unknown'}`);
         info.push(`Protocol: ${window.location.protocol}`);
         info.push(`Notification API: ${'Notification' in window ? 'Available' : 'Not Available'}`);
         
@@ -690,16 +741,99 @@ class ActivityTracker {
             info.push(`Max Actions: ${Notification.maxActions || 'Unknown'}`);
         }
         
-        info.push(`Service Worker: ${'serviceWorker' in navigator ? 'Available' : 'Not Available'}`);
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            info.push(`SW State: ${navigator.serviceWorker.controller.state}`);
+        // Enhanced Service Worker diagnostics
+        if ('serviceWorker' in navigator) {
+            info.push(`Service Worker: Available`);
+            
+            if (navigator.serviceWorker.controller) {
+                info.push(`SW State: ${navigator.serviceWorker.controller.state}`);
+                info.push(`SW URL: ${navigator.serviceWorker.controller.scriptURL.split('/').pop()}`);
+            } else {
+                info.push(`SW State: No controller`);
+            }
+            
+            // Check registration status
+            navigator.serviceWorker.getRegistration().then(registration => {
+                if (registration) {
+                    const scopeInfo = document.getElementById('debugText');
+                    if (scopeInfo && scopeInfo.innerHTML.includes('SW Scope: Checking...')) {
+                        scopeInfo.innerHTML = scopeInfo.innerHTML.replace('SW Scope: Checking...', `SW Scope: ${registration.scope}`);
+                    }
+                }
+            }).catch(error => {
+                console.warn('SW registration check failed:', error);
+            });
+            
+            info.push(`SW Scope: Checking...`);
+        } else {
+            info.push(`Service Worker: Not Available`);
+            if (window.location.protocol === 'file:') {
+                info.push(`SW Reason: file:// protocol (expected)`);
+            }
         }
+        
         info.push(`Web Audio API: ${this.audioContext ? 'Available' : 'Not Available'}`);
         info.push(`Sound Muted: ${this.settings.muteNotificationSound ? 'Yes' : 'No'}`);
         info.push(`Sound Type: ${this.settings.notificationSoundType}`);
         info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
         
         debugEl.innerHTML = info.join('<br>');
+    }
+
+    /**
+     * Comprehensive service worker diagnostics
+     */
+    async runServiceWorkerDiagnostics() {
+        const diagnostics = {
+            available: 'serviceWorker' in navigator,
+            protocol: window.location.protocol,
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            registration: null,
+            controller: null,
+            error: null
+        };
+
+        if (!diagnostics.available) {
+            diagnostics.error = 'Service Worker API not available';
+            return diagnostics;
+        }
+
+        try {
+            // Check current registration
+            diagnostics.registration = await navigator.serviceWorker.getRegistration();
+            diagnostics.controller = navigator.serviceWorker.controller;
+
+            // Test communication if controller exists
+            if (diagnostics.controller) {
+                try {
+                    const messageChannel = new MessageChannel();
+                    const response = await new Promise((resolve, reject) => {
+                        const timeout = setTimeout(() => reject(new Error('SW communication timeout')), 5000);
+                        
+                        messageChannel.port1.onmessage = (event) => {
+                            clearTimeout(timeout);
+                            resolve(event.data);
+                        };
+                        
+                        diagnostics.controller.postMessage(
+                            { type: 'GET_VERSION' }, 
+                            [messageChannel.port2]
+                        );
+                    });
+                    
+                    diagnostics.communication = 'Working';
+                    diagnostics.swVersion = response.version;
+                } catch (commError) {
+                    diagnostics.communication = `Failed: ${commError.message}`;
+                }
+            }
+
+        } catch (error) {
+            diagnostics.error = error.message;
+        }
+
+        return diagnostics;
     }
 
     /**
