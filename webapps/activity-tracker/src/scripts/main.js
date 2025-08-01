@@ -241,6 +241,26 @@ function closeAbout() {
 }
 
 /**
+ * Show User Guide modal
+ */
+function showUserGuide() {
+    const modal = document.getElementById('userGuideModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+/**
+ * Close User Guide modal
+ */
+function closeUserGuide() {
+    const modal = document.getElementById('userGuideModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
  * Set due date using quick-set buttons
  * @param {string} period - 'tomorrow', 'nextWeek', or 'nextMonth'
  */
@@ -498,6 +518,15 @@ function togglePause() {
 function togglePomodoro() {
     if (tracker && tracker.pomodoroManager) {
         tracker.pomodoroManager.togglePomodoroFromButton();
+    }
+}
+
+/**
+ * Toggle Pomodoro pause/resume from banner button
+ */
+function togglePomodoroPause() {
+    if (tracker && tracker.pomodoroManager) {
+        tracker.pomodoroManager.togglePause();
     }
 }
 
@@ -856,6 +885,8 @@ document.addEventListener('click', (e) => {
             closePomodoroActivityModal();
         } else if (e.target.id === 'hashtagBrowserModal') {
             closeHashtagBrowser();
+        } else if (e.target.id === 'userGuideModal') {
+            closeUserGuide();
         } else {
             closeEditModal();
         }
@@ -874,6 +905,7 @@ document.addEventListener('keydown', (e) => {
         const editModal = document.getElementById('editModal');
         const pomodoroActivityModal = document.getElementById('pomodoroActivityModal');
         const hashtagBrowserModal = document.getElementById('hashtagBrowserModal');
+        const userGuideModal = document.getElementById('userGuideModal');
         
         if (templateGuideModal && templateGuideModal.style.display === 'block') {
             closeTemplateGuide();
@@ -883,6 +915,8 @@ document.addEventListener('keydown', (e) => {
             closePomodoroActivityModal();
         } else if (hashtagBrowserModal && hashtagBrowserModal.style.display === 'block') {
             closeHashtagBrowser();
+        } else if (userGuideModal && userGuideModal.style.display === 'block') {
+            closeUserGuide();
         } else if (editModal && editModal.style.display === 'block') {
             closeEditModal();
         }

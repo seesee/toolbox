@@ -33,8 +33,32 @@
                     <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
                 </div>
                 <div class="nav-right">
-                    <button id="pauseButton" class="nav-btn" onclick="togglePause()">Pause Alerts</button>
+                    <button id="pauseButton" class="nav-btn" onclick="togglePause()">Start Alerts</button>
                     <button id="pomodoroButton" class="nav-btn pomodoro-btn" onclick="togglePomodoro()" style="display: none;">🍅 Start Pomodoro</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pomodoro Status Banner -->
+        <div id="pomodoroStatusBanner" class="pomodoro-banner" style="display: none;">
+            <div class="pomodoro-banner-content">
+                <div id="pomodoroStatus" class="pomodoro-status disabled">Pomodoro mode disabled</div>
+                <div id="pomodoroTimer" class="pomodoro-timer" style="display: none;">
+                    <span id="pomodoroTimeRemaining">25:00</span>
+                    <span id="pomodoroPhase">Work Session</span>
+                </div>
+                <div id="pomodoroBannerControls" class="pomodoro-banner-controls" style="display: none;">
+                    <button id="pomodoroPauseBtn" class="pomodoro-pause-btn" onclick="togglePomodoroPause()">Pause</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Status Banner -->
+        <div id="notificationStatusBanner" class="notification-banner" style="display: none;">
+            <div class="notification-banner-content">
+                <div id="notificationStatus" class="notification-status">Next notification in:</div>
+                <div id="notificationTimer" class="notification-timer">
+                    <span id="notificationTimeRemaining">--:--</span>
                 </div>
             </div>
         </div>
@@ -209,7 +233,6 @@
             <div class="settings-buttons-section">
                 <div class="notification-buttons">
                     <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
-                    <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
                     <button class="btn btn-info" onclick="showAbout()" title="View app information, version details, and diagnostic tools">About & Diagnostics</button>
                     <button class="btn btn-info" onclick="showUserGuide()" title="View user guide and shortcuts">📚 User Guide</button>
                 </div>
@@ -251,6 +274,12 @@
                             <option value="1440">24 hours</option>
                             <option value="-1">Never</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="autoStartAlerts">
+                            <label for="autoStartAlerts" title="Automatically start notifications when the app loads">Auto-start alerts on page load</label>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="notificationSoundType" title="Choose the sound that plays with notifications">Notification Sound</label>
@@ -355,11 +384,6 @@
                         </div>
                         
                         <div class="pomodoro-config" id="pomodoroConfig" style="display: none;">
-                            <!-- Pomodoro Status Display -->
-                            <div class="pomodoro-status-section">
-                                <div id="pomodoroStatus" class="pomodoro-status disabled">Pomodoro mode disabled</div>
-                                <p class="pomodoro-hint">Use the 🍅 button in the navigation to start/abandon sessions</p>
-                            </div>
                             
                             <!-- Timer Configuration -->
                             <div class="pomodoro-timers">
@@ -475,6 +499,10 @@
                                 <div class="checkbox-group">
                                     <input type="checkbox" id="pomodoroLongBreak" checked>
                                     <label for="pomodoroLongBreak" title="Enable long breaks after completing multiple sessions">Enable long breaks</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="pomodoroPauseAllowed" checked>
+                                    <label for="pomodoroPauseAllowed" title="Allow pausing Pomodoro sessions from the banner">Allow session pausing</label>
                                 </div>
                             </div>
                         </div>
@@ -809,72 +837,90 @@ Total activities: {{totalEntries}}
             </div>
             <div class="modal-body">
                 <div class="user-guide-content">
-                    <h4>🚀 Getting Started</h4>
-                    <p>Activity Tracker helps you log activities, manage todos, and generate reports with automatic reminders.</p>
+                    <div class="guide-section">
+                        <h4>🚀 Getting Started</h4>
+                        <p>Activity Tracker helps you log activities, manage todos, and generate reports with automatic reminders.</p>
+                    </div>
                     
-                    <h4>⌨️ Keyboard Shortcuts</h4>
-                    <ul>
-                        <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> - Submit activity form</li>
-                        <li><kbd>Shift</kbd> + <kbd>Enter</kbd> - Mark as todo and submit</li>
-                        <li><kbd>Esc</kbd> - Close modals</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>⌨️ Keyboard Shortcuts</h4>
+                        <ul>
+                            <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> - Submit activity form</li>
+                            <li><kbd>Shift</kbd> + <kbd>Enter</kbd> - Mark as todo and submit</li>
+                            <li><kbd>Esc</kbd> - Close modals</li>
+                        </ul>
+                    </div>
                     
-                    <h4>📝 Adding Activities</h4>
-                    <ul>
-                        <li>Enter what you're doing in the activity field</li>
-                        <li>Add #hashtags for easy categorization</li>
-                        <li>Use the "Add as Todo" button for tasks that need completion</li>
-                        <li>Set due dates for todos using quick-set buttons</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>📝 Adding Activities</h4>
+                        <ul>
+                            <li>Enter what you're doing in the activity field</li>
+                            <li>Add #hashtags for easy categorization</li>
+                            <li>Use the "Add as Todo" button for tasks that need completion</li>
+                            <li>Set due dates for todos using quick-set buttons</li>
+                        </ul>
+                    </div>
                     
-                    <h4>🔍 Search & Navigation</h4>
-                    <ul>
-                        <li>Use the global search to find activities, todos, and hashtags</li>
-                        <li>Click the 🏷️ button to browse hashtags in a visual cloud</li>
-                        <li>Click any hashtag to search for related items</li>
-                        <li>Use pagination controls to navigate through large lists</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>🔍 Search & Navigation</h4>
+                        <ul>
+                            <li>Use the global search to find activities, todos, and hashtags</li>
+                            <li>Click the 🏷️ button to browse hashtags in a visual cloud</li>
+                            <li>Click any hashtag to search for related items</li>
+                            <li>Use pagination controls to navigate through large lists</li>
+                        </ul>
+                    </div>
                     
-                    <h4>✅ Managing Todos</h4>
-                    <ul>
-                        <li>View all todos in the dedicated "To Do" section</li>
-                        <li>Filter by status, due date, or category</li>
-                        <li>Click "Mark Complete" to finish todos</li>
-                        <li>Overdue items are highlighted in red</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>✅ Managing Todos</h4>
+                        <ul>
+                            <li>View all todos in the dedicated "To Do" section</li>
+                            <li>Filter by status, due date, or category</li>
+                            <li>Click "Mark Complete" to finish todos</li>
+                            <li>Overdue items are highlighted in red</li>
+                        </ul>
+                    </div>
                     
-                    <h4>📊 Reports</h4>
-                    <ul>
-                        <li>Generate weekly, custom date range, or template-based reports</li>
-                        <li>Export reports in HTML, Markdown, or CSV formats</li>
-                        <li>Create custom report templates with variables</li>
-                        <li>Include/exclude completed todos from reports</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>📊 Reports</h4>
+                        <ul>
+                            <li>Generate weekly, custom date range, or template-based reports</li>
+                            <li>Export reports in HTML, Markdown, or CSV formats</li>
+                            <li>Create custom report templates with variables</li>
+                            <li>Include/exclude completed todos from reports</li>
+                        </ul>
+                    </div>
                     
-                    <h4>🍅 Pomodoro Mode (Optional)</h4>
-                    <ul>
-                        <li>Enable Pomodoro technique with customizable work/break intervals</li>
-                        <li>Automatic activity logging during Pomodoro sessions</li>
-                        <li>Audio notifications for work/break transitions</li>
-                        <li>Focus timer to help maintain productivity</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>🍅 Pomodoro Mode (Optional)</h4>
+                        <ul>
+                            <li>Enable Pomodoro technique with customizable work/break intervals</li>
+                            <li>Automatic activity logging during Pomodoro sessions</li>
+                            <li>Audio notifications for work/break transitions</li>
+                            <li>Focus timer to help maintain productivity</li>
+                        </ul>
+                    </div>
                     
-                    <h4>⚙️ Settings & Customization</h4>
-                    <ul>
-                        <li>Customize notification intervals and working hours</li>
-                        <li>Choose from multiple notification sounds</li>
-                        <li>Switch between light/dark themes</li>
-                        <li>Set pagination size for better navigation</li>
-                        <li>All settings auto-save as you change them</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>⚙️ Settings & Customization</h4>
+                        <ul>
+                            <li>Customize notification intervals and working hours</li>
+                            <li>Choose from multiple notification sounds</li>
+                            <li>Switch between light/dark themes</li>
+                            <li>Set pagination size for better navigation</li>
+                            <li>All settings auto-save as you change them</li>
+                        </ul>
+                    </div>
                     
-                    <h4>💾 Data Management</h4>
-                    <ul>
-                        <li>Export your data as JSON backup</li>
-                        <li>Import previously exported data</li>
-                        <li>Data is stored locally in your browser</li>
-                        <li>Works offline after initial load</li>
-                    </ul>
+                    <div class="guide-section">
+                        <h4>💾 Data Management</h4>
+                        <ul>
+                            <li>Export your data as JSON backup</li>
+                            <li>Import previously exported data</li>
+                            <li>Data is stored locally in your browser</li>
+                            <li>Works offline after initial load</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -896,6 +942,7 @@ Total activities: {{totalEntries}}
                 <div class="about-section">
                     <h4>Diagnostic Tools</h4>
                     <div class="diagnostic-buttons">
+                        <button class="btn btn-secondary" onclick="testNotification()" title="Send a test notification">Test Notification</button>
                         <button class="btn btn-primary" onclick="testNotificationSound()" title="Play a test notification sound">Test Notification Sound</button>
                         <button class="btn btn-secondary" onclick="runServiceWorkerTest()" title="Run comprehensive service worker diagnostics">Test Service Worker</button>
                         <button class="btn btn-secondary" onclick="refreshNotificationStatus()" title="Refresh the notification permission status display - useful if permissions changed outside the app">Refresh Notification Status</button>

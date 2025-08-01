@@ -51,6 +51,7 @@ class ActivityTracker {
             pauseDuration: 60,
             notificationsPausedUntil: null,
             notificationsEnabled: true,
+            autoStartAlerts: false,
             soundMuteMode: 'none', // 'none', 'all', 'pomodoro', 'notifications'
             notificationSoundType: "classic",
             darkModePreference: 'light', // 'light', 'dark', 'system'
@@ -83,7 +84,11 @@ class ActivityTracker {
         this.updateNotificationStatus();
         this.updateDebugInfo();
         this.updatePauseButtonState();
-        this.startNotificationTimer();
+        
+        // Only start notifications if auto-start is enabled
+        if (this.settings.autoStartAlerts) {
+            this.startNotificationTimer();
+        }
         this.setWeeklyReport();
         this.initSoundManager();
         this.initPauseManager();
@@ -254,6 +259,7 @@ class ActivityTracker {
             'soundMuteMode',
             'notificationSoundType',
             'darkModePreference',
+            'autoStartAlerts',
             'paginationSize',
             'pomodoroEnabled',
             'pomodoroWorkDuration',
@@ -269,6 +275,7 @@ class ActivityTracker {
             'pomodoroAutoLog',
             'pomodoroLogBreaks',
             'pomodoroLongBreak',
+            'pomodoroPauseAllowed',
             'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
         ];
 
@@ -300,6 +307,7 @@ class ActivityTracker {
         this.settings.soundMuteMode = document.getElementById('soundMuteMode').value;
         this.settings.notificationSoundType = document.getElementById('notificationSoundType').value;
         this.settings.darkModePreference = document.getElementById('darkModePreference').value;
+        this.settings.autoStartAlerts = document.getElementById('autoStartAlerts')?.checked || false;
         this.settings.paginationSize = parseInt(document.getElementById('paginationSize').value);
         this.settings.pomodoroAutoStart = document.getElementById('pomodoroAutoStart')?.checked || false;
         this.settings.pomodoroAutoLog = document.getElementById('pomodoroAutoLog')?.checked !== false;
@@ -611,6 +619,7 @@ class ActivityTracker {
             soundMuteMode: document.getElementById('soundMuteMode').value,
             notificationSoundType: document.getElementById('notificationSoundType').value,
             darkModePreference: document.getElementById('darkModePreference').value,
+            autoStartAlerts: document.getElementById('autoStartAlerts')?.checked || false,
             paginationSize: parseInt(document.getElementById('paginationSize').value),
             workingDays: {
                 monday: document.getElementById('monday').checked,
@@ -628,7 +637,8 @@ class ActivityTracker {
             pomodoroAutoStart: document.getElementById('pomodoroAutoStart')?.checked || false,
             pomodoroAutoLog: document.getElementById('pomodoroAutoLog')?.checked !== false,
             pomodoroLogBreaks: document.getElementById('pomodoroLogBreaks')?.checked || false,
-            pomodoroLongBreak: document.getElementById('pomodoroLongBreak')?.checked || false
+            pomodoroLongBreak: document.getElementById('pomodoroLongBreak')?.checked || false,
+            pomodoroPauseAllowed: document.getElementById('pomodoroPauseAllowed')?.checked !== false
         };
 
         localStorage.setItem('activitySettings', JSON.stringify(this.settings));
@@ -696,6 +706,7 @@ class ActivityTracker {
         document.getElementById('pauseDuration').value = this.settings.pauseDuration;
         document.getElementById('soundMuteMode').value = this.settings.soundMuteMode;
         document.getElementById('darkModePreference').value = this.settings.darkModePreference;
+        document.getElementById('autoStartAlerts').checked = this.settings.autoStartAlerts;
         document.getElementById('paginationSize').value = this.settings.paginationSize;
         
         // Populate sound dropdowns with all available sounds
@@ -988,6 +999,92 @@ class ActivityTracker {
     }
 
     /**
+     * Show notification countdown banner
+     */
+    showNotificationBanner() {
+        const banner = document.getElementById('notificationStatusBanner');
+        if (banner && this.settings.notificationsEnabled) {
+            banner.style.display = 'block';
+        }
+    }
+
+    /**
+     * Hide notification countdown banner
+     */
+    hideNotificationBanner() {
+        const banner = document.getElementById('notificationStatusBanner');
+        if (banner) {
+            banner.style.display = 'none';
+        }
+    }
+
+    /**
+     * Start notification countdown display
+     */
+    startNotificationCountdown() {
+        if (this.notificationCountdownTimer) {
+            clearInterval(this.notificationCountdownTimer);
+        }
+
+        // Update immediately
+        this.updateNotificationCountdown();
+
+        // Update every second
+        this.notificationCountdownTimer = setInterval(() => {
+            this.updateNotificationCountdown();
+        }, 1000);
+    }
+
+    /**
+     * Update notification countdown display
+     */
+    updateNotificationCountdown() {
+        const timeRemainingEl = document.getElementById('notificationTimeRemaining');
+        if (!timeRemainingEl || !this.settings.notificationsEnabled) {
+            return;
+        }
+
+        // Calculate time until next notification
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+        const intervalMinutes = this.settings.notificationInterval;
+
+        // Find next notification time
+        let nextNotificationMinutes = Math.ceil(currentMinutes / intervalMinutes) * intervalMinutes;
+        
+        // If we've passed the last interval of the day, next notification is at start of tomorrow
+        if (nextNotificationMinutes >= 24 * 60) {
+            nextNotificationMinutes = 0; // Start of next day
+        }
+
+        // Calculate time remaining
+        let timeRemainingMinutes;
+        if (nextNotificationMinutes === 0) {
+            // Next notification is tomorrow
+            timeRemainingMinutes = (24 * 60) - currentMinutes;
+        } else {
+            timeRemainingMinutes = nextNotificationMinutes - currentMinutes;
+        }
+
+        // Convert to hours, minutes, seconds
+        const hours = Math.floor(timeRemainingMinutes / 60);
+        const minutes = timeRemainingMinutes % 60;
+        const seconds = 60 - now.getSeconds(); // Seconds until next minute
+
+        // Format time display
+        let timeText;
+        if (hours > 0) {
+            timeText = `${hours}h ${minutes}m ${seconds}s`;
+        } else if (minutes > 0) {
+            timeText = `${minutes}m ${seconds}s`;
+        } else {
+            timeText = `${seconds}s`;
+        }
+
+        timeRemainingEl.textContent = timeText;
+    }
+
+    /**
      * Update about information display
      */
     updateDebugInfo() {
@@ -1180,10 +1277,18 @@ class ActivityTracker {
         if (this.notificationTimer) {
             clearInterval(this.notificationTimer);
         }
+        
+        if (this.notificationCountdownTimer) {
+            clearInterval(this.notificationCountdownTimer);
+        }
 
         this.notificationTimer = setInterval(() => {
             this.checkForNotification();
         }, 60000); // Check every minute
+        
+        // Start countdown display timer (updates every second)
+        this.startNotificationCountdown();
+        this.showNotificationBanner();
     }
 
     /**
@@ -1194,6 +1299,13 @@ class ActivityTracker {
             clearInterval(this.notificationTimer);
             this.notificationTimer = null;
         }
+        
+        if (this.notificationCountdownTimer) {
+            clearInterval(this.notificationCountdownTimer);
+            this.notificationCountdownTimer = null;
+        }
+        
+        this.hideNotificationBanner();
     }
 
     /**
@@ -1302,37 +1414,30 @@ class ActivityTracker {
     }
 
     /**
-     * Toggle pause/resume notifications
+     * Toggle start/stop notifications
      * @param {boolean} showNotif - Whether to show notification
      */
     togglePause(showNotif = true) {
-        if (this.settings.notificationsPausedUntil) {
-            if (this.pauseManager) {
-                this.pauseManager.resume();
-            } else {
-                this.unpauseNotifications(showNotif);
+        if (this.settings.notificationsEnabled) {
+            // Stop notifications
+            this.settings.notificationsEnabled = false;
+            this.stopNotificationTimer();
+            if (showNotif) {
+                showNotification('Notifications stopped', 'info');
             }
         } else {
-            if (this.pauseManager) {
-                this.pauseManager.startPause(this.settings.pauseDuration);
-            } else {
-                // Fallback to old method
-                const duration = this.settings.pauseDuration;
-                if (duration === -1) {
-                    this.settings.notificationsPausedUntil = Infinity;
-                } else {
-                    this.settings.notificationsPausedUntil = new Date().getTime() + duration * 60 * 1000;
-                }
-                this.updatePauseButtonState();
-                this.saveSettings();
+            // Start notifications
+            this.settings.notificationsEnabled = true;
+            this.startNotificationTimer();
+            if (showNotif) {
+                showNotification('Notifications started', 'success');
             }
         }
-            
-        if (showNotif) {
-            const message = this.settings.notificationsPausedUntil ? 'Notifications paused' : 'Notifications resumed';
-            const type = this.settings.notificationsPausedUntil ? 'info' : 'success';
-            showNotification(message, type);
-        }
+        
+        this.updatePauseButtonState();
+        this.saveSettings();
+        this.updateNotificationStatus();
+        this.updateDebugInfo();
     }
 
     /**

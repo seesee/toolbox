@@ -170,7 +170,9 @@ class PauseManager {
      * Update button for normal (not paused) state
      */
     updatePauseButtonNormal() {
-        this.pauseButton.textContent = this.originalButtonText;
+        // Check if notifications are enabled to determine button text
+        const buttonText = this.tracker.settings.notificationsEnabled ? 'Pause Alerts' : 'Start Alerts';
+        this.pauseButton.textContent = buttonText;
         this.pauseButton.style.background = '';
         this.pauseButton.style.animation = 'none';
         this.pauseButton.style.transition = '';

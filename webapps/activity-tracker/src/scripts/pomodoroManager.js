@@ -8,6 +8,8 @@ class PomodoroManager {
         this.activityTracker = activityTracker;
         this.isActive = false;
         this.isRunning = false;
+        this.isPaused = false;
+        this.pausedAt = null;
         this.currentPhase = 'work'; // 'work' or 'break'
         this.cycleCount = 0;
         this.totalSessions = 0;
@@ -15,6 +17,7 @@ class PomodoroManager {
         this.tickTimer = null;
         this.remainingTime = 0;
         this.startTime = null;
+        this.originalDuration = 0;
         
         // Settings (will be loaded from activity tracker settings)
         this.settings = {
@@ -31,7 +34,8 @@ class PomodoroManager {
             autoStart: false,
             autoLog: true,
             logBreaks: false,
-            longBreak: true
+            longBreak: true,
+            pauseAllowed: true
         };
         
         this.statusUpdateInterval = null;
@@ -111,7 +115,8 @@ class PomodoroManager {
                 autoStart: settings.pomodoroAutoStart || false,
                 autoLog: settings.pomodoroAutoLog !== false,
                 logBreaks: settings.pomodoroLogBreaks || false,
-                longBreak: settings.pomodoroLongBreak !== false
+                longBreak: settings.pomodoroLongBreak !== false,
+                pauseAllowed: settings.pomodoroPauseAllowed !== false
             };
             
             // Restore session state if it exists
@@ -254,15 +259,15 @@ class PomodoroManager {
     startPomodoroMode() {
         if (!this.isActive) return;
         
+        // Reset state but don't start immediately
         this.currentPhase = 'work';
         this.cycleCount = 0;
-        this.startWorkPeriod();
+        this.isRunning = false;
         
-        if (this.settings.autoLog) {
-            this.logActivity('Pomodoro work session started', 'Starting focused work period');
-        }
+        // Update display to show ready state
+        this.updateStatusDisplay();
         
-        showNotification('🍅 Pomodoro mode started! Beginning work period.', 'success');
+        showNotification('🍅 Pomodoro mode enabled! Click the 🍅 button to start your first session.', 'success');
     }
     
     stopPomodoroMode() {
@@ -298,9 +303,8 @@ class PomodoroManager {
     startWorkPeriod() {
         if (!this.isActive) return;
         
-        // If auto-log is enabled, prompt for activity description first
-        if (this.settings.autoLog && this.cycleCount === 0) {
-            // First session - show modal to get activity description
+        // Always show modal for work session activity if auto-log is enabled
+        if (this.settings.autoLog) {
             this.pendingWorkSession = true;
             this.showWorkActivityModal();
             return;
@@ -312,9 +316,20 @@ class PomodoroManager {
     actuallyStartWorkPeriod() {
         if (!this.isActive) return;
         
+        // Prevent multiple instances - stop any existing timers first
+        if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+        this.stopTickSounds();
+        this.stopStatusUpdates();
+        
         this.currentPhase = 'work';
         this.isRunning = true;
-        this.remainingTime = this.settings.workDuration * 60 * 1000; // Convert to milliseconds
+        this.isPaused = false;
+        this.pausedAt = null;
+        this.remainingTime = this.settings.workDuration * 60 * 1000;
+        this.originalDuration = this.remainingTime; // Convert to milliseconds
         this.startTime = Date.now();
         
         this.timer = setTimeout(() => {
@@ -384,8 +399,18 @@ class PomodoroManager {
     startBreakPeriod() {
         if (!this.isActive) return;
         
+        // Prevent multiple instances - stop any existing timers first
+        if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+        this.stopTickSounds(); // Should already be stopped for breaks, but be safe
+        this.stopStatusUpdates();
+        
         this.currentPhase = 'break';
         this.isRunning = true;
+        this.isPaused = false;
+        this.pausedAt = null;
         
         // Determine break duration (long break based on configurable interval)
         // Only give long break after completing the specified number of sessions (not at start)
@@ -393,6 +418,7 @@ class PomodoroManager {
         const breakDuration = isLongBreak ? this.settings.longBreakDuration : this.settings.breakDuration;
         
         this.remainingTime = breakDuration * 60 * 1000;
+        this.originalDuration = this.remainingTime;
         this.startTime = Date.now();
         
         this.timer = setTimeout(() => {
@@ -595,7 +621,10 @@ class PomodoroManager {
     startTickSounds() {
         console.log(`🍅 StartTickSounds called - Active: ${this.isActive}, Phase: ${this.currentPhase}, TickSound: ${this.settings.tickSound}, Interval: ${this.settings.tickInterval}`);
         
-        if (!this.isActive || this.currentPhase !== 'work' || this.settings.tickSound === 'none' || this.settings.tickInterval === 0) {
+        // Stop any existing tick timer first
+        this.stopTickSounds();
+        
+        if (!this.isActive || this.currentPhase !== 'work' || this.settings.tickSound === 'none' || this.settings.tickInterval <= 0) {
             console.log('🍅 Tick sounds not started - conditions not met');
             return;
         }
@@ -743,48 +772,76 @@ class PomodoroManager {
      */
     updateStatusDisplay() {
         const statusDisplay = document.getElementById('pomodoroStatus');
+        const banner = document.getElementById('pomodoroStatusBanner');
+        const timer = document.getElementById('pomodoroTimer');
+        const timeRemaining = document.getElementById('pomodoroTimeRemaining');
+        const phase = document.getElementById('pomodoroPhase');
+        
         if (!statusDisplay) return;
         
         if (!this.isActive) {
             statusDisplay.textContent = 'Pomodoro mode disabled';
             statusDisplay.className = 'pomodoro-status disabled';
+            if (banner) banner.style.display = 'none';
             return;
         }
+        
+        // Show banner when active
+        if (banner) banner.style.display = 'block';
         
         if (!this.isRunning) {
             const nextSession = this.cycleCount + 1;
             const nextBreakType = this.settings.longBreak && (nextSession % this.settings.longBreakInterval === 0) ? 'long break' : 'break';
-            statusDisplay.textContent = `Ready to start session ${nextSession} (${this.settings.workDuration}min work, then ${nextBreakType})`;
+            statusDisplay.textContent = `Ready to start session ${nextSession}`;
             statusDisplay.className = 'pomodoro-status ready';
+            if (timer) timer.style.display = 'none';
+            this.hidePauseButton();
             return;
         }
+        
+        // Show timer when running
+        if (timer) timer.style.display = 'flex';
         
         const timeLeft = Math.ceil((this.remainingTime - (Date.now() - this.startTime)) / 60000);
         const timeLeftSafe = Math.max(0, timeLeft);
         
+        // Calculate more precise time remaining for display
+        let totalMs;
+        if (this.isPaused) {
+            // Show time remaining when paused
+            const timeElapsedBeforePause = this.pausedAt - this.startTime;
+            totalMs = this.originalDuration - timeElapsedBeforePause;
+        } else {
+            // Normal running calculation
+            totalMs = this.remainingTime - (Date.now() - this.startTime);
+        }
+        const minutes = Math.floor(totalMs / 60000);
+        const seconds = Math.floor((totalMs % 60000) / 1000);
+        const formattedTime = `${Math.max(0, minutes)}:${Math.max(0, seconds).toString().padStart(2, '0')}`;
+        
         if (this.currentPhase === 'work') {
             const currentSession = this.cycleCount + 1;
-            let nextBreakInfo = '';
-            
-            if (this.settings.longBreak) {
-                const sessionsRemaining = this.settings.longBreakInterval - (currentSession % this.settings.longBreakInterval);
-                if (sessionsRemaining === this.settings.longBreakInterval) {
-                    // We're at a multiple of the interval (e.g., session 4, 8, 12...)
-                    nextBreakInfo = 'Long break next!';
-                } else {
-                    nextBreakInfo = `${sessionsRemaining} more session${sessionsRemaining === 1 ? '' : 's'} until long break`;
-                }
-            } else {
-                nextBreakInfo = 'Short breaks only';
-            }
-            
-            statusDisplay.textContent = `Work Session ${currentSession} - ${timeLeftSafe}m left | ${nextBreakInfo}`;
-            statusDisplay.className = 'pomodoro-status working';
+            const statusText = this.isPaused ? `Work Session ${currentSession} (Paused)` : `Work Session ${currentSession}`;
+            statusDisplay.textContent = statusText;
+            statusDisplay.className = this.isPaused ? 'pomodoro-status paused' : 'pomodoro-status working';
+            if (timeRemaining) timeRemaining.textContent = formattedTime;
+            if (phase) phase.textContent = this.isPaused ? 'Work Session (Paused)' : 'Work Session';
         } else {
             const isLongBreak = this.settings.longBreak && this.cycleCount > 0 && (this.cycleCount % this.settings.longBreakInterval === 0);
             const breakType = isLongBreak ? 'Long Break' : 'Short Break';
-            statusDisplay.textContent = `${breakType} - ${timeLeftSafe}m left | ${this.cycleCount} sessions completed`;
-            statusDisplay.className = 'pomodoro-status breaking';
+            const statusText = this.isPaused ? `${breakType} (Paused)` : breakType;
+            statusDisplay.textContent = statusText;
+            statusDisplay.className = this.isPaused ? 'pomodoro-status paused' : 'pomodoro-status breaking';
+            if (timeRemaining) timeRemaining.textContent = formattedTime;
+            if (phase) phase.textContent = statusText;
+        }
+        
+        // Update pause button visibility and text based on state and settings
+        if (this.settings.pauseAllowed) {
+            this.showPauseButton();
+            this.updatePauseButtonText();
+        } else {
+            this.hidePauseButton();
         }
     }
     
@@ -983,6 +1040,125 @@ class PomodoroManager {
             this.actuallyStartWorkPeriod();
             
             console.log('🍅 Work session started with activity:', this.currentWorkActivity.name);
+        }
+    }
+    
+    /**
+     * Toggle pause/resume of current Pomodoro session
+     */
+    togglePause() {
+        if (!this.isActive || !this.isRunning) {
+            return; // Can't pause if not running
+        }
+        
+        if (!this.settings.pauseAllowed) {
+            showNotification('🍅 Session pausing is disabled in settings', 'warning');
+            return;
+        }
+        
+        if (this.isPaused) {
+            // Resume
+            this.resumeSession();
+        } else {
+            // Pause
+            this.pauseSession();
+        }
+    }
+    
+    /**
+     * Pause the current session
+     */
+    pauseSession() {
+        if (!this.isActive || !this.isRunning || this.isPaused) return;
+        
+        this.isPaused = true;
+        this.pausedAt = Date.now();
+        
+        // Clear the timer
+        if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+        
+        // Stop tick sounds and status updates
+        this.stopTickSounds();
+        this.stopStatusUpdates();
+        
+        // Update UI
+        this.updateStatusDisplay();
+        this.updatePomodoroButton();
+        
+        showNotification('🍅 Pomodoro session paused', 'info');
+        console.log('🍅 Session paused');
+    }
+    
+    /**
+     * Resume the paused session
+     */
+    resumeSession() {
+        if (!this.isActive || !this.isPaused) return;
+        
+        // Calculate how much time was remaining when paused
+        const timeElapsedBeforePause = this.pausedAt - this.startTime;
+        const remainingTimeWhenPaused = this.originalDuration - timeElapsedBeforePause;
+        
+        // Reset start time to now, keeping the same remaining time
+        this.startTime = Date.now();
+        this.remainingTime = remainingTimeWhenPaused;
+        
+        this.isPaused = false;
+        this.pausedAt = null;
+        
+        // Restart the timer with the remaining time
+        this.timer = setTimeout(() => {
+            if (this.currentPhase === 'work') {
+                this.endWorkPeriod();
+            } else {
+                this.endBreakPeriod();
+            }
+        }, this.remainingTime);
+        
+        // Restart tick sounds and status updates
+        if (this.currentPhase === 'work') {
+            this.startTickSounds();
+        }
+        this.startStatusUpdates();
+        
+        // Update UI
+        this.updateStatusDisplay();
+        this.updatePomodoroButton();
+        
+        showNotification('🍅 Pomodoro session resumed', 'success');
+        console.log('🍅 Session resumed');
+    }
+    
+    /**
+     * Show the pause button in the banner
+     */
+    showPauseButton() {
+        const controls = document.getElementById('pomodoroBannerControls');
+        if (controls) {
+            controls.style.display = 'flex';
+        }
+    }
+    
+    /**
+     * Hide the pause button in the banner
+     */
+    hidePauseButton() {
+        const controls = document.getElementById('pomodoroBannerControls');
+        if (controls) {
+            controls.style.display = 'none';
+        }
+    }
+    
+    /**
+     * Update the pause button text based on current state
+     */
+    updatePauseButtonText() {
+        const pauseBtn = document.getElementById('pomodoroPauseBtn');
+        if (pauseBtn) {
+            pauseBtn.textContent = this.isPaused ? 'Resume' : 'Pause';
         }
     }
     
