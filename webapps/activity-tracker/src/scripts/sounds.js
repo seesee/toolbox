@@ -27,7 +27,11 @@ class SoundManager {
             'cosmic': 'Cosmic Blip',
             'ocean': 'Ocean Wave',
             'forest': 'Forest Chirp',
-            'failsafe': 'Failsafe'
+            'failsafe': 'Failsafe',
+            // Pomodoro tick sounds
+            'soft-tick': 'Soft Tick',
+            'classic-tick': 'Classic Tick',
+            'digital-tick': 'Digital Tick'
         };
         this.initAudioContext();
     }
@@ -133,6 +137,15 @@ class SoundManager {
                     break;
                 case 'failsafe':
                     this.playFailsafe(currentTime);
+                    break;
+                case 'soft-tick':
+                    this.playSoftTick(currentTime);
+                    break;
+                case 'classic-tick':
+                    this.playClassicTick(currentTime);
+                    break;
+                case 'digital-tick':
+                    this.playDigitalTick(currentTime);
                     break;
                 default:
                     this.playClassicBloop(currentTime);
@@ -822,6 +835,101 @@ class SoundManager {
         }
         
         console.log('✨ Failsafe sound: Magic activated! ✨');
+    }
+
+    // === POMODORO TICK SOUNDS ===
+
+    /**
+     * Soft tick sound - gentle but crisp digital-style click
+     */
+    playSoftTick(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        // Triangle wave like digital but lower pitch for softness
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(1800, currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(900, currentTime + 0.005);
+        
+        // Band-pass filter like digital but lower Q for gentleness
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1200, currentTime);
+        filter.Q.setValueAtTime(4, currentTime);
+        
+        // Sharp but softer envelope like digital
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.035, currentTime + 0.0005);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.02);
+        
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.02);
+    }
+
+    /**
+     * Classic tick sound - crisp digital-style click with classic feel
+     */
+    playClassicTick(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        // Triangle wave like digital but slightly higher pitch for classic feel
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(2000, currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1000, currentTime + 0.005);
+        
+        // Band-pass filter like digital but mid-range for classic sound
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1350, currentTime);
+        filter.Q.setValueAtTime(5, currentTime);
+        
+        // Sharp digital-style envelope with slightly more volume
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.045, currentTime + 0.0005);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.02);
+        
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.02);
+    }
+
+    /**
+     * Digital tick sound - crisp electronic click
+     */
+    playDigitalTick(currentTime) {
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        const filter = this.audioContext.createBiquadFilter();
+        
+        // Triangle wave for cleaner digital sound
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(2200, currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(1100, currentTime + 0.005);
+        
+        // Band-pass filter for focused click
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1500, currentTime);
+        filter.Q.setValueAtTime(6, currentTime);
+        
+        // Ultra-sharp digital click envelope
+        gainNode.gain.setValueAtTime(0, currentTime);
+        gainNode.gain.linearRampToValueAtTime(0.05, currentTime + 0.0005);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, currentTime + 0.02);
+        
+        oscillator.connect(filter);
+        filter.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.start(currentTime);
+        oscillator.stop(currentTime + 0.02);
     }
 
     /**

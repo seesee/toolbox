@@ -11,6 +11,25 @@ body {
     color: #333;
 }
 
+/* Fix HR overflow on constrained screens */
+hr {
+    margin: 15px 0;
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.template-overlay hr {
+    margin: 10px 0;
+    max-width: calc(100% - 20px);
+}
+
+.modal hr {
+    margin: 15px 0;
+    max-width: calc(100% - 20px);
+}
+
 /* Improved heading spacing throughout the UI */
 h2 {
     margin-bottom: 20px;
@@ -39,8 +58,19 @@ h3 {
 
 .nav {
     display: flex;
-    gap: 15px;
+    justify-content: space-between;
+    align-items: center;
     margin-top: 15px;
+}
+
+.nav-left {
+    display: flex;
+    gap: 15px;
+}
+
+.nav-right {
+    display: flex;
+    gap: 15px;
 }
 
 .nav-btn {
@@ -398,32 +428,7 @@ h3 {
     border-left: 4px solid #38a169;
 }
 
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-}
-
-.modal.active {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background: white;
-    padding: 30px;
-    border-radius: 15px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-}
+/* Modal styles moved to improved version below */
 
 .status-indicator {
     display: inline-block;
@@ -633,13 +638,42 @@ h3 {
     text-align: center;
 }
 
+/* Pomodoro button styling */
+.pomodoro-btn {
+    background: #f56565 !important;
+    min-width: 160px;
+    text-align: center;
+}
+.pomodoro-btn:hover {
+    background: #e53e3e !important;
+}
+.pomodoro-btn.active {
+    background: #c53030 !important;
+    animation: pulse 2s infinite;
+}
+.pomodoro-btn.breaking {
+    background: #0891b2 !important;
+}
+.pomodoro-btn.breaking:hover {
+    background: #0e7490 !important;
+}
+
 @media (max-width: 768px) {
     .container {
         padding: 10px;
     }
     
     .nav {
-        flex-wrap: wrap;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .nav-left, .nav-right {
+        justify-content: center;
+    }
+    
+    .nav-right {
+        gap: 10px;
     }
     
     .entry-item {
@@ -789,10 +823,6 @@ body.dark-mode {
     color: #c6f6d5;
 }
 
-.dark-mode .modal-content {
-    background: #2d3748;
-}
-
 .dark-mode .debug-info {
     background: #1a202c;
     border-left-color: #667eea;
@@ -903,17 +933,32 @@ body.dark-mode {
 }
 
 .template-manager-header {
-    padding: 20px 30px;
+    padding: 15px 20px;
     border-bottom: 1px solid #e2e8f0;
     display: flex;
-    justify-content: space-between;
     align-items: center;
     border-radius: 15px 15px 0 0;
+    flex-shrink: 0;
+    background: #f8f9fa;
 }
 
 .template-manager-header h2 {
     margin: 0;
     color: #2d3748;
+    font-size: 1.25rem;
+    flex: 1;
+}
+
+.template-manager-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-right: 30px;
+}
+
+.template-manager-actions .btn {
+    font-size: 0.875rem;
+    padding: 8px 16px;
 }
 
 .btn-close {
@@ -937,6 +982,7 @@ body.dark-mode {
     display: grid;
     grid-template-columns: 300px 1fr;
     min-height: 0;
+    overflow: hidden;
 }
 
 .template-list-panel {
@@ -945,6 +991,7 @@ body.dark-mode {
     display: flex;
     flex-direction: column;
     background: #f7fafc;
+    overflow-y: auto;
 }
 
 .template-list-panel h3 {
@@ -1275,6 +1322,7 @@ body.dark-mode {
 
 .dark-mode .template-manager-header {
     border-bottom-color: #4a5568;
+    background: #1a202c;
 }
 
 .dark-mode .template-manager-header h2 {
@@ -1581,6 +1629,95 @@ body.dark-mode {
     gap: 10px;
 }
 
+/* Enhanced Pomodoro Status Section */
+.pomodoro-status-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    text-align: center;
+}
+.dark-mode .pomodoro-status-section {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pomodoro-status {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+.pomodoro-status.disabled {
+    color: #6b7280;
+    background: rgba(107, 114, 128, 0.1);
+}
+.pomodoro-status.ready {
+    color: #059669;
+    background: rgba(5, 150, 105, 0.1);
+}
+.pomodoro-status.working {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.1);
+    animation: pulse 2s infinite;
+}
+.pomodoro-status.breaking {
+    color: #0891b2;
+    background: rgba(8, 145, 178, 0.1);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.pomodoro-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.pomodoro-hint {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 8px 0 0 0;
+    font-style: italic;
+}
+.dark-mode .pomodoro-hint {
+    color: #9ca3af;
+}
+
+/* Pomodoro Configuration Sections */
+.pomodoro-config h4 {
+    color: #374151;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 20px 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding-bottom: 5px;
+}
+.dark-mode .pomodoro-config h4 {
+    color: #d1d5db;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.pomodoro-sounds {
+    margin-bottom: 15px;
+}
+.pomodoro-sounds .form-group {
+    margin-bottom: 10px;
+}
+
+.pomodoro-announce-sounds {
+    margin-bottom: 15px;
+}
+.pomodoro-announce-sounds .form-group {
+    margin-bottom: 10px;
+}
+
 @media (max-width: 768px) {
     .settings-grid-two-col {
         grid-template-columns: 1fr !important;
@@ -1591,11 +1728,131 @@ body.dark-mode {
     }
 }
 
+/* Modal improvements */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal[style*="block"] {
+    display: flex !important;
+}
+
+.modal-content {
+    background: white;
+    padding: 0;
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8f9fa;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #2d3748;
+    font-size: 1.25rem;
+}
+
+.modal-body {
+    padding: 30px;
+    overflow-y: auto;
+    max-height: calc(90vh - 140px);
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #718096;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-close:hover {
+    background: #f7fafc;
+    color: #2d3748;
+}
+
 /* Template Guide Modal */
 .template-guide-content {
     max-width: 800px;
-    max-height: 80vh;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+.template-guide-content .modal-body {
     overflow-y: auto;
+}
+
+/* About Modal */
+.about-modal-content {
+    max-width: 600px;
+}
+
+.about-section {
+    margin-bottom: 25px;
+}
+
+.about-section h4 {
+    color: #4a5568;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.diagnostic-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.diagnostic-buttons .btn {
+    font-size: 0.875rem;
+}
+
+.about-section p {
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.about-section ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.about-section li {
+    margin-bottom: 5px;
+    line-height: 1.5;
 }
 
 .template-guide-content h4 {
@@ -1625,6 +1882,30 @@ body.dark-mode {
     padding: 0;
 }
 
+/* Dark mode modal styles */
+.dark-mode .modal-content {
+    background: #2d3748;
+}
+
+.dark-mode .modal-header {
+    background: #1a202c;
+    border-bottom-color: #4a5568;
+}
+
+.dark-mode .modal-header h3 {
+    color: #e2e8f0;
+}
+
+.dark-mode .btn-close {
+    color: #a0aec0;
+}
+
+.dark-mode .btn-close:hover {
+    background: #1a202c;
+    color: #e2e8f0;
+}
+
+.dark-mode .about-section h4,
 .dark-mode .template-guide-content h4 {
     color: #cbd5e0;
 }

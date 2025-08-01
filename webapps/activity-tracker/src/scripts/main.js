@@ -63,6 +63,48 @@ function addCurrentTime() {
 }
 
 /**
+ * Generate sound option elements for dropdowns
+ * @param {Array} excludeSounds - Array of sound keys to exclude (e.g., tick sounds)
+ * @param {string} selectedValue - Currently selected value
+ * @returns {string} HTML string of option elements
+ */
+function generateSoundOptions(excludeSounds = [], selectedValue = '') {
+    // Get all available sounds from SoundManager
+    const allSounds = {
+        'classic': 'Classic Bloop',
+        'gentle': 'Gentle Chime', 
+        'urgent': 'Urgent Ping',
+        'digital': 'Digital Beep',
+        'nature': 'Nature Drop',
+        'mechanical': 'Mechanical Click',
+        'spacey': 'Spacey Wobble',
+        'corporate': 'Corporate Ding',
+        'retro': 'Retro Arcade',
+        'piano': 'Piano Note',
+        'bell': 'Temple Bell',
+        'whistle': 'Train Whistle',
+        'bubble': 'Bubble Pop',
+        'glass': 'Glass Tap',
+        'wood': 'Wood Block',
+        'metal': 'Metal Ting',
+        'ethereal': 'Ethereal Hum',
+        'cosmic': 'Cosmic Blip',
+        'ocean': 'Ocean Wave',
+        'forest': 'Forest Chirp',
+        'failsafe': 'Failsafe'
+    };
+    
+    return Object.entries(allSounds)
+        .filter(([key]) => !excludeSounds.includes(key))
+        .sort(([, nameA], [, nameB]) => nameA.localeCompare(nameB))
+        .map(([key, name]) => {
+            const selected = key === selectedValue ? ' selected' : '';
+            return `<option value="${key}"${selected}>${name}</option>`;
+        })
+        .join('');
+}
+
+/**
  * Generate report based on selected dates
  */
 function generateReport() {
@@ -148,9 +190,8 @@ function testNotificationSound() {
  */
 function previewNotificationSound() {
     const soundType = document.getElementById('notificationSoundType').value;
-    const muted = document.getElementById('muteNotificationSound').checked;
     
-    if (tracker && tracker.soundManager && !muted) {
+    if (tracker && tracker.soundManager && !tracker.isNotificationSoundMuted()) {
         tracker.soundManager.playSound(soundType, false);
     }
 }
@@ -170,6 +211,30 @@ function showTemplateGuide() {
  */
 function closeTemplateGuide() {
     const modal = document.getElementById('templateGuideModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Show About modal
+ */
+function showAbout() {
+    const modal = document.getElementById('aboutModal');
+    if (modal) {
+        modal.style.display = 'block';
+        // Update debug info when modal opens
+        if (tracker) {
+            tracker.updateAboutDebugInfo();
+        }
+    }
+}
+
+/**
+ * Close About modal
+ */
+function closeAbout() {
+    const modal = document.getElementById('aboutModal');
     if (modal) {
         modal.style.display = 'none';
     }
@@ -243,11 +308,60 @@ function closeEditModal() {
 }
 
 /**
+ * Close Pomodoro activity modal
+ */
+function closePomodoroActivityModal() {
+    const modal = document.getElementById('pomodoroActivityModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('pomodoroActivityForm').reset();
+    }
+}
+
+/**
+ * Show Pomodoro activity modal
+ */
+function showPomodoroActivityModal() {
+    const modal = document.getElementById('pomodoroActivityModal');
+    if (modal) {
+        modal.style.display = 'block';
+        setTimeout(() => {
+            const activityInput = document.getElementById('pomodoroActivityName');
+            if (activityInput) {
+                activityInput.focus();
+            }
+        }, 100);
+    }
+}
+
+/**
  * Toggle pause/resume for notifications
  */
 function togglePause() {
     if (tracker) {
         tracker.togglePause();
+    }
+}
+
+/**
+ * Toggle Pomodoro mode from navigation button
+ */
+function togglePomodoro() {
+    if (tracker && tracker.pomodoroManager) {
+        tracker.pomodoroManager.togglePomodoroFromButton();
+    }
+}
+
+/**
+ * Test Pomodoro tick sounds (for debugging)
+ */
+function testPomodoroTick(soundType = 'soft') {
+    if (tracker && tracker.pomodoroManager) {
+        console.log(`Testing Pomodoro tick sound: ${soundType}`);
+        tracker.pomodoroManager.settings.tickSound = soundType;
+        tracker.pomodoroManager.playTickSound();
+    } else {
+        console.error('Tracker or Pomodoro Manager not available');
     }
 }
 
@@ -584,7 +698,16 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('modal')) {
-        closeEditModal();
+        // Close the appropriate modal based on which one is open
+        if (e.target.id === 'templateGuideModal') {
+            closeTemplateGuide();
+        } else if (e.target.id === 'aboutModal') {
+            closeAbout();
+        } else if (e.target.id === 'pomodoroActivityModal') {
+            closePomodoroActivityModal();
+        } else {
+            closeEditModal();
+        }
     }
 });
 
@@ -594,16 +717,48 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
     // Esc key closes modals
     if (e.key === 'Escape') {
-        closeEditModal();
+        // Close whichever modal is currently open
+        const templateGuideModal = document.getElementById('templateGuideModal');
+        const aboutModal = document.getElementById('aboutModal');
+        const editModal = document.getElementById('editModal');
+        const pomodoroActivityModal = document.getElementById('pomodoroActivityModal');
+        
+        if (templateGuideModal && templateGuideModal.style.display === 'block') {
+            closeTemplateGuide();
+        } else if (aboutModal && aboutModal.style.display === 'block') {
+            closeAbout();
+        } else if (pomodoroActivityModal && pomodoroActivityModal.style.display === 'block') {
+            closePomodoroActivityModal();
+        } else if (editModal && editModal.style.display === 'block') {
+            closeEditModal();
+        }
     }
     
     // Ctrl/Cmd + Enter submits the activity form when focused
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         const activeElement = document.activeElement;
+        
+        // Main activity form
         if (activeElement && (activeElement.id === 'activity' || activeElement.id === 'description')) {
             const form = document.getElementById('activityForm');
             if (form) {
                 form.dispatchEvent(new Event('submit'));
+            }
+        }
+        
+        // Edit modal form
+        if (activeElement && (activeElement.id === 'editActivity' || activeElement.id === 'editDescription' || activeElement.id === 'editTimestamp')) {
+            const editForm = document.getElementById('editForm');
+            if (editForm) {
+                editForm.dispatchEvent(new Event('submit'));
+            }
+        }
+        
+        // Pomodoro activity modal form
+        if (activeElement && (activeElement.id === 'pomodoroActivityName' || activeElement.id === 'pomodoroActivityDescription')) {
+            const pomodoroForm = document.getElementById('pomodoroActivityForm');
+            if (pomodoroForm) {
+                pomodoroForm.dispatchEvent(new Event('submit'));
             }
         }
     }
@@ -724,6 +879,8 @@ if (typeof module !== 'undefined' && module.exports) {
         previewNotificationSound,
         showTemplateGuide,
         closeTemplateGuide,
+        showAbout,
+        closeAbout,
         copyReportToClipboard
     };
 }

@@ -13,9 +13,16 @@ Object.assign(ActivityTracker.prototype, {
         if (!templateSelector) return;
 
         const templates = this.getReportTemplates();
-        templateSelector.innerHTML = Object.keys(templates).map(key => 
-            `<option value="${key}">${templates[key].name}</option>`
-        ).join('');
+        const defaultTemplates = window.ReportTemplates || {};
+        
+        templateSelector.innerHTML = Object.keys(templates).map(key => {
+            const template = templates[key];
+            const isCustom = !defaultTemplates[key];
+            const displayName = isCustom ? `${template.name} (Custom)` : template.name;
+            return `<option value="${key}">${displayName}</option>`;
+        }).join('');
+        
+        console.log('Initialized report templates dropdown with', Object.keys(templates).length, 'templates');
     },
 
     /**

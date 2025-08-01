@@ -36,9 +36,9 @@ class ActivityTracker {
             pauseDuration: 60,
             notificationsPausedUntil: null,
             notificationsEnabled: true,
-            muteNotificationSound: false,
+            soundMuteMode: 'none', // 'none', 'all', 'pomodoro', 'notifications'
             notificationSoundType: "classic",
-            darkMode: false,
+            darkModePreference: 'light', // 'light', 'dark', 'system'
             ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
         };
 
@@ -85,20 +85,25 @@ class ActivityTracker {
     }
 
     /**
-     * Get current report templates, from localStorage or defaults.
+     * Get current report templates, combining defaults with custom templates from localStorage.
      */
     getReportTemplates() {
-        const storedTemplates = localStorage.getItem('reportTemplates');
-        if (storedTemplates) {
+        // Start with default templates
+        const allTemplates = { ...(window.ReportTemplates || {}) };
+        
+        // Load and merge custom templates
+        const customTemplatesData = localStorage.getItem('customReportTemplates');
+        if (customTemplatesData) {
             try {
-                return JSON.parse(storedTemplates);
+                const customTemplates = JSON.parse(customTemplatesData);
+                Object.assign(allTemplates, customTemplates);
+                console.log('Loaded custom templates:', Object.keys(customTemplates));
             } catch (e) {
                 console.error("Error parsing custom report templates from localStorage", e);
-                // Fallback to default if parsing fails
-                return window.ReportTemplates || {};
             }
         }
-        return window.ReportTemplates || {};
+        
+        return allTemplates;
     }
 
     /**
@@ -208,9 +213,12 @@ class ActivityTracker {
             'startTime', 
             'endTime',
             'pauseDuration',
-            'muteNotificationSound',
+            'soundMuteMode',
             'notificationSoundType',
-            'darkMode',
+            'darkModePreference',
+            'pomodoroAutoStart',
+            'pomodoroAutoLog',
+            'pomodoroLogBreaks',
             'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
         ];
 
@@ -239,9 +247,12 @@ class ActivityTracker {
         this.settings.startTime = document.getElementById('startTime').value;
         this.settings.endTime = document.getElementById('endTime').value;
         this.settings.pauseDuration = parseInt(document.getElementById('pauseDuration').value);
-        this.settings.muteNotificationSound = document.getElementById('muteNotificationSound').checked;
+        this.settings.soundMuteMode = document.getElementById('soundMuteMode').value;
         this.settings.notificationSoundType = document.getElementById('notificationSoundType').value;
-        this.settings.darkMode = document.getElementById('darkMode').checked;
+        this.settings.darkModePreference = document.getElementById('darkModePreference').value;
+        this.settings.pomodoroAutoStart = document.getElementById('pomodoroAutoStart')?.checked || false;
+        this.settings.pomodoroAutoLog = document.getElementById('pomodoroAutoLog')?.checked !== false;
+        this.settings.pomodoroLogBreaks = document.getElementById('pomodoroLogBreaks')?.checked || false;
 
         // Update working days
         ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(day => {
@@ -278,11 +289,25 @@ class ActivityTracker {
     }
 
     /**
+     * Check if notification sounds are muted
+     */
+    isNotificationSoundMuted() {
+        return this.settings.soundMuteMode === 'all' || this.settings.soundMuteMode === 'notifications';
+    }
+
+    /**
+     * Check if Pomodoro sounds are muted
+     */
+    isPomodoroSoundMuted() {
+        return this.settings.soundMuteMode === 'all' || this.settings.soundMuteMode === 'pomodoro';
+    }
+
+    /**
      * Play notification sound
      */
     playNotificationSound() {
         if (this.soundManager) {
-            this.soundManager.playSound(this.settings.notificationSoundType, this.settings.muteNotificationSound);
+            this.soundManager.playSound(this.settings.notificationSoundType, this.isNotificationSoundMuted());
         }
     }
 
@@ -291,7 +316,7 @@ class ActivityTracker {
      */
     testNotificationSound() {
         if (this.soundManager) {
-            this.soundManager.playSound(this.settings.notificationSoundType, this.settings.muteNotificationSound);
+            this.soundManager.playSound(this.settings.notificationSoundType, this.isNotificationSoundMuted());
         }
         showNotification('Test sound played!', 'success');
     }
@@ -380,7 +405,7 @@ class ActivityTracker {
             document.getElementById('editTimestamp').value = 
                 new Date(entry.timestamp).toISOString().slice(0, 16);
             
-            document.getElementById('editModal').classList.add('active');
+            document.getElementById('editModal').style.display = 'block';
         }
     }
 
@@ -388,7 +413,7 @@ class ActivityTracker {
      * Close the edit modal
      */
     closeEditModal() {
-        document.getElementById('editModal').classList.remove('active');
+        document.getElementById('editModal').style.display = 'none';
     }
 
     /**
@@ -452,9 +477,9 @@ class ActivityTracker {
             startTime: document.getElementById('startTime').value,
             endTime: document.getElementById('endTime').value,
             pauseDuration: parseInt(document.getElementById('pauseDuration').value),
-            muteNotificationSound: document.getElementById('muteNotificationSound').checked,
+            soundMuteMode: document.getElementById('soundMuteMode').value,
             notificationSoundType: document.getElementById('notificationSoundType').value,
-            darkMode: document.getElementById('darkMode').checked,
+            darkModePreference: document.getElementById('darkModePreference').value,
             workingDays: {
                 monday: document.getElementById('monday').checked,
                 tuesday: document.getElementById('tuesday').checked,
@@ -468,7 +493,9 @@ class ActivityTracker {
             pomodoroEnabled: document.getElementById('pomodoroEnabled')?.checked || false,
             pomodoroWorkDuration: parseInt(document.getElementById('pomodoroWorkDuration')?.value) || 25,
             pomodoroBreakDuration: parseInt(document.getElementById('pomodoroBreakDuration')?.value) || 5,
+            pomodoroAutoStart: document.getElementById('pomodoroAutoStart')?.checked || false,
             pomodoroAutoLog: document.getElementById('pomodoroAutoLog')?.checked !== false,
+            pomodoroLogBreaks: document.getElementById('pomodoroLogBreaks')?.checked || false,
             pomodoroLongBreak: document.getElementById('pomodoroLongBreak')?.checked || false
         };
 
@@ -478,7 +505,13 @@ class ActivityTracker {
         
         // Update Pomodoro manager if it exists
         if (this.pomodoroManager) {
+            this.pomodoroManager.saveSettings();
             this.pomodoroManager.loadSettings();
+        }
+        
+        // Also save any pending template changes
+        if (this.templateManagerState && this.templateManagerState.hasUnsavedChanges) {
+            this.saveTemplatesQuietly();
         }
         
         showNotification('Settings saved successfully!', 'success');
@@ -492,9 +525,11 @@ class ActivityTracker {
         document.getElementById('startTime').value = this.settings.startTime;
         document.getElementById('endTime').value = this.settings.endTime;
         document.getElementById('pauseDuration').value = this.settings.pauseDuration;
-        document.getElementById('muteNotificationSound').checked = this.settings.muteNotificationSound;
-        document.getElementById('notificationSoundType').value = this.settings.notificationSoundType;
-        document.getElementById('darkMode').checked = this.settings.darkMode;
+        document.getElementById('soundMuteMode').value = this.settings.soundMuteMode;
+        document.getElementById('darkModePreference').value = this.settings.darkModePreference;
+        
+        // Populate sound dropdowns with all available sounds
+        this.populateSoundDropdowns();
         
         Object.entries(this.settings.workingDays).forEach(([day, checked]) => {
             document.getElementById(day).checked = checked;
@@ -502,15 +537,63 @@ class ActivityTracker {
 
         this.applyTheme();
     }
+    
+    /**
+     * Populate all sound dropdowns with available sounds
+     */
+    populateSoundDropdowns() {
+        const soundDropdowns = [
+            { id: 'notificationSoundType', selectedValue: this.settings.notificationSoundType },
+            { id: 'pomodoroShortBreakSound', selectedValue: this.settings.pomodoroShortBreakSound || 'gentle' },
+            { id: 'pomodoroLongBreakSound', selectedValue: this.settings.pomodoroLongBreakSound || 'bell' },
+            { id: 'pomodoroResumeSound', selectedValue: this.settings.pomodoroResumeSound || 'digital' }
+        ];
+        
+        soundDropdowns.forEach(({ id, selectedValue }) => {
+            const dropdown = document.getElementById(id);
+            if (dropdown && typeof generateSoundOptions === 'function') {
+                dropdown.innerHTML = generateSoundOptions([], selectedValue);
+            }
+        });
+    }
 
     /**
      * Apply the current theme (light/dark)
      */
     applyTheme() {
-        if (this.settings.darkMode) {
+        let shouldUseDarkMode = false;
+        
+        switch (this.settings.darkModePreference) {
+            case 'dark':
+                shouldUseDarkMode = true;
+                break;
+            case 'light':
+                shouldUseDarkMode = false;
+                break;
+            case 'system':
+                // Check system preference
+                shouldUseDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                break;
+            default:
+                shouldUseDarkMode = false;
+        }
+        
+        if (shouldUseDarkMode) {
             document.body.classList.add('dark-mode');
         } else {
             document.body.classList.remove('dark-mode');
+        }
+        
+        // Listen for system preference changes if using system mode
+        if (this.settings.darkModePreference === 'system') {
+            if (!this.systemThemeListener) {
+                this.systemThemeListener = (e) => {
+                    if (this.settings.darkModePreference === 'system') {
+                        this.applyTheme();
+                    }
+                };
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', this.systemThemeListener);
+            }
         }
     }
 
@@ -739,6 +822,12 @@ class ActivityTracker {
      */
     updateDebugInfo() {
         const debugEl = document.getElementById('debugText');
+        if (!debugEl) {
+            // Element doesn't exist (removed from UI), skip debug info update
+            console.log('Debug info element not found, skipping update');
+            return;
+        }
+        
         const info = [];
         
         // Application version
@@ -787,9 +876,73 @@ class ActivityTracker {
         }
         
         info.push(`Audio Support: ${this.soundManager && this.soundManager.audioContext ? 'Yes' : 'No'}`);
-        info.push(`Sound Muted: ${this.settings.muteNotificationSound ? 'Yes' : 'No'}`);
+        info.push(`Sound Settings: ${this.settings.soundMuteMode === 'none' ? 'All enabled' : this.settings.soundMuteMode}`);
         info.push(`Sound Type: ${this.settings.notificationSoundType}`);
         info.push(`Last Updated: ${new Date().toLocaleTimeString('en-GB')}`);
+        
+        debugEl.innerHTML = info.join('<br>');
+    }
+
+    /**
+     * Update debug info specifically for the About modal
+     */
+    async updateAboutDebugInfo() {
+        const debugEl = document.getElementById('aboutDebugInfo');
+        if (!debugEl) return;
+        
+        const info = [];
+        
+        // Application version
+        info.push(`<strong>Version:</strong> ${typeof APP_VERSION !== 'undefined' ? APP_VERSION : 'Unknown'}`);
+        info.push('');
+        
+        info.push(`<strong>Browser:</strong> ${navigator.userAgent.split(' ').slice(-2).join(' ')}`);
+        info.push(`<strong>Platform:</strong> ${navigator.platform || 'Unknown'}`);
+        info.push(`<strong>Protocol:</strong> ${window.location.protocol}`);
+        info.push('');
+        
+        info.push(`<strong>Notification API:</strong> ${'Notification' in window ? 'Available' : 'Not Available'}`);
+        if ('Notification' in window) {
+            info.push(`<strong>Permission:</strong> ${Notification.permission}`);
+            info.push(`<strong>Max Actions:</strong> ${Notification.maxActions || 'Unknown'}`);
+        }
+        info.push('');
+        
+        // Enhanced Service Worker diagnostics
+        if ('serviceWorker' in navigator) {
+            info.push(`<strong>Service Worker:</strong> Available`);
+            
+            if (navigator.serviceWorker.controller) {
+                info.push(`<strong>SW State:</strong> ${navigator.serviceWorker.controller.state}`);
+                info.push(`<strong>SW URL:</strong> ${navigator.serviceWorker.controller.scriptURL.split('/').pop()}`);
+            } else {
+                info.push(`<strong>SW State:</strong> No controller`);
+            }
+            
+            // Check registration status with proper await
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    info.push(`<strong>SW Scope:</strong> ${registration.scope}`);
+                } else {
+                    info.push(`<strong>SW Scope:</strong> No registration`);
+                }
+            } catch (error) {
+                console.warn('SW registration check failed:', error);
+                info.push(`<strong>SW Scope:</strong> Check failed`);
+            }
+        } else {
+            info.push(`<strong>Service Worker:</strong> Not Available`);
+            if (window.location.protocol === 'file:') {
+                info.push(`<strong>SW Reason:</strong> file:// protocol (expected)`);
+            }
+        }
+        info.push('');
+        
+        info.push(`<strong>Audio Support:</strong> ${this.soundManager && this.soundManager.audioContext ? 'Yes' : 'No'}`);
+        info.push(`<strong>Sound Settings:</strong> ${this.settings.soundMuteMode === 'none' ? 'All enabled' : this.settings.soundMuteMode}`);
+        info.push(`<strong>Sound Type:</strong> ${this.settings.notificationSoundType}`);
+        info.push(`<strong>Last Updated:</strong> ${new Date().toLocaleTimeString('en-GB')}`);
         
         debugEl.innerHTML = info.join('<br>');
     }
@@ -1648,25 +1801,55 @@ class ActivityTracker {
         // Update template preview grid
         this.initTemplatePreviewGrid();
         
-        // Update template dropdown in reports
-        const reportTemplate = document.getElementById('reportTemplate');
-        if (reportTemplate) {
-            const currentValue = reportTemplate.value;
-            reportTemplate.innerHTML = '';
-            
-            Object.keys(this.templateManagerState.templates).forEach(templateId => {
-                const template = this.templateManagerState.templates[templateId];
-                const option = document.createElement('option');
-                option.value = templateId;
-                option.textContent = template.name;
-                reportTemplate.appendChild(option);
-            });
-            
-            // Restore selection or set default
-            reportTemplate.value = currentValue || this.settings.defaultTemplate || 'detailed-html';
+        // Update template dropdown in reports using proper method
+        if (this.initReportTemplates) {
+            const currentValue = document.getElementById('reportTemplate')?.value;
+            this.initReportTemplates();
+            // Restore selection if the template still exists
+            const reportTemplate = document.getElementById('reportTemplate');
+            if (reportTemplate && currentValue) {
+                reportTemplate.value = currentValue;
+            }
         }
 
         this.closeTemplateManager();
         showNotification('All templates saved successfully!', 'success');
+    }
+
+    /**
+     * Save templates quietly (without notifications or closing manager)
+     */
+    saveTemplatesQuietly() {
+        if (!this.templateManagerState) return;
+
+        // Save current template if editing
+        if (this.templateManagerState.currentTemplateId) {
+            this.saveCurrentTemplate();
+        }
+
+        // Save templates to localStorage
+        const customTemplates = {};
+        Object.keys(this.templateManagerState.templates).forEach(templateId => {
+            // Only save custom templates (not default ones)
+            if (!window.ReportTemplates || !window.ReportTemplates[templateId]) {
+                customTemplates[templateId] = this.templateManagerState.templates[templateId];
+            }
+        });
+
+        localStorage.setItem('customReportTemplates', JSON.stringify(customTemplates));
+        this.templateManagerState.hasUnsavedChanges = false;
+        
+        // Update template dropdown in reports using proper method
+        if (this.initReportTemplates) {
+            const currentValue = document.getElementById('reportTemplate')?.value;
+            this.initReportTemplates();
+            // Restore selection if the template still exists
+            const reportTemplate = document.getElementById('reportTemplate');
+            if (reportTemplate && currentValue) {
+                reportTemplate.value = currentValue;
+            }
+        }
+        
+        console.log('Templates saved quietly to localStorage');
     }
 }

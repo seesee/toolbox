@@ -16,10 +16,15 @@
             <h1>Activity Tracker</h1>
             <p>Track your daily activities with automatic reminders</p>
             <div class="nav">
-                <button class="nav-btn active" onclick="showSection('tracker', event)">Tracker</button>
-                <button class="nav-btn" onclick="showSection('reports', event)">Reports</button>
-                <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
-                <button id="pauseButton" class="nav-btn" onclick="togglePause()">Pause Alerts</button>
+                <div class="nav-left">
+                    <button class="nav-btn active" onclick="showSection('tracker', event)">Tracker</button>
+                    <button class="nav-btn" onclick="showSection('reports', event)">Reports</button>
+                    <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
+                </div>
+                <div class="nav-right">
+                    <button id="pauseButton" class="nav-btn" onclick="togglePause()">Pause Alerts</button>
+                    <button id="pomodoroButton" class="nav-btn pomodoro-btn" onclick="togglePomodoro()" style="display: none;">🍅 Start Pomodoro</button>
+                </div>
             </div>
         </div>
 
@@ -125,9 +130,7 @@
                 <div class="notification-buttons">
                     <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
                     <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
-                    <button class="btn btn-secondary" onclick="refreshNotificationStatus()">Refresh Status</button>
-                    <button class="btn btn-secondary" onclick="testNotificationSound()">Test Sound</button>
-                    <button class="btn btn-secondary" onclick="runServiceWorkerTest()">Test Service Worker</button>
+                    <button class="btn btn-info" onclick="showAbout()" title="View app information, version details, and diagnostic tools">About & Diagnostics</button>
                 </div>
             </div>
 
@@ -171,37 +174,26 @@
                     <div class="form-group">
                         <label for="notificationSoundType" title="Choose the sound that plays with notifications">Notification Sound</label>
                         <select id="notificationSoundType" onchange="previewNotificationSound()">
-                            <option value="bubble">Bubble Pop</option>
-                            <option value="classic">Classic Bloop</option>
-                            <option value="corporate">Corporate Ding</option>
-                            <option value="cosmic">Cosmic Blip</option>
-                            <option value="digital">Digital Beep</option>
-                            <option value="ethereal">Ethereal Hum</option>
-                            <option value="failsafe">Failsafe</option>
-                            <option value="forest">Forest Chirp</option>
-                            <option value="gentle">Gentle Chime</option>
-                            <option value="glass">Glass Tap</option>
-                            <option value="mechanical">Mechanical Click</option>
-                            <option value="metal">Metal Ting</option>
-                            <option value="nature">Nature Drop</option>
-                            <option value="ocean">Ocean Wave</option>
-                            <option value="piano">Piano Note</option>
-                            <option value="retro">Retro Arcade</option>
-                            <option value="spacey">Spacey Wobble</option>
-                            <option value="bell">Temple Bell</option>
-                            <option value="whistle">Train Whistle</option>
-                            <option value="urgent">Urgent Ping</option>
-                            <option value="wood">Wood Block</option>
+                            <!-- Options will be populated by JavaScript -->
                         </select>
                     </div>
                     <div class="settings-toggles">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="muteNotificationSound">
-                            <label for="muteNotificationSound" title="Disable notification sounds while keeping visual notifications">Mute notification sound</label>
+                        <div class="form-group">
+                            <label for="soundMuteMode" title="Choose which sounds to mute">Sound Settings</label>
+                            <select id="soundMuteMode">
+                                <option value="none">All sounds enabled</option>
+                                <option value="all">Mute all sounds</option>
+                                <option value="pomodoro">Mute Pomodoro sounds only</option>
+                                <option value="notifications">Mute notification sounds only</option>
+                            </select>
                         </div>
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="darkMode">
-                            <label for="darkMode" title="Switch between light and dark color themes">Enable dark mode</label>
+                        <div class="form-group">
+                            <label for="darkModePreference" title="Choose your colour theme preference">Colour Theme</label>
+                            <select id="darkModePreference">
+                                <option value="light">Light mode</option>
+                                <option value="dark">Dark mode</option>
+                                <option value="system">Follow system settings</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -272,6 +264,13 @@
                         </div>
                         
                         <div class="pomodoro-config" id="pomodoroConfig" style="display: none;">
+                            <!-- Pomodoro Status Display -->
+                            <div class="pomodoro-status-section">
+                                <div id="pomodoroStatus" class="pomodoro-status disabled">Pomodoro mode disabled</div>
+                                <p class="pomodoro-hint">Use the 🍅 button in the navigation to start/abandon sessions</p>
+                            </div>
+                            
+                            <!-- Timer Configuration -->
                             <div class="pomodoro-timers">
                                 <div class="form-group">
                                     <label for="pomodoroWorkDuration" title="Length of work periods in minutes">Work Duration (minutes)</label>
@@ -285,7 +284,7 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="pomodoroBreakDuration" title="Length of break periods in minutes">Break Duration (minutes)</label>
+                                    <label for="pomodoroBreakDuration" title="Length of short break periods in minutes">Short Break Duration (minutes)</label>
                                     <select id="pomodoroBreakDuration">
                                         <option value="3">3 minutes</option>
                                         <option value="5" selected>5 minutes</option>
@@ -293,15 +292,98 @@
                                         <option value="15">15 minutes</option>
                                     </select>
                                 </div>
+                                <div class="form-group">
+                                    <label for="pomodoroLongBreakDuration" title="Length of long break periods in minutes">Long Break Duration (minutes)</label>
+                                    <select id="pomodoroLongBreakDuration">
+                                        <option value="15" selected>15 minutes</option>
+                                        <option value="20">20 minutes</option>
+                                        <option value="30">30 minutes</option>
+                                        <option value="45">45 minutes</option>
+                                        <option value="60">60 minutes</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pomodoroLongBreakInterval" title="Number of work sessions before taking a long break">Sessions before long break</label>
+                                    <select id="pomodoroLongBreakInterval">
+                                        <option value="2">Every 2 sessions</option>
+                                        <option value="3">Every 3 sessions</option>
+                                        <option value="4" selected>Every 4 sessions</option>
+                                        <option value="5">Every 5 sessions</option>
+                                        <option value="6">Every 6 sessions</option>
+                                    </select>
+                                </div>
                             </div>
+                            
+                            <!-- Tick Sound Configuration -->
+                            <div class="pomodoro-sounds">
+                                <h4>Tick Sounds</h4>
+                                <div class="form-group">
+                                    <label for="pomodoroTickSound" title="Optional tick sound to remind you're in a work session">Tick Sound Type</label>
+                                    <select id="pomodoroTickSound">
+                                        <option value="none" selected>No ticking</option>
+                                        <option value="soft">Soft tick</option>
+                                        <option value="classic">Classic tick</option>
+                                        <option value="digital">Digital tick</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pomodoroTickInterval" title="How often to play the tick sound in seconds">Tick Interval (seconds)</label>
+                                    <select id="pomodoroTickInterval">
+                                        <option value="0" selected>Off (no ticking)</option>
+                                        <option value="1">Every 1 second</option>
+                                        <option value="2">Every 2 seconds</option>
+                                        <option value="3">Every 3 seconds</option>
+                                        <option value="4">Every 4 seconds</option>
+                                        <option value="5">Every 5 seconds</option>
+                                        <option value="10">Every 10 seconds</option>
+                                        <option value="15">Every 15 seconds</option>
+                                        <option value="30">Every 30 seconds</option>
+                                        <option value="60">Every minute</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Announce Sound Configuration -->
+                            <div class="pomodoro-announce-sounds">
+                                <h4>Announce Sounds</h4>
+                                <div class="form-group">
+                                    <label for="pomodoroShortBreakSound" title="Sound to play when short break starts">Short Break Announce</label>
+                                    <select id="pomodoroShortBreakSound">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pomodoroLongBreakSound" title="Sound to play when long break starts">Long Break Announce</label>
+                                    <select id="pomodoroLongBreakSound">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pomodoroResumeSound" title="Sound to play when resuming work after break">Resume Work Announce</label>
+                                    <select id="pomodoroResumeSound">
+                                        <!-- Options will be populated by JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- Pomodoro Options -->
                             <div class="pomodoro-options">
+                                <h4>Options</h4>
                                 <div class="checkbox-group">
-                                    <input type="checkbox" id="pomodoroAutoLog" checked>
-                                    <label for="pomodoroAutoLog" title="Automatically create activity log entries for work/break periods">Auto-log activities</label>
+                                    <input type="checkbox" id="pomodoroAutoStart">
+                                    <label for="pomodoroAutoStart" title="Automatically start the next session without requiring manual intervention">Automatically start next session</label>
                                 </div>
                                 <div class="checkbox-group">
-                                    <input type="checkbox" id="pomodoroLongBreak">
-                                    <label for="pomodoroLongBreak" title="Take a longer break every 4 cycles">Long break every 4 cycles</label>
+                                    <input type="checkbox" id="pomodoroAutoLog" checked>
+                                    <label for="pomodoroAutoLog" title="Prompt for activity description and create log entries for work sessions">Prompt for work session descriptions</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="pomodoroLogBreaks">
+                                    <label for="pomodoroLogBreaks" title="Also log break sessions in the activity tracker">Log break sessions too</label>
+                                </div>
+                                <div class="checkbox-group">
+                                    <input type="checkbox" id="pomodoroLongBreak" checked>
+                                    <label for="pomodoroLongBreak" title="Enable long breaks after completing multiple sessions">Enable long breaks</label>
                                 </div>
                             </div>
                         </div>
@@ -334,15 +416,8 @@
                 </div>
             </div>
 
-            <!-- About Section -->
-            <div class="about-section">
-                <div class="debug-info" id="debugInfo">
-                    <strong>About:</strong><br>
-                    <span id="debugText">Loading...</span>
-                </div>
-            </div>
 
-            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            <button class="btn btn-primary" onclick="saveSettings()">Manual Save Settings</button>
             <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
         </div>
     </div>
@@ -379,6 +454,9 @@
         <div class="template-overlay-content">
             <div class="template-manager-header">
                 <h2>Template Manager</h2>
+                <div class="template-manager-actions">
+                    <button class="btn btn-primary" onclick="saveAllTemplates()">Save All Changes</button>
+                </div>
                 <button class="btn-close" onclick="closeTemplateManager()">&times;</button>
             </div>
             
@@ -461,10 +539,6 @@
                 </div>
             </div>
             
-            <div class="template-manager-footer">
-                <button class="btn btn-primary" onclick="saveAllTemplates()">Save All Changes</button>
-                <button class="btn btn-secondary" onclick="closeTemplateManager()">Close</button>
-            </div>
         </div>
     </div>
 
@@ -525,6 +599,71 @@ Total activities: {{totalEntries}}
                     <li>CSV templates are great for data analysis in spreadsheets</li>
                     <li>Test your templates with the preview feature</li>
                 </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pomodoro Activity Modal -->
+    <div id="pomodoroActivityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Work Session Activity</h3>
+                <button class="btn-close" onclick="closePomodoroActivityModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="pomodoroActivityForm">
+                    <div class="form-group">
+                        <label for="pomodoroActivityName">What will you be working on?</label>
+                        <input type="text" id="pomodoroActivityName" required placeholder="e.g., Writing report, Meeting preparation">
+                    </div>
+                    <div class="form-group">
+                        <label for="pomodoroActivityDescription">Description (optional)</label>
+                        <textarea id="pomodoroActivityDescription" rows="3" placeholder="Additional details about this work session"></textarea>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">Start Work Session</button>
+                        <button type="button" class="btn btn-secondary" onclick="closePomodoroActivityModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="modal">
+        <div class="modal-content about-modal-content">
+            <div class="modal-header">
+                <h3>About Activity Tracker</h3>
+                <button class="btn-close" onclick="closeAbout()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="about-section">
+                    <h4>Application Info</h4>
+                    <div class="debug-info" id="aboutDebugInfo">Loading...</div>
+                </div>
+                
+                <div class="about-section">
+                    <h4>Diagnostic Tools</h4>
+                    <div class="diagnostic-buttons">
+                        <button class="btn btn-primary" onclick="testNotificationSound()" title="Play a test notification sound">Test Notification Sound</button>
+                        <button class="btn btn-secondary" onclick="runServiceWorkerTest()" title="Run comprehensive service worker diagnostics">Test Service Worker</button>
+                        <button class="btn btn-secondary" onclick="refreshNotificationStatus()" title="Refresh the notification permission status display - useful if permissions changed outside the app">Refresh Notification Status</button>
+                    </div>
+                </div>
+                
+                <div class="about-section">
+                    <h4>Version History</h4>
+                    <p>This is a personal activity tracking application with smart notifications, comprehensive reporting, and Pomodoro timer functionality.</p>
+                    <p><strong>Features:</strong></p>
+                    <ul>
+                        <li>🍅 Pomodoro Timer with configurable work/break cycles</li>
+                        <li>⏰ Smart notification system with customizable sounds</li>
+                        <li>📊 Comprehensive activity reporting with custom templates</li>
+                        <li>🌙 Dark mode support</li>
+                        <li>💾 Offline functionality with service worker</li>
+                        <li>📱 Progressive Web App (PWA) support</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
