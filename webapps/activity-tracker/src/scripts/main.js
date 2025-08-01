@@ -942,6 +942,18 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     
+    // Shift + Space focuses the activity input field
+    if (e.shiftKey && e.key === ' ') {
+        e.preventDefault();
+        const activityInput = document.getElementById('activity');
+        if (activityInput) {
+            activityInput.focus();
+            // Also switch to tracker section if not already there
+            showSection('tracker');
+        }
+        return;
+    }
+    
     // Ctrl/Cmd + Enter submits the activity form when focused
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         const activeElement = document.activeElement;

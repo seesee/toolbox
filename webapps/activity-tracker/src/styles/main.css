@@ -593,6 +593,13 @@ h3 {
     flex-wrap: wrap;
 }
 
+.todo-quick-set {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
 .btn-quick-set {
     padding: 4px 8px;
     font-size: 11px;
@@ -958,7 +965,7 @@ h3 {
     background: #f56565;
 }
 
-.notification-buttons {
+.reminder-buttons {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
@@ -1225,7 +1232,7 @@ h3 {
         gap: 6px;
     }
 
-    .notification-buttons {
+    .reminder-buttons {
         justify-content: center;
     }
 
@@ -2400,8 +2407,8 @@ body.dark-mode {
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
 }
 
-/* Notification Banner Styles */
-.notification-banner {
+/* Reminder Banner Styles */
+.reminder-banner {
     background: linear-gradient(135deg, #059669 0%, #047857 100%);
     color: white;
     padding: 15px 20px;
@@ -2410,7 +2417,7 @@ body.dark-mode {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-.notification-banner-content {
+.reminder-banner-content {
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
@@ -2419,13 +2426,13 @@ body.dark-mode {
     gap: 20px;
 }
 
-.notification-timer {
+.reminder-timer {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-#notificationTimeRemaining {
+#reminderTimeRemaining {
     font-size: 20px;
     font-weight: bold;
     background: rgba(255, 255, 255, 0.2);
@@ -2434,14 +2441,134 @@ body.dark-mode {
     min-width: 80px;
 }
 
-.notification-status {
+.reminder-status {
     font-size: 16px;
     opacity: 0.9;
 }
 
-/* Dark mode notification banner */
-.dark-mode .notification-banner {
+/* Dark mode reminder banner */
+.dark-mode .reminder-banner {
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+/* Combined Status Banner - matches header style */
+.status-banner {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin: 0 auto 20px auto;
+    max-width: 1200px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.status-banner-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.status-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.status-section:first-child:last-child {
+    /* Only one section active */
+    border-radius: 10px;
+}
+
+/* Pomodoro section styling */
+#pomodoroStatusSection {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+/* Reminder section styling */
+#reminderStatusSection {
+    background: linear-gradient(135deg, rgba(5, 150, 105, 0.1) 0%, rgba(4, 120, 87, 0.1) 100%);
+    border: 1px solid rgba(5, 150, 105, 0.2);
+}
+
+.status-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.status-label {
+    font-size: 16px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.status-timer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-button {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.status-button:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+.status-button:active {
+    background: rgba(102, 126, 234, 0.3);
+}
+
+/* Dark mode status banner */
+.dark-mode .status-banner {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .status-label {
+    color: #e5e7eb;
+}
+
+.dark-mode #pomodoroStatusSection {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+    border-color: rgba(79, 70, 229, 0.3);
+}
+
+.dark-mode #reminderStatusSection {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.2) 100%);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
+.dark-mode .status-button {
+    background: rgba(79, 70, 229, 0.2);
+    color: #a78bfa;
+    border-color: rgba(79, 70, 229, 0.4);
+}
+
+.dark-mode .status-button:hover {
+    background: rgba(79, 70, 229, 0.3);
+    border-color: rgba(79, 70, 229, 0.5);
 }
 
 .pomodoro-controls {

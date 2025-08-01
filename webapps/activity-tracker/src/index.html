@@ -33,32 +33,37 @@
                     <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
                 </div>
                 <div class="nav-right">
-                    <button id="pauseButton" class="nav-btn" onclick="togglePause()">Start Alerts</button>
+                    <button id="pauseButton" class="nav-btn" onclick="togglePause()">Start Reminders</button>
                     <button id="pomodoroButton" class="nav-btn pomodoro-btn" onclick="togglePomodoro()" style="display: none;">🍅 Start Pomodoro</button>
                 </div>
             </div>
         </div>
 
-        <!-- Pomodoro Status Banner -->
-        <div id="pomodoroStatusBanner" class="pomodoro-banner" style="display: none;">
-            <div class="pomodoro-banner-content">
-                <div id="pomodoroStatus" class="pomodoro-status disabled">Pomodoro mode disabled</div>
-                <div id="pomodoroTimer" class="pomodoro-timer" style="display: none;">
-                    <span id="pomodoroTimeRemaining">25:00</span>
-                    <span id="pomodoroPhase">Work Session</span>
+        <!-- Status Banner -->
+        <div id="statusBanner" class="status-banner" style="display: none;">
+            <div class="status-banner-content">
+                <!-- Pomodoro Status -->
+                <div id="pomodoroStatusSection" class="status-section" style="display: none;">
+                    <div class="status-info">
+                        <div id="pomodoroStatus" class="status-label">Pomodoro mode disabled</div>
+                        <div id="pomodoroTimer" class="status-timer" style="display: none;">
+                            <span id="pomodoroTimeRemaining">25:00</span>
+                            <span id="pomodoroPhase">Work Session</span>
+                        </div>
+                    </div>
+                    <div id="pomodoroBannerControls" class="status-controls" style="display: none;">
+                        <button id="pomodoroPauseBtn" class="status-button" onclick="togglePomodoroPause()">Pause</button>
+                    </div>
                 </div>
-                <div id="pomodoroBannerControls" class="pomodoro-banner-controls" style="display: none;">
-                    <button id="pomodoroPauseBtn" class="pomodoro-pause-btn" onclick="togglePomodoroPause()">Pause</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Notification Status Banner -->
-        <div id="notificationStatusBanner" class="notification-banner" style="display: none;">
-            <div class="notification-banner-content">
-                <div id="notificationStatus" class="notification-status">Next notification in:</div>
-                <div id="notificationTimer" class="notification-timer">
-                    <span id="notificationTimeRemaining">--:--</span>
+                
+                <!-- Reminder Status -->
+                <div id="reminderStatusSection" class="status-section" style="display: none;">
+                    <div class="status-info">
+                        <div id="reminderStatus" class="status-label">Next activity logging reminder in:</div>
+                        <div id="reminderTimer" class="status-timer">
+                            <span id="reminderTimeRemaining">--:--</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -229,10 +234,10 @@
                 <span id="statusText">Checking notification status...</span>
             </div>
 
-            <!-- Notification Control Buttons -->
+            <!-- Reminder Control Buttons -->
             <div class="settings-buttons-section">
-                <div class="notification-buttons">
-                    <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
+                <div class="reminder-buttons">
+                    <button class="btn btn-primary" onclick="enableNotifications()">Enable Reminders</button>
                     <button class="btn btn-info" onclick="showAbout()" title="View app information, version details, and diagnostic tools">About & Diagnostics</button>
                     <button class="btn btn-info" onclick="showUserGuide()" title="View user guide and shortcuts">📚 User Guide</button>
                 </div>
@@ -241,7 +246,7 @@
             <!-- Main Settings Grid -->
             <div class="settings-grid settings-grid-two-col">
                 <div class="settings-section">
-                    <h3>Notification Settings</h3>
+                    <h3>Reminder Settings</h3>
                     <div class="form-group">
                         <label for="notificationInterval" title="How often you'll receive activity reminder notifications">Reminder Interval</label>
                         <select id="notificationInterval">
@@ -278,11 +283,11 @@
                     <div class="form-group">
                         <div class="checkbox-group">
                             <input type="checkbox" id="autoStartAlerts">
-                            <label for="autoStartAlerts" title="Automatically start notifications when the app loads">Auto-start alerts on page load</label>
+                            <label for="autoStartAlerts" title="Automatically start reminders when the app loads">Auto-start reminders on page load</label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="notificationSoundType" title="Choose the sound that plays with notifications">Notification Sound</label>
+                        <label for="notificationSoundType" title="Choose the sound that plays with reminders">Reminder Sound</label>
                         <select id="notificationSoundType" onchange="previewNotificationSound()">
                             <!-- Options will be populated by JavaScript -->
                         </select>
@@ -942,10 +947,10 @@ Total activities: {{totalEntries}}
                 <div class="about-section">
                     <h4>Diagnostic Tools</h4>
                     <div class="diagnostic-buttons">
-                        <button class="btn btn-secondary" onclick="testNotification()" title="Send a test notification">Test Notification</button>
-                        <button class="btn btn-primary" onclick="testNotificationSound()" title="Play a test notification sound">Test Notification Sound</button>
+                        <button class="btn btn-secondary" onclick="testNotification()" title="Send a test reminder">Test Reminder</button>
+                        <button class="btn btn-primary" onclick="testNotificationSound()" title="Play a test reminder sound">Test Reminder Sound</button>
                         <button class="btn btn-secondary" onclick="runServiceWorkerTest()" title="Run comprehensive service worker diagnostics">Test Service Worker</button>
-                        <button class="btn btn-secondary" onclick="refreshNotificationStatus()" title="Refresh the notification permission status display - useful if permissions changed outside the app">Refresh Notification Status</button>
+                        <button class="btn btn-secondary" onclick="refreshNotificationStatus()" title="Refresh the reminder permission status display - useful if permissions changed outside the app">Refresh Reminder Status</button>
                     </div>
                 </div>
                 

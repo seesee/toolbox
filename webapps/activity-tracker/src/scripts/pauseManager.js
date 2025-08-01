@@ -8,7 +8,7 @@ class PauseManager {
         this.tracker = activityTracker;
         this.countdownInterval = null;
         this.pauseButton = null;
-        this.originalButtonText = 'Pause Alerts';
+        this.originalButtonText = 'Pause Reminders';
         this.init();
     }
 
@@ -171,7 +171,7 @@ class PauseManager {
      */
     updatePauseButtonNormal() {
         // Check if notifications are enabled to determine button text
-        const buttonText = this.tracker.settings.notificationsEnabled ? 'Pause Alerts' : 'Start Alerts';
+        const buttonText = this.tracker.settings.notificationsEnabled ? 'Pause Reminders' : 'Start Reminders';
         this.pauseButton.textContent = buttonText;
         this.pauseButton.style.background = '';
         this.pauseButton.style.animation = 'none';

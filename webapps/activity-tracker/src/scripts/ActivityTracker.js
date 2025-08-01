@@ -999,21 +999,32 @@ class ActivityTracker {
     }
 
     /**
-     * Show notification countdown banner
+     * Show reminder countdown banner
      */
-    showNotificationBanner() {
-        const banner = document.getElementById('notificationStatusBanner');
-        if (banner && this.settings.notificationsEnabled) {
+    showReminderBanner() {
+        const banner = document.getElementById('statusBanner');
+        const reminderSection = document.getElementById('reminderStatusSection');
+        if (banner && reminderSection && this.settings.notificationsEnabled) {
             banner.style.display = 'block';
+            reminderSection.style.display = 'flex';
         }
     }
 
     /**
-     * Hide notification countdown banner
+     * Hide reminder countdown banner
      */
-    hideNotificationBanner() {
-        const banner = document.getElementById('notificationStatusBanner');
-        if (banner) {
+    hideReminderBanner() {
+        const reminderSection = document.getElementById('reminderStatusSection');
+        if (reminderSection) {
+            reminderSection.style.display = 'none';
+        }
+        
+        // Hide the entire banner if no sections are visible
+        const pomodoroSection = document.getElementById('pomodoroStatusSection');
+        const banner = document.getElementById('statusBanner');
+        if (banner && pomodoroSection && 
+            reminderSection.style.display === 'none' && 
+            pomodoroSection.style.display === 'none') {
             banner.style.display = 'none';
         }
     }
@@ -1036,10 +1047,10 @@ class ActivityTracker {
     }
 
     /**
-     * Update notification countdown display
+     * Update reminder countdown display
      */
     updateNotificationCountdown() {
-        const timeRemainingEl = document.getElementById('notificationTimeRemaining');
+        const timeRemainingEl = document.getElementById('reminderTimeRemaining');
         if (!timeRemainingEl || !this.settings.notificationsEnabled) {
             return;
         }
@@ -1288,7 +1299,7 @@ class ActivityTracker {
         
         // Start countdown display timer (updates every second)
         this.startNotificationCountdown();
-        this.showNotificationBanner();
+        this.showReminderBanner();
     }
 
     /**
@@ -1305,7 +1316,7 @@ class ActivityTracker {
             this.notificationCountdownTimer = null;
         }
         
-        this.hideNotificationBanner();
+        this.hideReminderBanner();
     }
 
     /**
@@ -1423,14 +1434,14 @@ class ActivityTracker {
             this.settings.notificationsEnabled = false;
             this.stopNotificationTimer();
             if (showNotif) {
-                showNotification('Notifications stopped', 'info');
+                showNotification('Reminders stopped', 'info');
             }
         } else {
             // Start notifications
             this.settings.notificationsEnabled = true;
             this.startNotificationTimer();
             if (showNotif) {
-                showNotification('Notifications started', 'success');
+                showNotification('Reminders started', 'success');
             }
         }
         

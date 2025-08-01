@@ -772,7 +772,8 @@ class PomodoroManager {
      */
     updateStatusDisplay() {
         const statusDisplay = document.getElementById('pomodoroStatus');
-        const banner = document.getElementById('pomodoroStatusBanner');
+        const banner = document.getElementById('statusBanner');
+        const pomodoroSection = document.getElementById('pomodoroStatusSection');
         const timer = document.getElementById('pomodoroTimer');
         const timeRemaining = document.getElementById('pomodoroTimeRemaining');
         const phase = document.getElementById('pomodoroPhase');
@@ -781,13 +782,34 @@ class PomodoroManager {
         
         if (!this.isActive) {
             statusDisplay.textContent = 'Pomodoro mode disabled';
-            statusDisplay.className = 'pomodoro-status disabled';
-            if (banner) banner.style.display = 'none';
+            statusDisplay.className = 'status-label';
+            if (pomodoroSection) pomodoroSection.style.display = 'none';
+            
+            // Hide the entire banner if no sections are visible
+            const reminderSection = document.getElementById('reminderStatusSection');
+            if (banner && reminderSection && 
+                pomodoroSection && pomodoroSection.style.display === 'none' && 
+                reminderSection.style.display === 'none') {
+                banner.style.display = 'none';
+            }
+            
+            // Re-enable standard reminders when Pomodoro is disabled
+            if (this.activityTracker && this.activityTracker.settings.notificationsEnabled) {
+                this.activityTracker.startNotificationTimer();
+            }
             return;
         }
         
-        // Show banner when active
-        if (banner) banner.style.display = 'block';
+        // Disable standard reminders when Pomodoro is active
+        if (this.activityTracker) {
+            this.activityTracker.stopNotificationTimer();
+        }
+        
+        // Show banner and Pomodoro section when active
+        if (banner && pomodoroSection) {
+            banner.style.display = 'block';
+            pomodoroSection.style.display = 'flex';
+        }
         
         if (!this.isRunning) {
             const nextSession = this.cycleCount + 1;
