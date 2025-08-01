@@ -15,9 +15,20 @@
         <div class="header">
             <h1>Activity Tracker</h1>
             <p>Track your daily activities with automatic reminders</p>
+            
+            <!-- Global Search -->
+            <div class="global-search">
+                <div class="search-container">
+                    <input type="text" id="globalSearch" placeholder="Search activities, todos, and hashtags..." autocomplete="off">
+                    <button class="hashtag-browser-btn" onclick="showHashtagBrowser()" title="Browse hashtags">🏷️</button>
+                    <div class="search-results" id="searchResults" style="display: none;"></div>
+                </div>
+            </div>
+            
             <div class="nav">
                 <div class="nav-left">
                     <button class="nav-btn active" onclick="showSection('tracker', event)">Tracker</button>
+                    <button class="nav-btn" onclick="showSection('todo', event)">To Do</button>
                     <button class="nav-btn" onclick="showSection('reports', event)">Reports</button>
                     <button class="nav-btn" onclick="showSection('settings', event)">Settings</button>
                 </div>
@@ -34,15 +45,29 @@
             <form id="activityForm">
                 <div class="form-group">
                     <label for="activity">What are you doing?</label>
-                    <input type="text" id="activity" required placeholder="e.g., Writing report, Meeting with team" autocomplete="off">
+                    <input type="text" id="activity" required placeholder="e.g., Writing report, Meeting with team #work" autocomplete="off">
                 </div>
                 <div class="form-group">
                     <label for="description">Description (optional)</label>
                     <textarea id="description" rows="3" placeholder="Additional details about this activity"></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="timestamp">Time</label>
-                    <input type="datetime-local" id="timestamp" required>
+                <div class="form-group form-group-row">
+                    <div class="form-group">
+                        <label for="timestamp">Time</label>
+                        <input type="datetime-local" id="timestamp" required>
+                        <div class="todo-quick-set">
+                            <button type="button" class="btn-quick-set" id="todoToggleBtn" onclick="toggleTodoMode()" title="Mark this as a todo item (Shift+Enter to submit as todo automatically)">Add as Todo</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="dueDate">Due Date (optional)</label>
+                        <input type="datetime-local" id="dueDate">
+                        <div class="due-date-quick-sets">
+                            <button type="button" class="btn-quick-set" onclick="setDueDate('tomorrow')">Tomorrow</button>
+                            <button type="button" class="btn-quick-set" onclick="setDueDate('nextWeek')">Next Week</button>
+                            <button type="button" class="btn-quick-set" onclick="setDueDate('nextMonth')">Next Month</button>
+                        </div>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Entry</button>
                 <button type="button" class="btn btn-secondary" onclick="addCurrentTime()">Use Current Time</button>
@@ -51,6 +76,55 @@
             <div class="entries-list">
                 <h3>Recent Entries</h3>
                 <div id="entriesList"></div>
+                <div class="entries-pagination" id="entriesPagination" style="display: none;">
+                    <button id="entriesPrevBtn" onclick="tracker.previousEntriesPage()">‹ Previous</button>
+                    <span id="entriesPageInfo"></span>
+                    <button id="entriesNextBtn" onclick="tracker.nextEntriesPage()">Next ›</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- To Do Section -->
+        <div id="todo" class="section">
+            <h2>To Do</h2>
+            
+            <div class="todo-filters">
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="todoFilter">Filter:</label>
+                        <select id="todoFilter" onchange="tracker.filterTodos()">
+                            <option value="all">All Todos</option>
+                            <option value="due-today">Due Today</option>
+                            <option value="overdue">Overdue</option>
+                            <option value="no-due-date">No Due Date</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="todoSort">Sort by:</label>
+                        <select id="todoSort" onchange="tracker.sortTodos()">
+                            <option value="created-desc">Newest First</option>
+                            <option value="created-asc">Oldest First</option>
+                            <option value="due-asc">Due Date (Earliest)</option>
+                            <option value="due-desc">Due Date (Latest)</option>
+                            <option value="activity-asc">Activity A-Z</option>
+                            <option value="activity-desc">Activity Z-A</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="todo-stats" id="todoStats">
+                <span id="todoCount">0 todos</span>
+            </div>
+
+            <div class="todo-list" id="todoList">
+                <p class="empty-state">No todos found. Add activities as todos to see them here!</p>
+            </div>
+
+            <div class="todo-pagination" id="todoPagination" style="display: none;">
+                <button class="btn btn-secondary" id="todoPrevBtn" onclick="tracker.previousTodoPage()">← Previous</button>
+                <span id="todoPageInfo">Page 1 of 1</span>
+                <button class="btn btn-secondary" id="todoNextBtn" onclick="tracker.nextTodoPage()">Next →</button>
             </div>
         </div>
 
@@ -78,11 +152,17 @@
                 </div>
 
                 <div class="reports-section">
-                    <h3>Template & Download</h3>
-                    <p class="settings-description">Choose format and download your report</p>
+                    <h3>Template & Options</h3>
+                    <p class="settings-description">Choose format, options and download your report</p>
                     <div class="form-group">
                         <label for="reportTemplate" title="Select the format for your report">Report Template</label>
                         <select id="reportTemplate" onchange="tracker.previewReport()"></select>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="includeIncompleteTodos" onchange="tracker.generateReport()">
+                            <label for="includeIncompleteTodos" title="Include uncompleted todo items in the report">Include incomplete todos</label>
+                        </div>
                     </div>
                     <div class="download-actions">
                         <button class="btn btn-success" onclick="downloadReport()" title="Download the generated report">Download Report</button>
@@ -131,6 +211,7 @@
                     <button class="btn btn-primary" onclick="enableNotifications()">Enable Notifications</button>
                     <button class="btn btn-secondary" onclick="testNotification()">Test Notification</button>
                     <button class="btn btn-info" onclick="showAbout()" title="View app information, version details, and diagnostic tools">About & Diagnostics</button>
+                    <button class="btn btn-info" onclick="showUserGuide()" title="View user guide and shortcuts">📚 User Guide</button>
                 </div>
             </div>
 
@@ -175,6 +256,16 @@
                         <label for="notificationSoundType" title="Choose the sound that plays with notifications">Notification Sound</label>
                         <select id="notificationSoundType" onchange="previewNotificationSound()">
                             <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="paginationSize" title="Number of items to show per page in lists">Items per page</label>
+                        <select id="paginationSize">
+                            <option value="10">10 items</option>
+                            <option value="20" selected>20 items</option>
+                            <option value="30">30 items</option>
+                            <option value="50">50 items</option>
+                            <option value="100">100 items</option>
                         </select>
                     </div>
                     <div class="settings-toggles">
@@ -420,6 +511,51 @@
             <button class="btn btn-primary" onclick="saveSettings()">Manual Save Settings</button>
             <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
         </div>
+
+        <!-- Search Results Section -->
+        <div id="search" class="section">
+            <h2>Search Results</h2>
+            
+            <div class="search-controls">
+                <div class="search-info" id="searchInfo">
+                    <span id="searchQuery"></span>
+                    <span id="searchCount">0 results</span>
+                </div>
+                
+                <div class="search-options">
+                    <div class="filter-group">
+                        <label for="searchSort">Sort by:</label>
+                        <select id="searchSort" onchange="tracker.sortSearchResults()">
+                            <option value="relevance">Relevance</option>
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="activity-asc">Activity A-Z</option>
+                            <option value="activity-desc">Activity Z-A</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="searchFilter">Show:</label>
+                        <select id="searchFilter" onchange="tracker.filterSearchResults()">
+                            <option value="all">All Items</option>
+                            <option value="activities">Activities Only</option>
+                            <option value="todos">Todos Only</option>
+                            <option value="completed">Completed Only</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="search-results-list" id="searchResultsList">
+                <p class="empty-state">Use the search box above to find activities, todos, and hashtags.</p>
+            </div>
+
+            <div class="search-pagination" id="searchPagination" style="display: none;">
+                <button class="btn btn-secondary" id="searchPrevBtn" onclick="tracker.previousSearchPage()">← Previous</button>
+                <span id="searchPageInfo">Page 1 of 1</span>
+                <button class="btn btn-secondary" id="searchNextBtn" onclick="tracker.nextSearchPage()">Next →</button>
+            </div>
+        </div>
     </div>
 
     <!-- Notification Stack Container -->
@@ -439,9 +575,26 @@
                     <label for="editDescription">Description</label>
                     <textarea id="editDescription" rows="3"></textarea>
                 </div>
+                <div class="form-group form-group-row">
+                    <div class="form-group">
+                        <label for="editTimestamp">Time</label>
+                        <input type="datetime-local" id="editTimestamp" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDueDate">Due Date (optional)</label>
+                        <input type="datetime-local" id="editDueDate">
+                        <div class="due-date-quick-sets">
+                            <button type="button" class="btn-quick-set" onclick="setEditDueDate('tomorrow')">Tomorrow</button>
+                            <button type="button" class="btn-quick-set" onclick="setEditDueDate('nextWeek')">Next Week</button>
+                            <button type="button" class="btn-quick-set" onclick="setEditDueDate('nextMonth')">Next Month</button>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label for="editTimestamp">Time</label>
-                    <input type="datetime-local" id="editTimestamp" required>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="editTodoCheckbox">
+                        <label for="editTodoCheckbox">Is Todo</label>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary">Update Entry</button>
                 <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -625,6 +778,104 @@ Total activities: {{totalEntries}}
                         <button type="button" class="btn btn-secondary" onclick="closePomodoroActivityModal()">Cancel</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hashtag Browser Modal -->
+    <div id="hashtagBrowserModal" class="modal">
+        <div class="modal-content hashtag-browser-content">
+            <div class="modal-header">
+                <h3>Hashtag Browser</h3>
+                <button class="btn-close" onclick="closeHashtagBrowser()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="hashtag-stats" id="hashtagStats">
+                    <span id="hashtagCount">0 hashtags found</span>
+                </div>
+                <div class="hashtag-cloud" id="hashtagCloud">
+                    <p class="empty-state">No hashtags found. Add activities with #hashtags to see them here!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Guide Modal -->
+    <div id="userGuideModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📚 User Guide</h3>
+                <button class="btn-close" onclick="closeUserGuide()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="user-guide-content">
+                    <h4>🚀 Getting Started</h4>
+                    <p>Activity Tracker helps you log activities, manage todos, and generate reports with automatic reminders.</p>
+                    
+                    <h4>⌨️ Keyboard Shortcuts</h4>
+                    <ul>
+                        <li><kbd>Ctrl</kbd> + <kbd>Enter</kbd> - Submit activity form</li>
+                        <li><kbd>Shift</kbd> + <kbd>Enter</kbd> - Mark as todo and submit</li>
+                        <li><kbd>Esc</kbd> - Close modals</li>
+                    </ul>
+                    
+                    <h4>📝 Adding Activities</h4>
+                    <ul>
+                        <li>Enter what you're doing in the activity field</li>
+                        <li>Add #hashtags for easy categorization</li>
+                        <li>Use the "Add as Todo" button for tasks that need completion</li>
+                        <li>Set due dates for todos using quick-set buttons</li>
+                    </ul>
+                    
+                    <h4>🔍 Search & Navigation</h4>
+                    <ul>
+                        <li>Use the global search to find activities, todos, and hashtags</li>
+                        <li>Click the 🏷️ button to browse hashtags in a visual cloud</li>
+                        <li>Click any hashtag to search for related items</li>
+                        <li>Use pagination controls to navigate through large lists</li>
+                    </ul>
+                    
+                    <h4>✅ Managing Todos</h4>
+                    <ul>
+                        <li>View all todos in the dedicated "To Do" section</li>
+                        <li>Filter by status, due date, or category</li>
+                        <li>Click "Mark Complete" to finish todos</li>
+                        <li>Overdue items are highlighted in red</li>
+                    </ul>
+                    
+                    <h4>📊 Reports</h4>
+                    <ul>
+                        <li>Generate weekly, custom date range, or template-based reports</li>
+                        <li>Export reports in HTML, Markdown, or CSV formats</li>
+                        <li>Create custom report templates with variables</li>
+                        <li>Include/exclude completed todos from reports</li>
+                    </ul>
+                    
+                    <h4>🍅 Pomodoro Mode (Optional)</h4>
+                    <ul>
+                        <li>Enable Pomodoro technique with customizable work/break intervals</li>
+                        <li>Automatic activity logging during Pomodoro sessions</li>
+                        <li>Audio notifications for work/break transitions</li>
+                        <li>Focus timer to help maintain productivity</li>
+                    </ul>
+                    
+                    <h4>⚙️ Settings & Customization</h4>
+                    <ul>
+                        <li>Customize notification intervals and working hours</li>
+                        <li>Choose from multiple notification sounds</li>
+                        <li>Switch between light/dark themes</li>
+                        <li>Set pagination size for better navigation</li>
+                        <li>All settings auto-save as you change them</li>
+                    </ul>
+                    
+                    <h4>💾 Data Management</h4>
+                    <ul>
+                        <li>Export your data as JSON backup</li>
+                        <li>Import previously exported data</li>
+                        <li>Data is stored locally in your browser</li>
+                        <li>Works offline after initial load</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

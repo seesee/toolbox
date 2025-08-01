@@ -125,9 +125,18 @@ Object.assign(ActivityTracker.prototype, {
         const end = new Date(endDateInput);
         end.setHours(23, 59, 59, 999);
 
+        const includeIncompleteTodos = document.getElementById('includeIncompleteTodos')?.checked || false;
+        
         const filteredEntries = this.entries.filter(entry => {
             const entryDate = new Date(entry.timestamp);
-            return entryDate >= start && entryDate <= end;
+            const isInDateRange = entryDate >= start && entryDate <= end;
+            
+            // Exclude incomplete todos unless checkbox is checked
+            if (entry.isTodo && !includeIncompleteTodos) {
+                return false;
+            }
+            
+            return isInDateRange;
         });
 
         this.currentReportEntries = filteredEntries;

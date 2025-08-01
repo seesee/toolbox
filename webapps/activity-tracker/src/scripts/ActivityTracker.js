@@ -11,7 +11,22 @@ class ActivityTracker {
             if (Array.isArray(storedEntries)) {
                 entries = storedEntries.filter(entry => 
                     entry && typeof entry === 'object' && entry.timestamp
-                );
+                ).map(entry => {
+                    // Migrate existing entries to new schema
+                    if (typeof entry.isTodo === 'undefined') {
+                        entry.isTodo = false;
+                    }
+                    if (!entry.tags) {
+                        entry.tags = [];
+                    }
+                    if (!entry.dueDate) {
+                        entry.dueDate = null;
+                    }
+                    if (!entry.startedAt) {
+                        entry.startedAt = null;
+                    }
+                    return entry;
+                });
             }
         } catch (e) {
             console.error("Error parsing activity entries from localStorage", e);
@@ -39,6 +54,7 @@ class ActivityTracker {
             soundMuteMode: 'none', // 'none', 'all', 'pomodoro', 'notifications'
             notificationSoundType: "classic",
             darkModePreference: 'light', // 'light', 'dark', 'system'
+            paginationSize: 20,
             ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
         };
 
@@ -57,11 +73,13 @@ class ActivityTracker {
      */
     init() {
         this.loadSettings();
+        this.migrateExistingEntries();
         this.initMarkdownRenderer();
         this.initReportTemplates();
         this.loadReportTemplatesIntoEditor();
         this.initTemplatePreviewGrid();
         this.displayEntries();
+        this.displayTodos();
         this.updateNotificationStatus();
         this.updateDebugInfo();
         this.updatePauseButtonState();
@@ -73,6 +91,7 @@ class ActivityTracker {
         
         // Event listeners
         this.attachEventListeners();
+        this.initSearch();
         
         // Set current time by default
         this.setCurrentTime();
@@ -81,6 +100,25 @@ class ActivityTracker {
         // Check for local file protocol
         if (window.location.protocol === 'file:') {
             console.warn('Running from local file - notifications may have limitations');
+        }
+    }
+
+    /**
+     * Migrate existing entries to add hashtags and update schema
+     */
+    migrateExistingEntries() {
+        let needsSave = false;
+        
+        this.entries.forEach(entry => {
+            if (!entry.tags || entry.tags.length === 0) {
+                entry.tags = this.extractHashtags(entry.activity + ' ' + (entry.description || ''));
+                needsSave = true;
+            }
+        });
+        
+        if (needsSave) {
+            this.saveEntries();
+            console.log('Migrated existing entries with hashtags');
         }
     }
 
@@ -216,9 +254,21 @@ class ActivityTracker {
             'soundMuteMode',
             'notificationSoundType',
             'darkModePreference',
+            'paginationSize',
+            'pomodoroEnabled',
+            'pomodoroWorkDuration',
+            'pomodoroBreakDuration',
+            'pomodoroLongBreakDuration', 
+            'pomodoroLongBreakInterval',
+            'pomodoroTickSound',
+            'pomodoroTickInterval',
+            'pomodoroShortBreakSound',
+            'pomodoroLongBreakSound',
+            'pomodoroResumeSound',
             'pomodoroAutoStart',
             'pomodoroAutoLog',
             'pomodoroLogBreaks',
+            'pomodoroLongBreak',
             'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
         ];
 
@@ -250,6 +300,7 @@ class ActivityTracker {
         this.settings.soundMuteMode = document.getElementById('soundMuteMode').value;
         this.settings.notificationSoundType = document.getElementById('notificationSoundType').value;
         this.settings.darkModePreference = document.getElementById('darkModePreference').value;
+        this.settings.paginationSize = parseInt(document.getElementById('paginationSize').value);
         this.settings.pomodoroAutoStart = document.getElementById('pomodoroAutoStart')?.checked || false;
         this.settings.pomodoroAutoLog = document.getElementById('pomodoroAutoLog')?.checked !== false;
         this.settings.pomodoroLogBreaks = document.getElementById('pomodoroLogBreaks')?.checked || false;
@@ -262,6 +313,11 @@ class ActivityTracker {
         // Apply theme immediately
         this.applyTheme();
 
+        // Update pagination settings if pagination size changed
+        if (document.getElementById('paginationSize')) {
+            this.updatePaginationSettings();
+        }
+
         // Save to localStorage
         this.saveSettings();
 
@@ -273,6 +329,12 @@ class ActivityTracker {
         // Update about section to reflect changes
         this.updateDebugInfo();
 
+        // Save Pomodoro settings if manager exists
+        if (this.pomodoroManager) {
+            this.pomodoroManager.saveSettings();
+            this.pomodoroManager.loadSettings();
+        }
+        
         // Show brief confirmation
         showNotification('Settings saved automatically', 'success', 1500);
     }
@@ -331,22 +393,35 @@ class ActivityTracker {
             const activity = document.getElementById('activity').value;
             const description = document.getElementById('description').value;
             const timestamp = document.getElementById('timestamp').value;
+            const isTodo = isTodoModeActive();
+            const dueDate = document.getElementById('dueDate')?.value || null;
 
             newEntry = {
                 id: generateId(),
                 activity,
                 description,
                 timestamp: new Date(timestamp).toISOString(),
-                created: new Date().toISOString()
+                created: new Date().toISOString(),
+                isTodo: isTodo,
+                tags: this.extractHashtags(activity + ' ' + (description || '')),
+                dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+                startedAt: isTodo ? new Date(timestamp).toISOString() : null
             };
         }
 
         this.entries.unshift(newEntry);
         this.saveEntries();
         this.displayEntries();
+        this.displayTodos();
 
         if (!entry) {
             document.getElementById('activityForm').reset();
+            // Reset todo mode button
+            const todoBtn = document.getElementById('todoToggleBtn');
+            if (todoBtn) {
+                todoBtn.classList.remove('active');
+                todoBtn.textContent = 'Add as Todo';
+            }
             this.setCurrentTime();
             document.getElementById('activity').focus();
         }
@@ -362,18 +437,28 @@ class ActivityTracker {
         const activity = document.getElementById('editActivity').value;
         const description = document.getElementById('editDescription').value;
         const timestamp = document.getElementById('editTimestamp').value;
+        const isTodo = document.getElementById('editTodoCheckbox').checked;
+        const dueDate = document.getElementById('editDueDate').value;
 
         const entryIndex = this.entries.findIndex(entry => entry.id === id);
         if (entryIndex !== -1) {
+            const existingEntry = this.entries[entryIndex];
+            
             this.entries[entryIndex] = {
-                ...this.entries[entryIndex],
+                ...existingEntry,
                 activity,
                 description,
-                timestamp: new Date(timestamp).toISOString()
+                timestamp: new Date(timestamp).toISOString(),
+                isTodo,
+                tags: this.extractHashtags(activity + ' ' + (description || '')),
+                dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+                // Preserve startedAt if it exists, or set it if becoming a todo
+                startedAt: isTodo ? (existingEntry.startedAt || new Date(timestamp).toISOString()) : existingEntry.startedAt
             };
             
             this.saveEntries();
             this.displayEntries();
+            this.displayTodos();
             this.closeEditModal();
             showNotification('Entry updated successfully!', 'success');
         }
@@ -388,6 +473,7 @@ class ActivityTracker {
             this.entries = this.entries.filter(entry => entry.id !== id);
             this.saveEntries();
             this.displayEntries();
+            this.displayTodos();
             showNotification('Entry deleted successfully!', 'success');
         }
     }
@@ -404,6 +490,9 @@ class ActivityTracker {
             document.getElementById('editDescription').value = entry.description || '';
             document.getElementById('editTimestamp').value = 
                 new Date(entry.timestamp).toISOString().slice(0, 16);
+            document.getElementById('editTodoCheckbox').checked = entry.isTodo || false;
+            document.getElementById('editDueDate').value = 
+                entry.dueDate ? new Date(entry.dueDate).toISOString().slice(0, 16) : '';
             
             document.getElementById('editModal').style.display = 'block';
         }
@@ -421,26 +510,68 @@ class ActivityTracker {
      */
     displayEntries() {
         const container = document.getElementById('entriesList');
-        const recentEntries = this.entries.slice(0, 20); // Show last 20 entries
+        
+        // Initialize entries pagination if it doesn't exist
+        if (!this.entriesPagination) {
+            this.entriesPagination = {
+                currentPage: 1,
+                itemsPerPage: this.settings.paginationSize || 20
+            };
+        }
+        
+        // Update pagination size if settings changed
+        this.entriesPagination.itemsPerPage = this.settings.paginationSize || 20;
+        
+        // Calculate pagination
+        const startIndex = (this.entriesPagination.currentPage - 1) * this.entriesPagination.itemsPerPage;
+        const endIndex = startIndex + this.entriesPagination.itemsPerPage;
+        const paginatedEntries = this.entries.slice(startIndex, endIndex);
 
-        if (recentEntries.length === 0) {
+        if (paginatedEntries.length === 0) {
             container.innerHTML = '<p>No entries yet. Add your first activity above!</p>';
             return;
         }
 
-        container.innerHTML = recentEntries.map(entry => `
-            <div class="entry-item">
-                <div class="entry-content">
-                    <div class="entry-time">${formatDateTime(entry.timestamp)}</div>
-                    <div class="entry-activity">${escapeHtml(entry.activity)}</div>
-                    ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
+        container.innerHTML = paginatedEntries.map(entry => {
+            const now = new Date();
+            const isOverdue = entry.isTodo && entry.dueDate && new Date(entry.dueDate) < now;
+            const isTodo = entry.isTodo;
+            
+            let itemClass = 'entry-item';
+            if (isTodo) {
+                itemClass += isOverdue ? ' entry-todo entry-overdue' : ' entry-todo';
+            }
+            
+            const tagsHtml = entry.tags && entry.tags.length > 0 
+                ? `<div class="entry-tags">${entry.tags.map(tag => `<span class="entry-tag" onclick="tracker.searchByHashtag('${tag}')">#${tag}</span>`).join('')}</div>`
+                : '';
+
+            const dueDateHtml = entry.dueDate 
+                ? `<div class="entry-due-date">Due: ${formatDateTime(entry.dueDate)}</div>`
+                : '';
+
+            const todoIndicator = entry.isTodo ? '<span class="entry-todo-indicator">📋 Todo</span>' : '';
+
+            return `
+                <div class="${itemClass}">
+                    <div class="entry-content">
+                        <div class="entry-time">${formatDateTime(entry.timestamp)} ${todoIndicator}</div>
+                        <div class="entry-activity">${escapeHtml(entry.activity)}</div>
+                        ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
+                        ${tagsHtml}
+                        ${dueDateHtml}
+                    </div>
+                    <div class="entry-actions">
+                        ${entry.isTodo ? `<button class="btn btn-success btn-small" onclick="tracker.completeEntry('${entry.id}')" title="Mark as completed">Mark Complete</button>` : ''}
+                        <button class="btn btn-secondary btn-small" onclick="tracker.editEntry('${entry.id}')">Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="tracker.deleteEntry('${entry.id}')">Delete</button>
+                    </div>
                 </div>
-                <div class="entry-actions">
-                    <button class="btn btn-secondary" onclick="tracker.editEntry('${entry.id}')">Edit</button>
-                    <button class="btn btn-danger" onclick="tracker.deleteEntry('${entry.id}')">Delete</button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+        
+        // Update pagination controls
+        this.updateEntriesPagination(this.entries.length);
     }
 
     /**
@@ -480,6 +611,7 @@ class ActivityTracker {
             soundMuteMode: document.getElementById('soundMuteMode').value,
             notificationSoundType: document.getElementById('notificationSoundType').value,
             darkModePreference: document.getElementById('darkModePreference').value,
+            paginationSize: parseInt(document.getElementById('paginationSize').value),
             workingDays: {
                 monday: document.getElementById('monday').checked,
                 tuesday: document.getElementById('tuesday').checked,
@@ -514,7 +646,44 @@ class ActivityTracker {
             this.saveTemplatesQuietly();
         }
         
+        // Update pagination settings and refresh displays
+        this.updatePaginationSettings();
+        
         showNotification('Settings saved successfully!', 'success');
+    }
+
+    /**
+     * Update pagination settings and refresh displays
+     */
+    updatePaginationSettings() {
+        const newSize = this.settings.paginationSize || 20;
+        
+        // Update entries pagination
+        if (this.entriesPagination) {
+            this.entriesPagination.itemsPerPage = newSize;
+            this.entriesPagination.currentPage = 1; // Reset to first page
+        }
+        
+        // Update todo pagination
+        if (this.todoPagination) {
+            this.todoPagination.itemsPerPage = newSize;
+            this.todoPagination.currentPage = 1; // Reset to first page
+        }
+        
+        // Update search pagination
+        if (this.searchState && this.searchState.searchPagination) {
+            this.searchState.searchPagination.itemsPerPage = newSize;
+            this.searchState.searchPagination.currentPage = 1; // Reset to first page
+        }
+        
+        // Refresh displays
+        this.displayEntries();
+        this.displayTodos();
+        
+        // Refresh search results if there's an active search
+        if (this.searchState && this.searchState.currentQuery) {
+            this.performSearch(this.searchState.currentQuery);
+        }
     }
 
     /**
@@ -527,6 +696,7 @@ class ActivityTracker {
         document.getElementById('pauseDuration').value = this.settings.pauseDuration;
         document.getElementById('soundMuteMode').value = this.settings.soundMuteMode;
         document.getElementById('darkModePreference').value = this.settings.darkModePreference;
+        document.getElementById('paginationSize').value = this.settings.paginationSize;
         
         // Populate sound dropdowns with all available sounds
         this.populateSoundDropdowns();
@@ -1851,5 +2021,732 @@ class ActivityTracker {
         }
         
         console.log('Templates saved quietly to localStorage');
+    }
+
+    /**
+     * Extract hashtags from text (case insensitive)
+     * @param {string} text - Text to extract hashtags from
+     * @returns {string[]} Array of hashtags without the # symbol
+     */
+    extractHashtags(text) {
+        if (!text || typeof text !== 'string') return [];
+        
+        const hashtagRegex = /#(\w+)/g;
+        const hashtags = [];
+        let match;
+        
+        while ((match = hashtagRegex.exec(text)) !== null) {
+            const tag = match[1].toLowerCase();
+            if (!hashtags.includes(tag)) {
+                hashtags.push(tag);
+            }
+        }
+        
+        return hashtags;
+    }
+
+    /**
+     * Mark an entry as completed (for todos)
+     * @param {string} entryId - ID of the entry to complete
+     */
+    completeEntry(entryId) {
+        const entry = this.entries.find(e => e.id === entryId);
+        if (!entry || !entry.isTodo) return;
+
+        // Move timestamp to startedAt and set new completion timestamp
+        entry.startedAt = entry.timestamp;
+        entry.timestamp = new Date().toISOString();
+        entry.isTodo = false; // Completed todos become regular activities
+
+        this.saveEntries();
+        this.displayEntries();
+        this.displayTodos();
+        showNotification('Todo completed!', 'success');
+    }
+
+    /**
+     * Toggle todo status of an entry
+     * @param {string} entryId - ID of the entry to toggle
+     */
+    toggleTodoStatus(entryId) {
+        const entry = this.entries.find(e => e.id === entryId);
+        if (!entry) return;
+
+        if (entry.isTodo) {
+            // Complete the todo
+            this.completeEntry(entryId);
+        } else {
+            // Make it a todo again
+            entry.isTodo = true;
+            entry.startedAt = entry.timestamp;
+            // Don't change the timestamp when making something a todo again
+            
+            this.saveEntries();
+            this.displayEntries();
+            this.displayTodos();
+            showNotification('Entry marked as todo!', 'success');
+        }
+    }
+
+    /**
+     * Display todos in the todo section
+     */
+    displayTodos() {
+        const todoList = document.getElementById('todoList');
+        const todoStats = document.getElementById('todoStats');
+        
+        if (!todoList || !todoStats) return;
+
+        // Initialize pagination state if not exists
+        if (!this.todoPagination) {
+            this.todoPagination = {
+                currentPage: 1,
+                itemsPerPage: this.settings.paginationSize || 20,
+                filter: 'all',
+                sort: 'created-desc'
+            };
+        }
+
+        const todos = this.getFilteredTodos();
+        const totalTodos = todos.length;
+        
+        // Update stats
+        todoStats.innerHTML = `<span id="todoCount">${totalTodos} todo${totalTodos !== 1 ? 's' : ''}</span>`;
+
+        if (totalTodos === 0) {
+            todoList.innerHTML = '<p class="empty-state">No todos found. Add activities as todos to see them here!</p>';
+            document.getElementById('todoPagination').style.display = 'none';
+            return;
+        }
+
+        // Apply pagination
+        const startIndex = (this.todoPagination.currentPage - 1) * this.todoPagination.itemsPerPage;
+        const endIndex = startIndex + this.todoPagination.itemsPerPage;
+        const paginatedTodos = todos.slice(startIndex, endIndex);
+
+        // Render todos
+        todoList.innerHTML = paginatedTodos.map(todo => this.renderTodoItem(todo)).join('');
+
+        // Update pagination controls
+        this.updateTodoPagination(totalTodos);
+    }
+
+    /**
+     * Get filtered and sorted todos
+     */
+    getFilteredTodos() {
+        let todos = this.entries.filter(entry => entry.isTodo);
+
+        // Apply filter
+        switch (this.todoPagination.filter) {
+            case 'due-today':
+                todos = todos.filter(todo => {
+                    if (!todo.dueDate) return false;
+                    const today = new Date().toDateString();
+                    return new Date(todo.dueDate).toDateString() === today;
+                });
+                break;
+            case 'overdue':
+                todos = todos.filter(todo => {
+                    if (!todo.dueDate) return false;
+                    return new Date(todo.dueDate) < new Date();
+                });
+                break;
+            case 'no-due-date':
+                todos = todos.filter(todo => !todo.dueDate);
+                break;
+        }
+
+        // Apply sort
+        switch (this.todoPagination.sort) {
+            case 'created-asc':
+                todos.sort((a, b) => new Date(a.created) - new Date(b.created));
+                break;
+            case 'created-desc':
+                todos.sort((a, b) => new Date(b.created) - new Date(a.created));
+                break;
+            case 'due-asc':
+                todos.sort((a, b) => {
+                    if (!a.dueDate && !b.dueDate) return 0;
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                });
+                break;
+            case 'due-desc':
+                todos.sort((a, b) => {
+                    if (!a.dueDate && !b.dueDate) return 0;
+                    if (!a.dueDate) return 1;
+                    if (!b.dueDate) return -1;
+                    return new Date(b.dueDate) - new Date(a.dueDate);
+                });
+                break;
+            case 'activity-asc':
+                todos.sort((a, b) => a.activity.localeCompare(b.activity));
+                break;
+            case 'activity-desc':
+                todos.sort((a, b) => b.activity.localeCompare(a.activity));
+                break;
+        }
+
+        return todos;
+    }
+
+    /**
+     * Render a single todo item
+     */
+    renderTodoItem(todo) {
+        const now = new Date();
+        const isOverdue = todo.dueDate && new Date(todo.dueDate) < now;
+        const isDueToday = todo.dueDate && new Date(todo.dueDate).toDateString() === now.toDateString();
+        
+        const itemClass = isOverdue ? 'todo-item todo-overdue' : 'todo-item todo-incomplete';
+        
+        const tagsHtml = todo.tags && todo.tags.length > 0 
+            ? `<div class="todo-tags">${todo.tags.map(tag => `<span class="todo-tag" onclick="tracker.searchByHashtag('${tag}')">#${tag}</span>`).join('')}</div>`
+            : '';
+
+        const dueDateHtml = todo.dueDate 
+            ? `<span class="todo-due-date">Due: ${formatDateTime(todo.dueDate)}</span>`
+            : '';
+
+        const metaItems = [
+            `Created: ${formatDateTime(todo.created)}`,
+            dueDateHtml
+        ].filter(Boolean);
+
+        return `
+            <div class="${itemClass}">
+                <div class="todo-header">
+                    <div class="todo-content">
+                        <div class="todo-activity">${escapeHtml(todo.activity)}</div>
+                        ${todo.description ? `<div class="todo-description">${this.renderDescriptionMarkdown(todo.description)}</div>` : ''}
+                        ${tagsHtml}
+                        <div class="todo-meta">${metaItems.join(' • ')}</div>
+                    </div>
+                    <div class="todo-actions">
+                        <button class="btn btn-success btn-small" onclick="tracker.completeEntry('${todo.id}')" title="Mark as completed">Mark Complete</button>
+                        <button class="btn btn-secondary btn-small" onclick="tracker.editEntry('${todo.id}')" title="Edit todo">Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="tracker.deleteEntry('${todo.id}')" title="Delete todo">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Update todo pagination controls
+     */
+    updateTodoPagination(totalItems) {
+        const pagination = document.getElementById('todoPagination');
+        const prevBtn = document.getElementById('todoPrevBtn');
+        const nextBtn = document.getElementById('todoNextBtn');
+        const pageInfo = document.getElementById('todoPageInfo');
+
+        if (!pagination || !prevBtn || !nextBtn || !pageInfo) return;
+
+        const totalPages = Math.ceil(totalItems / this.todoPagination.itemsPerPage);
+        
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Page ${this.todoPagination.currentPage} of ${totalPages}`;
+        
+        prevBtn.disabled = this.todoPagination.currentPage <= 1;
+        nextBtn.disabled = this.todoPagination.currentPage >= totalPages;
+    }
+
+    /**
+     * Update entries pagination controls
+     */
+    updateEntriesPagination(totalItems) {
+        const pagination = document.getElementById('entriesPagination');
+        const prevBtn = document.getElementById('entriesPrevBtn');
+        const nextBtn = document.getElementById('entriesNextBtn');
+        const pageInfo = document.getElementById('entriesPageInfo');
+        
+        if (!pagination || !prevBtn || !nextBtn || !pageInfo) return;
+        
+        const totalPages = Math.ceil(totalItems / this.entriesPagination.itemsPerPage);
+        
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+        
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Page ${this.entriesPagination.currentPage} of ${totalPages}`;
+        
+        prevBtn.disabled = this.entriesPagination.currentPage <= 1;
+        nextBtn.disabled = this.entriesPagination.currentPage >= totalPages;
+    }
+
+    /**
+     * Navigate to previous entries page
+     */
+    previousEntriesPage() {
+        if (this.entriesPagination.currentPage > 1) {
+            this.entriesPagination.currentPage--;
+            this.displayEntries();
+        }
+    }
+
+    /**
+     * Navigate to next entries page
+     */
+    nextEntriesPage() {
+        const totalPages = Math.ceil(this.entries.length / this.entriesPagination.itemsPerPage);
+        if (this.entriesPagination.currentPage < totalPages) {
+            this.entriesPagination.currentPage++;
+            this.displayEntries();
+        }
+    }
+
+    /**
+     * Filter todos
+     */
+    filterTodos() {
+        const filterSelect = document.getElementById('todoFilter');
+        if (filterSelect) {
+            this.todoPagination.filter = filterSelect.value;
+            this.todoPagination.currentPage = 1; // Reset to first page
+            this.displayTodos();
+        }
+    }
+
+    /**
+     * Sort todos
+     */
+    sortTodos() {
+        const sortSelect = document.getElementById('todoSort');
+        if (sortSelect) {
+            this.todoPagination.sort = sortSelect.value;
+            this.todoPagination.currentPage = 1; // Reset to first page
+            this.displayTodos();
+        }
+    }
+
+    /**
+     * Navigate to previous todo page
+     */
+    previousTodoPage() {
+        if (this.todoPagination.currentPage > 1) {
+            this.todoPagination.currentPage--;
+            this.displayTodos();
+        }
+    }
+
+    /**
+     * Navigate to next todo page
+     */
+    nextTodoPage() {
+        const totalTodos = this.getFilteredTodos().length;
+        const totalPages = Math.ceil(totalTodos / this.todoPagination.itemsPerPage);
+        
+        if (this.todoPagination.currentPage < totalPages) {
+            this.todoPagination.currentPage++;
+            this.displayTodos();
+        }
+    }
+
+    /**
+     * Initialize search functionality
+     */
+    initSearch() {
+        const searchInput = document.getElementById('globalSearch');
+        const searchResults = document.getElementById('searchResults');
+        
+        if (!searchInput || !searchResults) return;
+
+        // Initialize search state
+        this.searchState = {
+            currentQuery: '',
+            selectedIndex: -1,
+            suggestions: [],
+            searchPagination: {
+                currentPage: 1,
+                itemsPerPage: this.settings.paginationSize || 20,
+                filter: 'all',
+                sort: 'relevance'
+            }
+        };
+
+        let searchTimeout;
+
+        // Real-time search as you type
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length === 0) {
+                this.hideSearchSuggestions();
+                return;
+            }
+
+            // Debounce search for better performance
+            searchTimeout = setTimeout(() => {
+                this.performSearch(query);
+            }, 150);
+        });
+
+        // Handle keyboard navigation
+        searchInput.addEventListener('keydown', (e) => {
+            const suggestions = this.searchState.suggestions;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.searchState.selectedIndex = Math.min(
+                    this.searchState.selectedIndex + 1, 
+                    suggestions.length - 1
+                );
+                this.updateSearchSuggestionSelection();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.searchState.selectedIndex = Math.max(this.searchState.selectedIndex - 1, -1);
+                this.updateSearchSuggestionSelection();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (this.searchState.selectedIndex >= 0) {
+                    this.selectSearchSuggestion(this.searchState.selectedIndex);
+                } else if (searchInput.value.trim()) {
+                    this.showFullSearchResults(searchInput.value.trim());
+                }
+            } else if (e.key === 'Escape') {
+                this.hideSearchSuggestions();
+                searchInput.blur();
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                this.hideSearchSuggestions();
+            }
+        });
+    }
+
+    /**
+     * Perform search and show suggestions
+     */
+    performSearch(query) {
+        this.searchState.currentQuery = query;
+        const results = this.searchEntries(query, 10); // Limit suggestions to 10
+        this.searchState.suggestions = results;
+        this.showSearchSuggestions(results);
+    }
+
+    /**
+     * Search through entries
+     */
+    searchEntries(query, limit = null) {
+        const searchTerms = query.toLowerCase().split(' ');
+        const results = [];
+
+        this.entries.forEach(entry => {
+            let score = 0;
+            const searchableText = (
+                entry.activity + ' ' + 
+                (entry.description || '') + ' ' +
+                (entry.tags ? entry.tags.join(' ') : '')
+            ).toLowerCase();
+
+            // Calculate relevance score
+            searchTerms.forEach(term => {
+                if (entry.activity.toLowerCase().includes(term)) {
+                    score += 10; // Activity title matches are most important
+                }
+                if (entry.description && entry.description.toLowerCase().includes(term)) {
+                    score += 5; // Description matches
+                }
+                if (entry.tags && entry.tags.some(tag => tag.includes(term))) {
+                    score += 8; // Hashtag matches are important
+                }
+                if (searchableText.includes(term)) {
+                    score += 1; // General match
+                }
+            });
+
+            if (score > 0) {
+                results.push({ ...entry, searchScore: score });
+            }
+        });
+
+        // Sort by relevance score
+        results.sort((a, b) => b.searchScore - a.searchScore);
+
+        return limit ? results.slice(0, limit) : results;
+    }
+
+    /**
+     * Show search suggestions dropdown
+     */
+    showSearchSuggestions(results) {
+        const searchResults = document.getElementById('searchResults');
+        if (!searchResults) return;
+
+        if (results.length === 0) {
+            searchResults.innerHTML = '<div class="search-suggestion">No results found</div>';
+        } else {
+            searchResults.innerHTML = results.map((result, index) => {
+                const tagsHtml = result.tags && result.tags.length > 0 
+                    ? result.tags.map(tag => `<span class="search-hashtag">#${tag}</span>`).join('')
+                    : '';
+
+                const todoIndicator = result.isTodo ? '📋 ' : '';
+                const typeIndicator = result.isTodo ? 'Todo' : 'Activity';
+
+                return `
+                    <div class="search-suggestion" data-index="${index}" onclick="tracker.selectSearchSuggestion(${index})">
+                        <div class="search-suggestion-activity">${todoIndicator}${escapeHtml(result.activity)}</div>
+                        <div class="search-suggestion-meta">${typeIndicator} • ${formatDateTime(result.timestamp)} ${tagsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        searchResults.style.display = 'block';
+        this.searchState.selectedIndex = -1;
+    }
+
+    /**
+     * Hide search suggestions
+     */
+    hideSearchSuggestions() {
+        const searchResults = document.getElementById('searchResults');
+        if (searchResults) {
+            searchResults.style.display = 'none';
+        }
+        this.searchState.selectedIndex = -1;
+    }
+
+    /**
+     * Update search suggestion selection
+     */
+    updateSearchSuggestionSelection() {
+        const suggestions = document.querySelectorAll('.search-suggestion');
+        suggestions.forEach((suggestion, index) => {
+            if (index === this.searchState.selectedIndex) {
+                suggestion.classList.add('selected');
+            } else {
+                suggestion.classList.remove('selected');
+            }
+        });
+    }
+
+    /**
+     * Select a search suggestion
+     */
+    selectSearchSuggestion(index) {
+        const result = this.searchState.suggestions[index];
+        if (result) {
+            this.editEntry(result.id); // Open the entry for editing
+            this.hideSearchSuggestions();
+            document.getElementById('globalSearch').value = '';
+        }
+    }
+
+    /**
+     * Show full search results in dedicated section
+     */
+    showFullSearchResults(query) {
+        const allResults = this.searchEntries(query);
+        this.searchState.searchPagination.filter = 'all';
+        this.searchState.searchPagination.sort = 'relevance';
+        this.searchState.searchPagination.currentPage = 1;
+        
+        // Switch to search section
+        showSection('search');
+        
+        // Update search info
+        const searchQuery = document.getElementById('searchQuery');
+        const searchCount = document.getElementById('searchCount');
+        
+        if (searchQuery) searchQuery.textContent = `Search: "${query}"`;
+        if (searchCount) searchCount.textContent = `${allResults.length} result${allResults.length !== 1 ? 's' : ''}`;
+        
+        // Display results
+        this.displaySearchResults(allResults);
+        this.hideSearchSuggestions();
+        document.getElementById('globalSearch').value = '';
+    }
+
+    /**
+     * Display paginated search results
+     */
+    displaySearchResults(results) {
+        const resultsList = document.getElementById('searchResultsList');
+        const pagination = this.searchState.searchPagination;
+        
+        if (!resultsList) return;
+
+        if (results.length === 0) {
+            resultsList.innerHTML = '<p class="empty-state">No results found. Try different search terms.</p>';
+            document.getElementById('searchPagination').style.display = 'none';
+            return;
+        }
+
+        // Apply pagination
+        const startIndex = (pagination.currentPage - 1) * pagination.itemsPerPage;
+        const endIndex = startIndex + pagination.itemsPerPage;
+        const paginatedResults = results.slice(startIndex, endIndex);
+
+        // Render results
+        resultsList.innerHTML = paginatedResults.map(result => this.renderSearchResult(result)).join('');
+
+        // Update pagination
+        this.updateSearchPagination(results.length);
+    }
+
+    /**
+     * Render a single search result
+     */
+    renderSearchResult(result) {
+        const now = new Date();
+        const isOverdue = result.isTodo && result.dueDate && new Date(result.dueDate) < now;
+        
+        let itemClass = 'search-result-item';
+        if (result.isTodo) {
+            itemClass += ' result-todo';
+        } else {
+            itemClass += ' result-completed';
+        }
+        
+        const tagsHtml = result.tags && result.tags.length > 0 
+            ? `<div class="search-result-tags">${result.tags.map(tag => `<span class="search-result-tag" onclick="tracker.searchByHashtag('${tag}')">#${tag}</span>`).join('')}</div>`
+            : '';
+
+        const dueDateHtml = result.dueDate 
+            ? `<span class="search-due-date">Due: ${formatDateTime(result.dueDate)}</span>`
+            : '';
+
+        const metaItems = [
+            result.isTodo ? 'Todo' : 'Activity',
+            `Created: ${formatDateTime(result.created)}`,
+            dueDateHtml
+        ].filter(Boolean);
+
+        return `
+            <div class="${itemClass}">
+                <div class="search-result-header">
+                    <div class="search-result-content">
+                        <div class="search-result-activity">${escapeHtml(result.activity)}</div>
+                        ${result.description ? `<div class="search-result-description">${this.renderDescriptionMarkdown(result.description)}</div>` : ''}
+                        ${tagsHtml}
+                        <div class="search-result-meta">${metaItems.join(' • ')}</div>
+                    </div>
+                    <div class="search-result-actions">
+                        ${result.isTodo ? `<button class="btn btn-success btn-small" onclick="tracker.completeEntry('${result.id}')" title="Mark as completed">Mark Complete</button>` : ''}
+                        <button class="btn btn-secondary btn-small" onclick="tracker.editEntry('${result.id}')" title="Edit">Edit</button>
+                        <button class="btn btn-danger btn-small" onclick="tracker.deleteEntry('${result.id}')" title="Delete">Delete</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Update search pagination controls
+     */
+    updateSearchPagination(totalItems) {
+        const pagination = document.getElementById('searchPagination');
+        const prevBtn = document.getElementById('searchPrevBtn');
+        const nextBtn = document.getElementById('searchNextBtn');
+        const pageInfo = document.getElementById('searchPageInfo');
+
+        if (!pagination || !prevBtn || !nextBtn || !pageInfo) return;
+
+        const totalPages = Math.ceil(totalItems / this.searchState.searchPagination.itemsPerPage);
+        
+        if (totalPages <= 1) {
+            pagination.style.display = 'none';
+            return;
+        }
+
+        pagination.style.display = 'flex';
+        pageInfo.textContent = `Page ${this.searchState.searchPagination.currentPage} of ${totalPages}`;
+        
+        prevBtn.disabled = this.searchState.searchPagination.currentPage <= 1;
+        nextBtn.disabled = this.searchState.searchPagination.currentPage >= totalPages;
+    }
+
+    /**
+     * Sort search results
+     */
+    sortSearchResults() {
+        const sortSelect = document.getElementById('searchSort');
+        if (sortSelect && this.searchState.currentQuery) {
+            this.searchState.searchPagination.sort = sortSelect.value;
+            this.searchState.searchPagination.currentPage = 1;
+            this.showFullSearchResults(this.searchState.currentQuery);
+        }
+    }
+
+    /**
+     * Filter search results
+     */
+    filterSearchResults() {
+        const filterSelect = document.getElementById('searchFilter');
+        if (filterSelect && this.searchState.currentQuery) {
+            this.searchState.searchPagination.filter = filterSelect.value;
+            this.searchState.searchPagination.currentPage = 1;
+            this.showFullSearchResults(this.searchState.currentQuery);
+        }
+    }
+
+    /**
+     * Navigate to previous search page
+     */
+    previousSearchPage() {
+        if (this.searchState.searchPagination.currentPage > 1) {
+            this.searchState.searchPagination.currentPage--;
+            if (this.searchState.currentQuery) {
+                this.showFullSearchResults(this.searchState.currentQuery);
+            }
+        }
+    }
+
+    /**
+     * Navigate to next search page
+     */
+    nextSearchPage() {
+        const results = this.searchEntries(this.searchState.currentQuery);
+        const totalPages = Math.ceil(results.length / this.searchState.searchPagination.itemsPerPage);
+        
+        if (this.searchState.searchPagination.currentPage < totalPages) {
+            this.searchState.searchPagination.currentPage++;
+            if (this.searchState.currentQuery) {
+                this.showFullSearchResults(this.searchState.currentQuery);
+            }
+        }
+    }
+
+    /**
+     * Search by hashtag
+     * @param {string} hashtag - The hashtag to search for
+     */
+    searchByHashtag(hashtag) {
+        const query = `#${hashtag}`;
+        this.showFullSearchResults(query);
+    }
+
+    /**
+     * Get hashtag frequency for cloud visualization
+     * @returns {Object} Object with hashtag as key and frequency as value
+     */
+    getHashtagFrequency() {
+        const frequency = {};
+        
+        this.entries.forEach(entry => {
+            if (entry.tags && entry.tags.length > 0) {
+                entry.tags.forEach(tag => {
+                    frequency[tag] = (frequency[tag] || 0) + 1;
+                });
+            }
+        });
+        
+        return frequency;
     }
 }

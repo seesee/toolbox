@@ -241,6 +241,74 @@ function closeAbout() {
 }
 
 /**
+ * Set due date using quick-set buttons
+ * @param {string} period - 'tomorrow', 'nextWeek', or 'nextMonth'
+ */
+function setDueDate(period) {
+    const dueDateInput = document.getElementById('dueDate');
+    if (!dueDateInput) return;
+
+    const now = new Date();
+    let targetDate;
+
+    switch (period) {
+        case 'tomorrow':
+            targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + 1);
+            targetDate.setHours(9, 0, 0, 0); // Set to 9 AM
+            break;
+        case 'nextWeek':
+            targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + 7);
+            targetDate.setHours(9, 0, 0, 0); // Set to 9 AM
+            break;
+        case 'nextMonth':
+            targetDate = new Date(now);
+            targetDate.setMonth(now.getMonth() + 1);
+            targetDate.setHours(9, 0, 0, 0); // Set to 9 AM
+            break;
+        default:
+            return;
+    }
+
+    dueDateInput.value = targetDate.toISOString().slice(0, 16);
+}
+
+/**
+ * Set due date using quick-set buttons for edit modal
+ * @param {string} period - 'tomorrow', 'nextWeek', or 'nextMonth'
+ */
+function setEditDueDate(period) {
+    const dueDateInput = document.getElementById('editDueDate');
+    if (!dueDateInput) return;
+
+    const now = new Date();
+    let targetDate;
+
+    switch (period) {
+        case 'tomorrow':
+            targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + 1);
+            targetDate.setHours(9, 0, 0, 0); // Set to 9 AM
+            break;
+        case 'nextWeek':
+            targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + 7);
+            targetDate.setHours(9, 0, 0, 0); // Set to 9 AM
+            break;
+        case 'nextMonth':
+            targetDate = new Date(now);
+            targetDate.setMonth(now.getMonth() + 1);
+            targetDate.setHours(9, 0, 0, 0); // Set to 9 AM
+            break;
+        default:
+            return;
+    }
+
+    dueDateInput.value = targetDate.toISOString().slice(0, 16);
+}
+
+/**
  * Copy report content to clipboard
  */
 function copyReportToClipboard() {
@@ -305,6 +373,87 @@ function closeEditModal() {
     if (tracker) {
         tracker.closeEditModal();
     }
+}
+
+/**
+ * Close modal by ID
+ */
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Show hashtag browser modal with cloud visualization
+ */
+function showHashtagBrowser() {
+    const modal = document.getElementById('hashtagBrowserModal');
+    if (!modal) return;
+    
+    // Generate hashtag cloud
+    const hashtagFrequency = tracker.getHashtagFrequency();
+    const cloudContainer = modal.querySelector('.hashtag-cloud');
+    
+    if (Object.keys(hashtagFrequency).length === 0) {
+        cloudContainer.innerHTML = '<p>No hashtags found in your entries.</p>';
+    } else {
+        const maxFreq = Math.max(...Object.values(hashtagFrequency));
+        const minFreq = Math.min(...Object.values(hashtagFrequency));
+        const range = maxFreq - minFreq || 1;
+        
+        const hashtagElements = Object.entries(hashtagFrequency)
+            .sort(([,a], [,b]) => b - a) // Sort by frequency desc
+            .map(([tag, freq]) => {
+                const normalized = (freq - minFreq) / range;
+                const fontSize = 0.8 + (normalized * 1.2); // 0.8em to 2.0em
+                const opacity = 0.6 + (normalized * 0.4); // 0.6 to 1.0
+                
+                return `<span class="hashtag-cloud-item" 
+                              style="font-size: ${fontSize}em; opacity: ${opacity};"
+                              onclick="tracker.searchByHashtag('${tag}'); closeModal('hashtagBrowserModal');"
+                              title="${freq} occurrence${freq !== 1 ? 's' : ''}">#${tag}</span>`;
+            })
+            .join(' ');
+        
+        cloudContainer.innerHTML = hashtagElements;
+    }
+    
+    modal.style.display = 'block';
+}
+
+/**
+ * Close hashtag browser modal
+ */
+function closeHashtagBrowser() {
+    closeModal('hashtagBrowserModal');
+}
+
+/**
+ * Toggle todo mode for activity form
+ */
+function toggleTodoMode() {
+    const btn = document.getElementById('todoToggleBtn');
+    if (!btn) return;
+    
+    const isActive = btn.classList.contains('active');
+    
+    if (isActive) {
+        btn.classList.remove('active');
+        btn.textContent = 'Add as Todo';
+    } else {
+        btn.classList.add('active');
+        btn.textContent = '✓ Todo Mode';
+    }
+}
+
+/**
+ * Check if todo mode is active
+ */
+function isTodoModeActive() {
+    const btn = document.getElementById('todoToggleBtn');
+    return btn ? btn.classList.contains('active') : false;
 }
 
 /**
@@ -705,6 +854,8 @@ document.addEventListener('click', (e) => {
             closeAbout();
         } else if (e.target.id === 'pomodoroActivityModal') {
             closePomodoroActivityModal();
+        } else if (e.target.id === 'hashtagBrowserModal') {
+            closeHashtagBrowser();
         } else {
             closeEditModal();
         }
@@ -722,6 +873,7 @@ document.addEventListener('keydown', (e) => {
         const aboutModal = document.getElementById('aboutModal');
         const editModal = document.getElementById('editModal');
         const pomodoroActivityModal = document.getElementById('pomodoroActivityModal');
+        const hashtagBrowserModal = document.getElementById('hashtagBrowserModal');
         
         if (templateGuideModal && templateGuideModal.style.display === 'block') {
             closeTemplateGuide();
@@ -729,9 +881,31 @@ document.addEventListener('keydown', (e) => {
             closeAbout();
         } else if (pomodoroActivityModal && pomodoroActivityModal.style.display === 'block') {
             closePomodoroActivityModal();
+        } else if (hashtagBrowserModal && hashtagBrowserModal.style.display === 'block') {
+            closeHashtagBrowser();
         } else if (editModal && editModal.style.display === 'block') {
             closeEditModal();
         }
+    }
+    
+    // Shift + Enter marks as todo and submits the activity form when focused
+    if (e.shiftKey && e.key === 'Enter') {
+        const activeElement = document.activeElement;
+        
+        // Main activity form
+        if (activeElement && (activeElement.id === 'activity' || activeElement.id === 'description')) {
+            e.preventDefault();
+            const todoBtn = document.getElementById('todoToggleBtn');
+            if (todoBtn && !todoBtn.classList.contains('active')) {
+                todoBtn.classList.add('active');
+                todoBtn.textContent = '✓ Todo Mode';
+            }
+            const form = document.getElementById('activityForm');
+            if (form) {
+                form.dispatchEvent(new Event('submit'));
+            }
+        }
+        return;
     }
     
     // Ctrl/Cmd + Enter submits the activity form when focused
