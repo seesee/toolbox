@@ -307,7 +307,7 @@ class ActivityTracker {
         this.settings.soundMuteMode = document.getElementById('soundMuteMode').value;
         this.settings.notificationSoundType = document.getElementById('notificationSoundType').value;
         this.settings.darkModePreference = document.getElementById('darkModePreference').value;
-        this.settings.autoStartAlerts = document.getElementById('autoStartAlerts')?.checked || false;
+        this.settings.autoStartAlerts = document.getElementById('autoStartAlerts')?.value === 'true';
         this.settings.paginationSize = parseInt(document.getElementById('paginationSize').value);
         this.settings.pomodoroAutoStart = document.getElementById('pomodoroAutoStart')?.checked || false;
         this.settings.pomodoroAutoLog = document.getElementById('pomodoroAutoLog')?.checked !== false;
@@ -619,7 +619,7 @@ class ActivityTracker {
             soundMuteMode: document.getElementById('soundMuteMode').value,
             notificationSoundType: document.getElementById('notificationSoundType').value,
             darkModePreference: document.getElementById('darkModePreference').value,
-            autoStartAlerts: document.getElementById('autoStartAlerts')?.checked || false,
+            autoStartAlerts: document.getElementById('autoStartAlerts')?.value === 'true',
             paginationSize: parseInt(document.getElementById('paginationSize').value),
             workingDays: {
                 monday: document.getElementById('monday').checked,
@@ -706,7 +706,7 @@ class ActivityTracker {
         document.getElementById('pauseDuration').value = this.settings.pauseDuration;
         document.getElementById('soundMuteMode').value = this.settings.soundMuteMode;
         document.getElementById('darkModePreference').value = this.settings.darkModePreference;
-        document.getElementById('autoStartAlerts').checked = this.settings.autoStartAlerts;
+        document.getElementById('autoStartAlerts').value = this.settings.autoStartAlerts.toString();
         document.getElementById('paginationSize').value = this.settings.paginationSize;
         
         // Populate sound dropdowns with all available sounds

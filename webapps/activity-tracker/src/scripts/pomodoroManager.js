@@ -537,14 +537,67 @@ class PomodoroManager {
         }
     }
     
+    /**
+     * Generate a simple hash for duplicate detection
+     */
+    generateActivityHash(activity, description, timestamp) {
+        // Round timestamp to minute accuracy for duplicate detection
+        const date = new Date(timestamp);
+        const minuteAccurateTime = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 
+                                          date.getHours(), date.getMinutes()).toISOString();
+        
+        const hashString = `${activity}|${description || ''}|${minuteAccurateTime}`;
+        
+        // Simple hash function
+        let hash = 0;
+        for (let i = 0; i < hashString.length; i++) {
+            const char = hashString.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        return hash.toString();
+    }
+
+    /**
+     * Check if an activity entry already exists (duplicate detection)
+     */
+    isDuplicateActivity(activity, description, timestamp) {
+        if (!this.activityTracker || !this.activityTracker.entries) return false;
+        
+        const hash = this.generateActivityHash(activity, description, timestamp);
+        
+        // Check recent entries (last 10) for performance
+        const recentEntries = this.activityTracker.entries.slice(0, 10);
+        
+        return recentEntries.some(entry => {
+            if (entry.source !== 'pomodoro') return false;
+            
+            const entryHash = this.generateActivityHash(
+                entry.activity, 
+                entry.description || '', 
+                entry.timestamp
+            );
+            
+            return entryHash === hash;
+        });
+    }
+
     logActivity(activity, description) {
         if (!this.activityTracker || !this.settings.autoLog) return;
+        
+        const timestamp = new Date().toISOString();
+        
+        // Check for duplicates before adding
+        if (this.isDuplicateActivity(activity, description, timestamp)) {
+            console.log('🍅 Skipping duplicate Pomodoro activity:', activity);
+            return;
+        }
         
         const entry = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
             activity: activity,
             description: description || '',
-            timestamp: new Date().toISOString(),
+            timestamp: timestamp,
             created: new Date().toISOString(),
             source: 'pomodoro'
         };

@@ -281,10 +281,11 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <div class="checkbox-group">
-                            <input type="checkbox" id="autoStartAlerts">
-                            <label for="autoStartAlerts" title="Automatically start reminders when the app loads">Auto-start reminders on page load</label>
-                        </div>
+                        <label for="autoStartAlerts" title="Automatically start reminders when the app opens">Auto start reminders upon opening app</label>
+                        <select id="autoStartAlerts">
+                            <option value="false" selected>No</option>
+                            <option value="true">Yes</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label for="notificationSoundType" title="Choose the sound that plays with reminders">Reminder Sound</label>
