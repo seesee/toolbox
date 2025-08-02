@@ -802,10 +802,13 @@ class SoundManager {
             bassOsc.type = waveforms[index];
             bassOsc.frequency.setValueAtTime(freq, currentTime);
             
-            // Add subtle bass frequency modulation for warmth
+            // Add subtle bass frequency modulation for warmth, then extended dramatic drop
             bassOsc.frequency.exponentialRampToValueAtTime(freq * 1.05, currentTime + 1.0);
-            bassOsc.frequency.exponentialRampToValueAtTime(freq * 0.95, currentTime + 2.0);
-            bassOsc.frequency.exponentialRampToValueAtTime(freq, currentTime + 3.0);
+            bassOsc.frequency.exponentialRampToValueAtTime(freq * 0.95, currentTime + 1.5);
+            // Begin the dramatic frequency drop midway through the sound
+            bassOsc.frequency.linearRampToValueAtTime(freq * 0.8, currentTime + 2.0); // Start dropping at midpoint
+            bassOsc.frequency.linearRampToValueAtTime(freq * 0.6, currentTime + 2.8); // Continue drop
+            bassOsc.frequency.linearRampToValueAtTime(freq * 0.4, currentTime + 3.2); // Final drop to 40% of original
             
             // Configure bass filter for punch and clarity
             bassFilter.type = 'lowpass';
@@ -837,11 +840,15 @@ class SoundManager {
         subBassFilter.connect(subBassGain);
         subBassGain.connect(this.audioContext.destination);
         
-        // Very low frequency for felt impact
+        // Very low frequency for felt impact with dramatic glissando drop
         subBassOsc.type = 'sine';
-        subBassOsc.frequency.setValueAtTime(baseFreq / 8, currentTime); // C1 (16.35 Hz)
-        subBassOsc.frequency.exponentialRampToValueAtTime(baseFreq / 6, currentTime + 1.5);
-        subBassOsc.frequency.exponentialRampToValueAtTime(baseFreq / 8, currentTime + 3.0);
+        subBassOsc.frequency.setValueAtTime(baseFreq / 4, currentTime); // C2 (32.7 Hz) - more audible start
+        subBassOsc.frequency.exponentialRampToValueAtTime(baseFreq / 3, currentTime + 1.5); // Up to ~43 Hz
+        subBassOsc.frequency.linearRampToValueAtTime(baseFreq / 4, currentTime + 2.0); // Back to 32.7 Hz
+        // Dramatic glissando drop - much more audible range
+        subBassOsc.frequency.linearRampToValueAtTime(baseFreq / 8, currentTime + 2.5); // Drop to 16 Hz
+        subBassOsc.frequency.linearRampToValueAtTime(baseFreq / 12, currentTime + 3.2); // Slide to ~11 Hz
+        subBassOsc.frequency.linearRampToValueAtTime(baseFreq / 16, currentTime + 3.5); // Final drop to ~8 Hz
         
         // Sub-bass filter for controlled rumble
         subBassFilter.type = 'lowpass';
@@ -850,12 +857,13 @@ class SoundManager {
         subBassFilter.frequency.exponentialRampToValueAtTime(40, currentTime + 2.5);
         subBassFilter.Q.setValueAtTime(1.5, currentTime);
         
-        // Sub-bass envelope - slow build for foundation
+        // Sub-bass envelope - dramatic presence with swooping finale
         subBassGain.gain.setValueAtTime(0, currentTime);
-        subBassGain.gain.linearRampToValueAtTime(0.12, currentTime + 0.3); // Slower attack
-        subBassGain.gain.exponentialRampToValueAtTime(0.08, currentTime + 1.5);
-        subBassGain.gain.linearRampToValueAtTime(0.04, currentTime + 2.5);
-        subBassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 3.5);
+        subBassGain.gain.linearRampToValueAtTime(0.18, currentTime + 0.3); // Stronger attack
+        subBassGain.gain.exponentialRampToValueAtTime(0.12, currentTime + 1.5); // Maintain strong presence
+        subBassGain.gain.linearRampToValueAtTime(0.10, currentTime + 2.0); // Keep audible for drop
+        subBassGain.gain.linearRampToValueAtTime(0.15, currentTime + 2.5); // Boost during the drop
+        subBassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 3.5); // Final fade
         
         subBassOsc.start(currentTime);
         subBassOsc.stop(currentTime + 3.5);
