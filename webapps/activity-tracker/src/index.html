@@ -794,43 +794,6 @@
                     </div>
 
                     <div class="guide-section">
-                        <h4>📊 Available Data</h4>
-                        <p>The following data is available in your templates:</p>
-                        <ul>
-                            <li><code>{{reportTitle}}</code> - The report title</li>
-                            <li><code>{{startDate}}</code> - Report start date (formatted)</li>
-                            <li><code>{{endDate}}</code> - Report end date (formatted)</li>
-                            <li><code>{{totalEntries}}</code> - Total number of activity entries</li>
-                            <li><code>{{entries}}</code> - Array of all activity entries</li>
-                        </ul>
-                    </div>
-
-                    <div class="guide-section">
-                        <h4>📅 Entry Properties</h4>
-                        <p>Each entry in the <code>{{#each entries}}</code> loop has:</p>
-                        <ul>
-                            <li><code>{{activity}}</code> - The activity name</li>
-                            <li><code>{{description}}</code> - Activity description</li>
-                            <li><code>{{timestamp}}</code> - Raw ISO timestamp</li>
-                            <li><code>{{formattedTime}}</code> - Nicely formatted time (e.g., "2:30 PM")</li>
-                            <li><code>{{formattedDate}}</code> - Nicely formatted date (e.g., "Jan 15, 2025")</li>
-                            <li><code>{{isTodo}}</code> - Boolean: true if this is a todo item</li>
-                            <li><code>{{tags}}</code> - Array of hashtags for this entry</li>
-                        </ul>
-                    </div>
-
-                    <div class="guide-section">
-                        <h4>🔄 Common Transformations</h4>
-                        <p>Transform timestamps and format data:</p>
-                        <ul>
-                            <li><strong>Date formats</strong>: Use <code>{{formattedDate}}</code> and <code>{{formattedTime}}</code> for human-readable formats</li>
-                            <li><strong>Conditional content</strong>: <code>{{#if description}}{{description}}{{/if}}</code> - only show if description exists</li>
-                            <li><strong>Loop through tags</strong>: <code>{{#each tags}}#{{this}} {{/each}}</code> - display all hashtags</li>
-                            <li><strong>Todo filtering</strong>: <code>{{#if isTodo}}📋 TODO: {{/if}}</code> - mark todo items</li>
-                        </ul>
-                    </div>
-
-                    <div class="guide-section">
                         <h4>🔧 Pipe Syntax & Function Chaining</h4>
                         <p>Transform data using the pipe (<code>|</code>) syntax to chain multiple functions together:</p>
                         
@@ -886,6 +849,43 @@
                         <ul>
                             <li>✅ <code>{{ text | stripLinebreaks | escapeCsv }}</code> - Remove breaks first, then escape</li>
                             <li>❌ <code>{{ text | escapeCsv | stripLinebreaks }}</code> - Escaping first may interfere with break removal</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-section">
+                        <h4>📊 Available Data</h4>
+                        <p>The following data is available in your templates:</p>
+                        <ul>
+                            <li><code>{{reportTitle}}</code> - The report title</li>
+                            <li><code>{{startDate}}</code> - Report start date (formatted)</li>
+                            <li><code>{{endDate}}</code> - Report end date (formatted)</li>
+                            <li><code>{{totalEntries}}</code> - Total number of activity entries</li>
+                            <li><code>{{entries}}</code> - Array of all activity entries</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-section">
+                        <h4>📅 Entry Properties</h4>
+                        <p>Each entry in the <code>{{#each entries}}</code> loop has:</p>
+                        <ul>
+                            <li><code>{{activity}}</code> - The activity name</li>
+                            <li><code>{{description}}</code> - Activity description</li>
+                            <li><code>{{timestamp}}</code> - Raw ISO timestamp</li>
+                            <li><code>{{formattedTime}}</code> - Nicely formatted time (e.g., "2:30 PM")</li>
+                            <li><code>{{formattedDate}}</code> - Nicely formatted date (e.g., "Jan 15, 2025")</li>
+                            <li><code>{{isTodo}}</code> - Boolean: true if this is a todo item</li>
+                            <li><code>{{tags}}</code> - Array of hashtags for this entry</li>
+                        </ul>
+                    </div>
+
+                    <div class="guide-section">
+                        <h4>🔄 Common Transformations</h4>
+                        <p>Transform timestamps and format data:</p>
+                        <ul>
+                            <li><strong>Date formats</strong>: Use <code>{{formattedDate}}</code> and <code>{{formattedTime}}</code> for human-readable formats</li>
+                            <li><strong>Conditional content</strong>: <code>{{#if description}}{{description}}{{/if}}</code> - only show if description exists</li>
+                            <li><strong>Loop through tags</strong>: <code>{{#each tags}}#{{this}} {{/each}}</code> - display all hashtags</li>
+                            <li><strong>Todo filtering</strong>: <code>{{#if isTodo}}📋 TODO: {{/if}}</code> - mark todo items</li>
                         </ul>
                     </div>
 

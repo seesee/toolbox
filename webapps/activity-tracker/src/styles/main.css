@@ -3162,11 +3162,13 @@ body.dark-mode {
 .template-guide-content {
     max-width: 800px;
     max-height: 90vh;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .template-guide-content .modal-body {
     overflow-y: auto;
+    flex: 1;
 }
 
 /* Edit Modal */
