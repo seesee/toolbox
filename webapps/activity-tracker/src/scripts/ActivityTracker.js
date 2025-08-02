@@ -1447,7 +1447,7 @@ class ActivityTracker {
         }
 
         this.notificationTimer = setInterval(() => {
-            this.checkForNotification();
+            this.checkAndTriggerActivityReminder();
         }, 60000); // Check every minute
         
         // Start countdown display timer (updates every second)
@@ -1473,18 +1473,12 @@ class ActivityTracker {
     }
 
     /**
-     * Check if a notification should be sent
+     * Check if a reminder (sound and/or notification) should be triggered.
      */
-    checkForNotification() {
-        // Check if Notification API is available
-        if (typeof Notification === 'undefined') {
-            console.log('Skipping notification check - Notification API not available');
-            return;
-        }
-
-        // Check if notifications are disabled by user
+    checkAndTriggerActivityReminder() {
+        // Check if reminders are disabled by user setting. This is the master switch.
         if (!this.settings.notificationsEnabled) {
-            console.log('Skipping notification check - notifications disabled by user');
+            console.log('Skipping reminder check - reminders disabled by user');
             return;
         }
 
@@ -1492,16 +1486,11 @@ class ActivityTracker {
         if (this.settings.notificationsPausedUntil) {
             const now = new Date().getTime();
             if (now < this.settings.notificationsPausedUntil) {
-                console.log('Notifications are paused.');
+                console.log('Reminders are paused.');
                 return;
             } else {
                 this.unpauseNotifications(false);
             }
-        }
-        
-        if (Notification.permission !== 'granted') {
-            console.log('Skipping notification check - permission not granted');
-            return;
         }
 
         const now = new Date();
@@ -1510,7 +1499,7 @@ class ActivityTracker {
 
         // Check if it's a working day
         if (!this.settings.workingDays[dayName]) {
-            console.log('Skipping notification - not a working day');
+            console.log('Skipping reminder - not a working day');
             return;
         }
 
@@ -1521,28 +1510,36 @@ class ActivityTracker {
         const endTime = endHour * 60 + endMin;
 
         if (currentTime < startTime || currentTime > endTime) {
-            console.log('Skipping notification - outside working hours');
+            console.log('Skipping reminder - outside working hours');
             return;
         }
 
-        // Check if enough time has passed since last notification
-        const lastNotification = localStorage.getItem('lastNotificationTime');
-        const timeSinceLastNotification = now.getTime() - (lastNotification || 0);
+        // Check if enough time has passed since last reminder
+        const lastReminderTime = localStorage.getItem('lastNotificationTime');
+        const timeSinceLastReminder = now.getTime() - (lastReminderTime || 0);
         const intervalMs = this.settings.notificationInterval * 60 * 1000;
 
-        if (intervalMs > 0 && timeSinceLastNotification >= intervalMs) {
-            console.log('Sending scheduled notification');
-            this.showActivityReminder();
+        if (intervalMs > 0 && timeSinceLastReminder >= intervalMs) {
+            console.log('Triggering activity reminder.');
+            
+            // Always play the sound if a reminder is due
+            this.playNotificationSound();
+            
+            // Only show a visual notification if the API is available and permission is granted
+            const canShowNotification = typeof Notification !== 'undefined' && Notification.permission === 'granted';
+            if (canShowNotification) {
+                console.log('Sending scheduled notification');
+                this.showActivityReminderNotification();
+            }
+            
             localStorage.setItem('lastNotificationTime', now.getTime().toString());
         }
     }
 
     /**
-     * Show activity reminder notification
+     * Show activity reminder visual notification.
      */
-    showActivityReminder() {
-        // Play sound for activity reminder
-        this.playNotificationSound();
+    showActivityReminderNotification() {
         this.setCurrentTime();
         
         try {
@@ -1557,7 +1554,7 @@ class ActivityTracker {
             };
             this.showNotificationWithServiceWorker('Activity Tracker Reminder', options);
         } catch (error) {
-            console.error('Error showing activity reminder:', error);
+            console.error('Error showing activity reminder notification:', error);
         }
     }
 
