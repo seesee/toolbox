@@ -42,10 +42,51 @@ class SoundManager {
     initAudioContext() {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // For iOS, we need to unlock the audio context with user interaction
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                this.unlockAudioContextForIOS();
+            }
         } catch (error) {
             console.warn('Web Audio API not supported:', error);
             this.audioContext = null;
         }
+    }
+
+    /**
+     * Unlock AudioContext for iOS - must be called from user interaction
+     */
+    unlockAudioContextForIOS() {
+        if (!this.audioContext || this.audioContext.state !== 'suspended') {
+            return;
+        }
+
+        // Create a short silent buffer to unlock the context
+        const unlockAudio = () => {
+            if (this.audioContext.state === 'suspended') {
+                const buffer = this.audioContext.createBuffer(1, 1, 22050);
+                const source = this.audioContext.createBufferSource();
+                source.buffer = buffer;
+                source.connect(this.audioContext.destination);
+                source.start(0);
+                
+                this.audioContext.resume().then(() => {
+                    console.log('iOS AudioContext unlocked successfully');
+                }).catch(error => {
+                    console.warn('Failed to unlock iOS AudioContext:', error);
+                });
+            }
+        };
+
+        // Add event listeners for user interactions to unlock audio
+        const events = ['touchstart', 'touchend', 'mousedown', 'keydown'];
+        const unlock = () => {
+            unlockAudio();
+            // Remove listeners after first interaction
+            events.forEach(event => document.removeEventListener(event, unlock, true));
+        };
+        
+        events.forEach(event => document.addEventListener(event, unlock, true));
     }
 
     /**
@@ -67,10 +108,41 @@ class SoundManager {
         }
 
         try {
-            // Resume audio context if it's suspended
+            // Resume audio context if it's suspended (critical for iOS)
             if (this.audioContext.state === 'suspended') {
-                this.audioContext.resume();
+                // For iOS, we need to handle the promise properly
+                const resumePromise = this.audioContext.resume();
+                if (resumePromise && resumePromise.then) {
+                    resumePromise.then(() => {
+                        console.log('AudioContext resumed successfully');
+                        this.playSoundInternal(soundType);
+                    }).catch(error => {
+                        console.warn('Failed to resume AudioContext:', error);
+                        // Try to reinitialize on iOS if resume fails
+                        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                            this.initAudioContext();
+                            if (this.audioContext && this.audioContext.state !== 'suspended') {
+                                this.playSoundInternal(soundType);
+                            }
+                        }
+                    });
+                    return;
+                } else {
+                    this.audioContext.resume();
+                }
             }
+            
+            this.playSoundInternal(soundType);
+        } catch (error) {
+            console.warn('Error playing notification sound:', error);
+        }
+    }
+
+    /**
+     * Internal method to actually play the sound after AudioContext is ready
+     */
+    playSoundInternal(soundType) {
+        try {
 
             const currentTime = this.audioContext.currentTime;
             
@@ -153,7 +225,7 @@ class SoundManager {
             
             console.log(`Notification sound played: ${soundType}`);
         } catch (error) {
-            console.warn('Error playing notification sound:', error);
+            console.warn('Error in playSoundInternal:', error);
         }
     }
 

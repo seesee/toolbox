@@ -26,7 +26,7 @@ describe('Edit Dialog Improvements', () => {
             
             // Initial state
             expect(editTodoButton).not.toHaveClass('active');
-            expect(editTodoButtonText.textContent).toBe('Add as Todo');
+            expect(editTodoButtonText.textContent).toBe('Mark as Todo');
             
             // Simulate the state change that would happen when clicked
             editTodoButton.classList.add('active');

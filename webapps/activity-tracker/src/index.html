@@ -85,7 +85,7 @@
                         <label for="timestamp">Time</label>
                         <input type="datetime-local" id="timestamp" required>
                         <div class="todo-quick-set">
-                            <button type="button" class="btn-quick-set" id="todoToggleBtn" onclick="toggleTodoMode()" title="Mark this as a todo item (Shift+Enter to submit as todo automatically)">Add as Todo</button>
+                            <button type="button" class="btn-quick-set" id="todoToggleBtn" onclick="toggleTodoMode()" title="Mark this as a todo item (Shift+Enter to submit as todo automatically)">Mark as Todo</button>
                         </div>
                     </div>
                     <div class="form-group" id="dueDateSection">
@@ -654,7 +654,7 @@
                             <input type="datetime-local" id="editTimestamp" required>
                             <div class="todo-quick-set">
                                 <button type="button" id="editTodoButton" class="btn-quick-set" onclick="toggleEditTodo()">
-                                    <span id="editTodoButtonText">Add as Todo</span>
+                                    <span id="editTodoButtonText">Mark as Todo</span>
                                 </button>
                             </div>
                         </div>
@@ -1072,7 +1072,7 @@ Tags: {{#each tags}}#{{this}} {{/each}}
                         <ul>
                             <li>Enter what you're doing in the activity field</li>
                             <li>Add #hashtags for easy categorization</li>
-                            <li>Use the "Add as Todo" button for tasks that need completion</li>
+                            <li>Use the "Mark as Todo" button for tasks that need completion</li>
                             <li>Set due dates for todos using quick-set buttons</li>
                         </ul>
                     </div>

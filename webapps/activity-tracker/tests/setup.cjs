@@ -180,7 +180,7 @@ global.createMockDOMStructure = () => {
                                     <input type="datetime-local" id="editTimestamp" required>
                                     <div class="todo-quick-set">
                                         <button type="button" id="editTodoButton" class="btn-quick-set" onclick="toggleEditTodo()">
-                                            <span id="editTodoButtonText">Add as Todo</span>
+                                            <span id="editTodoButtonText">Mark as Todo</span>
                                         </button>
                                     </div>
                                 </div>

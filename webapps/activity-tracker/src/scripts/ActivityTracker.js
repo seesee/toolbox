@@ -444,7 +444,7 @@ class ActivityTracker {
             const todoBtn = document.getElementById('todoToggleBtn');
             if (todoBtn) {
                 todoBtn.classList.remove('active');
-                todoBtn.textContent = 'Add as Todo';
+                todoBtn.textContent = 'Mark as Todo';
             }
             this.setCurrentTime();
             document.getElementById('activity').focus();
@@ -650,7 +650,7 @@ class ActivityTracker {
                 }
             } else {
                 button.classList.remove('active');
-                buttonText.textContent = 'Add as Todo';
+                buttonText.textContent = 'Mark as Todo';
                 // Hide due date section when not in todo mode
                 if (editDueDateSection) {
                     editDueDateSection.style.display = 'none';
@@ -693,46 +693,61 @@ class ActivityTracker {
             return;
         }
 
-        container.innerHTML = paginatedEntries.map(entry => {
-            const now = new Date();
-            const isOverdue = entry.isTodo && entry.dueDate && new Date(entry.dueDate) < now;
-            const isTodo = entry.isTodo;
-            
-            let itemClass = 'entry-item';
-            if (isTodo) {
-                itemClass += isOverdue ? ' entry-todo entry-overdue' : ' entry-todo';
-            }
-            
-            const tagsHtml = entry.tags && entry.tags.length > 0 
-                ? `<div class="entry-tags">${entry.tags.map(tag => `<span class="entry-tag" onclick="tracker.searchByHashtag('${tag}')">#${tag}</span>`).join('')}</div>`
-                : '';
-
-            const dueDateHtml = entry.dueDate 
-                ? `<div class="entry-due-date">Due: ${formatDateTime(entry.dueDate)}</div>`
-                : '';
-
-            const todoIndicator = entry.isTodo ? '<span class="entry-todo-indicator">📋 Todo</span>' : '';
-
-            return `
-                <div class="${itemClass}">
-                    <div class="entry-content">
-                        <div class="entry-time">${formatDateTime(entry.timestamp)} ${todoIndicator}</div>
-                        <div class="entry-activity">${escapeHtml(entry.activity)}</div>
-                        ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
-                        ${tagsHtml}
-                        ${dueDateHtml}
-                    </div>
-                    <div class="entry-actions">
-                        ${entry.isTodo ? `<button class="btn btn-success btn-small" onclick="tracker.completeEntry('${entry.id}')" title="Mark as completed">Mark Complete</button>` : ''}
-                        <button class="btn btn-secondary btn-small" onclick="tracker.editEntry('${entry.id}')">Edit</button>
-                        <button class="btn btn-danger btn-small" onclick="tracker.deleteEntry('${entry.id}')">Delete</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
+        container.innerHTML = paginatedEntries.map(entry => this.renderEntry(entry, { showTodoIndicator: true })).join('');
         
         // Update pagination controls
         this.updateEntriesPagination(this.entries.length);
+    }
+
+    /**
+     * Unified entry rendering method used by both main entries and todo sections
+     * @param {Object} entry - The entry to render
+     * @param {Object} options - Rendering options
+     * @returns {string} HTML string for the entry
+     */
+    renderEntry(entry, options = {}) {
+        const {
+            showTodoIndicator = false,
+            showCreatedTime = false
+        } = options;
+
+        const now = new Date();
+        const isOverdue = entry.isTodo && entry.dueDate && new Date(entry.dueDate) < now;
+        const isTodo = entry.isTodo;
+        
+        let itemClass = 'entry-item';
+        if (isTodo) {
+            itemClass += isOverdue ? ' entry-todo entry-overdue' : ' entry-todo';
+        }
+        
+        const tagsHtml = entry.tags && entry.tags.length > 0 
+            ? `<div class="entry-tags">${entry.tags.map(tag => `<span class="entry-tag" onclick="tracker.searchByHashtag('${tag}')">#${tag}</span>`).join('')}</div>`
+            : '';
+
+        const dueDateHtml = entry.dueDate 
+            ? `<div class="entry-due-date">Due: ${formatDateTime(entry.dueDate)}</div>`
+            : '';
+
+        // For todo section, show created time instead of timestamp, and optionally show todo indicator
+        const timeToShow = showCreatedTime && entry.created ? entry.created : entry.timestamp;
+        const todoIndicator = (showTodoIndicator && entry.isTodo) ? '<span class="entry-todo-indicator">📋 Todo</span>' : '';
+
+        return `
+            <div class="${itemClass}">
+                <div class="entry-content">
+                    <div class="entry-time">${formatDateTime(timeToShow)} ${todoIndicator}</div>
+                    <div class="entry-activity">${escapeHtml(entry.activity)}</div>
+                    ${entry.description ? `<div class="entry-description">${this.renderDescriptionMarkdown(entry.description)}</div>` : ''}
+                    ${tagsHtml}
+                    ${dueDateHtml}
+                </div>
+                <div class="entry-actions">
+                    ${entry.isTodo ? `<button class="btn btn-success btn-small" onclick="tracker.completeEntry('${entry.id}')" title="Mark as completed">Mark Complete</button>` : ''}
+                    <button class="btn btn-secondary btn-small" onclick="tracker.editEntry('${entry.id}')">Edit</button>
+                    <button class="btn btn-danger btn-small" onclick="tracker.deleteEntry('${entry.id}')">Delete</button>
+                </div>
+            </div>
+        `;
     }
 
     /**
@@ -2428,8 +2443,8 @@ class ActivityTracker {
         const endIndex = startIndex + this.todoPagination.itemsPerPage;
         const paginatedTodos = todos.slice(startIndex, endIndex);
 
-        // Render todos
-        todoList.innerHTML = paginatedTodos.map(todo => this.renderTodoItem(todo)).join('');
+        // Render todos using unified renderEntry method (no todo indicator since we're already in todo section)
+        todoList.innerHTML = paginatedTodos.map(todo => this.renderEntry(todo, { showCreatedTime: true })).join('');
 
         // Update pagination controls
         this.updateTodoPagination(totalTodos);
@@ -2494,48 +2509,6 @@ class ActivityTracker {
         }
 
         return todos;
-    }
-
-    /**
-     * Render a single todo item
-     */
-    renderTodoItem(todo) {
-        const now = new Date();
-        const isOverdue = todo.dueDate && new Date(todo.dueDate) < now;
-        const isDueToday = todo.dueDate && new Date(todo.dueDate).toDateString() === now.toDateString();
-        
-        const itemClass = isOverdue ? 'todo-item todo-overdue' : 'todo-item todo-incomplete';
-        
-        const tagsHtml = todo.tags && todo.tags.length > 0 
-            ? `<div class="todo-tags">${todo.tags.map(tag => `<span class="todo-tag" onclick="tracker.searchByHashtag('${tag}')">#${tag}</span>`).join('')}</div>`
-            : '';
-
-        const dueDateHtml = todo.dueDate 
-            ? `<span class="todo-due-date">Due: ${formatDateTime(todo.dueDate)}</span>`
-            : '';
-
-        const metaItems = [
-            `Created: ${formatDateTime(todo.created)}`,
-            dueDateHtml
-        ].filter(Boolean);
-
-        return `
-            <div class="${itemClass}">
-                <div class="todo-header">
-                    <div class="todo-content">
-                        <div class="todo-activity">${escapeHtml(todo.activity)}</div>
-                        ${todo.description ? `<div class="todo-description">${this.renderDescriptionMarkdown(todo.description)}</div>` : ''}
-                        ${tagsHtml}
-                        <div class="todo-meta">${metaItems.join(' • ')}</div>
-                    </div>
-                    <div class="todo-actions">
-                        <button class="btn btn-success btn-small" onclick="tracker.completeEntry('${todo.id}')" title="Mark as completed">Mark Complete</button>
-                        <button class="btn btn-secondary btn-small" onclick="tracker.editEntry('${todo.id}')" title="Edit todo">Edit</button>
-                        <button class="btn btn-danger btn-small" onclick="tracker.deleteEntry('${todo.id}')" title="Delete todo">Delete</button>
-                    </div>
-                </div>
-            </div>
-        `;
     }
 
     /**
@@ -2897,59 +2870,13 @@ class ActivityTracker {
         const endIndex = startIndex + pagination.itemsPerPage;
         const paginatedResults = results.slice(startIndex, endIndex);
 
-        // Render results
-        resultsList.innerHTML = paginatedResults.map(result => this.renderSearchResult(result)).join('');
+        // Render results using unified renderEntry method
+        resultsList.innerHTML = paginatedResults.map(result => this.renderEntry(result, { showTodoIndicator: true, showCreatedTime: true })).join('');
 
         // Update pagination
         this.updateSearchPagination(results.length);
     }
 
-    /**
-     * Render a single search result
-     */
-    renderSearchResult(result) {
-        const now = new Date();
-        const isOverdue = result.isTodo && result.dueDate && new Date(result.dueDate) < now;
-        
-        let itemClass = 'search-result-item';
-        if (result.isTodo) {
-            itemClass += ' result-todo';
-        } else {
-            itemClass += ' result-completed';
-        }
-        
-        const tagsHtml = result.tags && result.tags.length > 0 
-            ? `<div class="search-result-tags">${result.tags.map(tag => `<span class="search-result-tag" onclick="tracker.searchByHashtag('${tag}')">#${tag}</span>`).join('')}</div>`
-            : '';
-
-        const dueDateHtml = result.dueDate 
-            ? `<span class="search-due-date">Due: ${formatDateTime(result.dueDate)}</span>`
-            : '';
-
-        const metaItems = [
-            result.isTodo ? 'Todo' : 'Activity',
-            `Created: ${formatDateTime(result.created)}`,
-            dueDateHtml
-        ].filter(Boolean);
-
-        return `
-            <div class="${itemClass}">
-                <div class="search-result-header">
-                    <div class="search-result-content">
-                        <div class="search-result-activity">${escapeHtml(result.activity)}</div>
-                        ${result.description ? `<div class="search-result-description">${this.renderDescriptionMarkdown(result.description)}</div>` : ''}
-                        ${tagsHtml}
-                        <div class="search-result-meta">${metaItems.join(' • ')}</div>
-                    </div>
-                    <div class="search-result-actions">
-                        ${result.isTodo ? `<button class="btn btn-success btn-small" onclick="tracker.completeEntry('${result.id}')" title="Mark as completed">Mark Complete</button>` : ''}
-                        <button class="btn btn-secondary btn-small" onclick="tracker.editEntry('${result.id}')" title="Edit">Edit</button>
-                        <button class="btn btn-danger btn-small" onclick="tracker.deleteEntry('${result.id}')" title="Delete">Delete</button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
 
     /**
      * Update search pagination controls

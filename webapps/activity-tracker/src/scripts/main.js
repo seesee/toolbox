@@ -462,7 +462,7 @@ function toggleTodoMode() {
     
     if (isActive) {
         btn.classList.remove('active');
-        btn.textContent = 'Add as Todo';
+        btn.textContent = 'Mark as Todo';
         // Hide due date section when not in todo mode
         if (dueDateSection) {
             dueDateSection.style.display = 'none';
