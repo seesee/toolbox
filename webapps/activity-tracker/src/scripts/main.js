@@ -458,13 +458,22 @@ function toggleTodoMode() {
     if (!btn) return;
     
     const isActive = btn.classList.contains('active');
+    const dueDateSection = document.getElementById('dueDateSection');
     
     if (isActive) {
         btn.classList.remove('active');
         btn.textContent = 'Add as Todo';
+        // Hide due date section when not in todo mode
+        if (dueDateSection) {
+            dueDateSection.style.display = 'none';
+        }
     } else {
         btn.classList.add('active');
         btn.textContent = '✓ Todo Mode';
+        // Show due date section when in todo mode
+        if (dueDateSection) {
+            dueDateSection.style.display = 'block';
+        }
     }
 }
 
@@ -494,6 +503,7 @@ function showPomodoroActivityModal() {
     const modal = document.getElementById('pomodoroActivityModal');
     if (modal) {
         modal.style.display = 'block';
+        updatePreviousActivityButton();
         setTimeout(() => {
             const activityInput = document.getElementById('pomodoroActivityName');
             if (activityInput) {
@@ -527,6 +537,206 @@ function togglePomodoro() {
 function togglePomodoroPause() {
     if (tracker && tracker.pomodoroManager) {
         tracker.pomodoroManager.togglePause();
+    }
+}
+
+/**
+ * Use previous activity to populate Pomodoro activity form
+ */
+function usePreviousActivity() {
+    if (!tracker || !tracker.entries || tracker.entries.length === 0) {
+        showNotification('No previous activities found', 'warning');
+        return;
+    }
+    
+    // Find the most recent non-Pomodoro activity or the most recent Pomodoro work activity
+    let previousActivity = null;
+    
+    for (const entry of tracker.entries) {
+        if (entry.source !== 'pomodoro') {
+            // Use most recent manual activity
+            previousActivity = entry;
+            break;
+        } else if (entry.activity && !entry.activity.includes('break') && !entry.activity.includes('abandoned')) {
+            // Use most recent Pomodoro work activity (not break or abandonment)
+            previousActivity = entry;
+            break;
+        }
+    }
+    
+    if (!previousActivity) {
+        showNotification('No suitable previous activity found', 'warning');
+        return;
+    }
+    
+    // Populate the form
+    const activityName = document.getElementById('pomodoroActivityName');
+    const activityDescription = document.getElementById('pomodoroActivityDescription');
+    
+    if (activityName) {
+        activityName.value = previousActivity.activity;
+    }
+    
+    if (activityDescription && previousActivity.description) {
+        activityDescription.value = previousActivity.description;
+    }
+    
+    showNotification(`Using previous activity: "${previousActivity.activity}"`, 'success');
+}
+
+/**
+ * Update the "Use Previous Activity" button state
+ */
+function updatePreviousActivityButton() {
+    const button = document.getElementById('usePreviousActivityBtn');
+    if (!button) return;
+    
+    if (!tracker || !tracker.entries || tracker.entries.length === 0) {
+        button.disabled = true;
+        button.title = 'No previous activities available';
+        return;
+    }
+    
+    // Check if there's a suitable previous activity
+    let hasUsableActivity = false;
+    for (const entry of tracker.entries) {
+        if (entry.source !== 'pomodoro' || 
+            (entry.activity && !entry.activity.includes('break') && !entry.activity.includes('abandoned'))) {
+            hasUsableActivity = true;
+            break;
+        }
+    }
+    
+    button.disabled = !hasUsableActivity;
+    button.title = hasUsableActivity ? 'Fill form with your most recent activity' : 'No suitable previous activities available';
+}
+
+/**
+ * Show Pomodoro abandonment dialog
+ */
+function showPomodoroAbandonDialog() {
+    const modal = document.getElementById('pomodoroAbandonModal');
+    if (modal) {
+        modal.style.display = 'block';
+        setTimeout(() => {
+            const activityInput = document.getElementById('pomodoroAbandonActivityName');
+            if (activityInput) {
+                activityInput.focus();
+            }
+        }, 100);
+    }
+}
+
+/**
+ * Close Pomodoro abandonment dialog
+ */
+function closePomodoroAbandonDialog() {
+    const modal = document.getElementById('pomodoroAbandonModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('pomodoroAbandonForm').reset();
+    }
+}
+
+/**
+ * Handle Pomodoro abandonment save decision
+ */
+function handlePomodoroAbandonmentSave(saveWork) {
+    if (tracker && tracker.pomodoroManager) {
+        tracker.pomodoroManager.handleAbandonmentSave(saveWork);
+    }
+}
+
+/**
+ * Reset Pomodoro session counter
+ */
+function resetPomodoroSessions() {
+    if (!tracker || !tracker.pomodoroManager) {
+        showNotification('Pomodoro manager not available', 'error');
+        return;
+    }
+    
+    // Check warning settings
+    if (tracker.settings.warnOnSessionReset) {
+        showConfirmationDialog(
+            'Reset Session Counter',
+            'Are you sure you want to reset the Pomodoro session counter? This will start your session count back at 1.',
+            (skipFuture) => {
+                if (skipFuture) {
+                    tracker.settings.warnOnSessionReset = false;
+                    tracker.saveSettings();
+                }
+                tracker.pomodoroManager.resetSessionCounter();
+            },
+            {
+                confirmText: 'Reset',
+                buttonClass: 'btn-warning',
+                allowSkip: true
+            }
+        );
+    } else {
+        tracker.pomodoroManager.resetSessionCounter();
+    }
+}
+
+/**
+ * Toggle the edit todo button state
+ */
+function toggleEditTodo() {
+    if (!tracker) return;
+    
+    const button = document.getElementById('editTodoButton');
+    if (button) {
+        const currentState = button.dataset.isTodo === 'true';
+        tracker.setEditTodoButtonState(!currentState);
+    }
+}
+
+/**
+ * Show custom confirmation dialog
+ */
+function showConfirmationDialog(title, message, onConfirm, options = {}) {
+    const modal = document.getElementById('confirmationModal');
+    const titleElement = document.getElementById('confirmationTitle');
+    const messageElement = document.getElementById('confirmationMessage');
+    const confirmBtn = document.getElementById('confirmationConfirmBtn');
+    const skipSection = document.getElementById('confirmationSkipSection');
+    const skipCheckbox = document.getElementById('confirmationSkipFuture');
+    
+    if (modal && titleElement && messageElement && confirmBtn) {
+        titleElement.textContent = title;
+        messageElement.textContent = message;
+        
+        // Configure button
+        confirmBtn.textContent = options.confirmText || 'Confirm';
+        confirmBtn.className = `btn ${options.buttonClass || 'btn-danger'}`;
+        
+        // Show/hide skip option
+        if (options.allowSkip) {
+            skipSection.style.display = 'block';
+            skipCheckbox.checked = false;
+        } else {
+            skipSection.style.display = 'none';
+        }
+        
+        // Set up confirm handler
+        confirmBtn.onclick = () => {
+            const skipFuture = skipCheckbox.checked;
+            closeConfirmationDialog();
+            onConfirm(skipFuture);
+        };
+        
+        modal.style.display = 'block';
+    }
+}
+
+/**
+ * Close confirmation dialog
+ */
+function closeConfirmationDialog() {
+    const modal = document.getElementById('confirmationModal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 
@@ -777,10 +987,29 @@ async function runServiceWorkerTest() {
 }
 
 /**
+ * Initialize UI state on page load
+ */
+function initializeUIState() {
+    // Hide due date sections by default (they're only for todos)
+    const dueDateSection = document.getElementById('dueDateSection');
+    if (dueDateSection) {
+        dueDateSection.style.display = 'none';
+    }
+    
+    const editDueDateSection = document.getElementById('editDueDateSection');
+    if (editDueDateSection) {
+        editDueDateSection.style.display = 'none';
+    }
+}
+
+/**
  * Initialize the application when DOM is loaded
  */
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 Initializing Activity Tracker...');
+    
+    // Initialize UI state
+    initializeUIState();
     
     // Create tracker instance
     tracker = new ActivityTracker();
@@ -883,6 +1112,10 @@ document.addEventListener('click', (e) => {
             closeAbout();
         } else if (e.target.id === 'pomodoroActivityModal') {
             closePomodoroActivityModal();
+        } else if (e.target.id === 'pomodoroAbandonModal') {
+            closePomodoroAbandonDialog();
+        } else if (e.target.id === 'confirmationModal') {
+            closeConfirmationDialog();
         } else if (e.target.id === 'hashtagBrowserModal') {
             closeHashtagBrowser();
         } else if (e.target.id === 'userGuideModal') {
@@ -904,6 +1137,8 @@ document.addEventListener('keydown', (e) => {
         const aboutModal = document.getElementById('aboutModal');
         const editModal = document.getElementById('editModal');
         const pomodoroActivityModal = document.getElementById('pomodoroActivityModal');
+        const pomodoroAbandonModal = document.getElementById('pomodoroAbandonModal');
+        const confirmationModal = document.getElementById('confirmationModal');
         const hashtagBrowserModal = document.getElementById('hashtagBrowserModal');
         const userGuideModal = document.getElementById('userGuideModal');
         
@@ -913,6 +1148,10 @@ document.addEventListener('keydown', (e) => {
             closeAbout();
         } else if (pomodoroActivityModal && pomodoroActivityModal.style.display === 'block') {
             closePomodoroActivityModal();
+        } else if (pomodoroAbandonModal && pomodoroAbandonModal.style.display === 'block') {
+            closePomodoroAbandonDialog();
+        } else if (confirmationModal && confirmationModal.style.display === 'block') {
+            closeConfirmationDialog();
         } else if (hashtagBrowserModal && hashtagBrowserModal.style.display === 'block') {
             closeHashtagBrowser();
         } else if (userGuideModal && userGuideModal.style.display === 'block') {

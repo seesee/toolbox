@@ -53,7 +53,7 @@ class NotificationManager {
         const notification = document.createElement('div');
         notification.className = `notification-toast notification-${type}`;
         notification.setAttribute('data-notification-id', id);
-        notification.textContent = message;
+        notification.innerHTML = message;
 
         // Click to dismiss
         notification.addEventListener('click', () => {

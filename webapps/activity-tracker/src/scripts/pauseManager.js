@@ -19,7 +19,112 @@ class PauseManager {
         this.pauseButton = document.getElementById('pauseButton');
         if (this.pauseButton) {
             this.updatePauseButtonDisplay();
+            this.setupPauseButtonHandlers();
         }
+    }
+    
+    /**
+     * Setup pause button event handlers for right-click pause menu
+     */
+    setupPauseButtonHandlers() {
+        // Add right-click context menu for pause durations
+        this.pauseButton.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.showPauseMenu(e);
+        });
+        
+        // Add long-press support for mobile
+        let pressTimer;
+        this.pauseButton.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => {
+                e.preventDefault();
+                this.showPauseMenu(e);
+            }, 500);
+        });
+        
+        this.pauseButton.addEventListener('touchend', () => {
+            clearTimeout(pressTimer);
+        });
+    }
+    
+    /**
+     * Show pause duration menu
+     */
+    showPauseMenu(event) {
+        // If already paused, just resume
+        if (this.isPaused()) {
+            this.resume();
+            return;
+        }
+        
+        // Create context menu
+        const menu = document.createElement('div');
+        menu.className = 'pause-context-menu';
+        menu.style.cssText = `
+            position: fixed;
+            z-index: 10000;
+            background: var(--bg-color, #fff);
+            border: 1px solid var(--border-color, #ccc);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 8px 0;
+            min-width: 150px;
+            font-size: 14px;
+        `;
+        
+        const options = [
+            { label: '5 minutes', duration: 5 },
+            { label: '15 minutes', duration: 15 },
+            { label: '30 minutes', duration: 30 },
+            { label: '1 hour', duration: 60 },
+            { label: '2 hours', duration: 120 },
+            { label: 'Until manually resumed', duration: -1 }
+        ];
+        
+        options.forEach(option => {
+            const menuItem = document.createElement('div');
+            menuItem.style.cssText = `
+                padding: 8px 16px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            `;
+            menuItem.textContent = option.label;
+            
+            menuItem.addEventListener('mouseenter', () => {
+                menuItem.style.backgroundColor = 'var(--hover-color, #f0f0f0)';
+            });
+            
+            menuItem.addEventListener('mouseleave', () => {
+                menuItem.style.backgroundColor = '';
+            });
+            
+            menuItem.addEventListener('click', () => {
+                this.startPause(option.duration);
+                menu.remove();
+            });
+            
+            menu.appendChild(menuItem);
+        });
+        
+        // Position menu
+        const rect = this.pauseButton.getBoundingClientRect();
+        menu.style.left = `${rect.left}px`;
+        menu.style.top = `${rect.bottom + 5}px`;
+        
+        // Add to page
+        document.body.appendChild(menu);
+        
+        // Remove menu when clicking elsewhere
+        const removeMenu = (e) => {
+            if (!menu.contains(e.target)) {
+                menu.remove();
+                document.removeEventListener('click', removeMenu);
+            }
+        };
+        
+        setTimeout(() => {
+            document.addEventListener('click', removeMenu);
+        }, 0);
     }
 
     /**
@@ -34,10 +139,13 @@ class PauseManager {
             // Forever pause
             this.tracker.settings.notificationsPausedUntil = Infinity;
             this.updatePauseButtonForever();
+            showNotification('Reminders paused indefinitely', 'info');
         } else {
             // Timed pause
             this.tracker.settings.notificationsPausedUntil = new Date().getTime() + durationMinutes * 60 * 1000;
             this.startCountdown();
+            const unit = durationMinutes === 1 ? 'minute' : 'minutes';
+            showNotification(`Reminders paused for ${durationMinutes} ${unit}`, 'info');
         }
 
         this.tracker.saveSettings();
@@ -51,6 +159,7 @@ class PauseManager {
         this.tracker.settings.notificationsPausedUntil = null;
         this.updatePauseButtonNormal();
         this.tracker.saveSettings();
+        showNotification('Reminders resumed', 'success');
     }
 
     /**
@@ -124,6 +233,7 @@ class PauseManager {
 
         // Update button text
         this.pauseButton.textContent = `Resume (${countdownText})`;
+        this.pauseButton.title = 'Click to resume reminders now. Right-click for pause duration options.';
 
         // Calculate drain percentage (how much time has passed)
         const totalDuration = this.tracker.settings.pauseDuration * 60 * 1000;
@@ -161,6 +271,7 @@ class PauseManager {
      */
     updatePauseButtonForever() {
         this.pauseButton.textContent = 'Resume (Paused Forever)';
+        this.pauseButton.title = 'Click to resume reminders. Right-click for pause duration options.';
         this.pauseButton.style.background = '#e53e3e';
         this.pauseButton.style.animation = 'none';
         this.pauseButton.style.transition = '';
@@ -171,8 +282,10 @@ class PauseManager {
      */
     updatePauseButtonNormal() {
         // Check if notifications are enabled to determine button text
+        // When not temporarily paused, show appropriate text based on notification state
         const buttonText = this.tracker.settings.notificationsEnabled ? 'Pause Reminders' : 'Start Reminders';
         this.pauseButton.textContent = buttonText;
+        this.pauseButton.title = 'Click to toggle reminders on/off. Right-click for pause duration options.';
         this.pauseButton.style.background = '';
         this.pauseButton.style.animation = 'none';
         this.pauseButton.style.transition = '';

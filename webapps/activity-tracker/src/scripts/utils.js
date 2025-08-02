@@ -104,7 +104,7 @@ function showNotification(message, type = 'info', duration = 3000) {
     `;
     document.head.appendChild(style);
     
-    notification.textContent = message;
+    notification.innerHTML = message;
     document.body.appendChild(notification);
 
     // Remove notification after specified duration with slide-out animation

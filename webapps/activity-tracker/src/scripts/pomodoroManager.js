@@ -11,8 +11,8 @@ class PomodoroManager {
         this.isPaused = false;
         this.pausedAt = null;
         this.currentPhase = 'work'; // 'work' or 'break'
-        this.cycleCount = 0;
-        this.totalSessions = 0;
+        this.cycleCount = 0; // Number of completed work sessions
+        this.totalSessions = 0; // Total completed work sessions across all Pomodoro mode activations
         this.timer = null;
         this.tickTimer = null;
         this.remainingTime = 0;
@@ -35,10 +35,12 @@ class PomodoroManager {
             autoLog: true,
             logBreaks: false,
             longBreak: true,
-            pauseAllowed: true
+            pauseAllowed: true,
+            autoResetDaily: false
         };
         
         this.statusUpdateInterval = null;
+        this.lastResetDate = null; // Track last reset date for daily auto-reset
         
         this.init();
     }
@@ -80,7 +82,9 @@ class PomodoroManager {
             'pomodoroAutoStart',
             'pomodoroAutoLog',
             'pomodoroLogBreaks',
-            'pomodoroLongBreak'
+            'pomodoroLongBreak',
+            'pomodoroAutoResetDaily',
+            'pomodoroLastResetDate'
         ];
         
         settingsIds.forEach(id => {
@@ -116,7 +120,8 @@ class PomodoroManager {
                 autoLog: settings.pomodoroAutoLog !== false,
                 logBreaks: settings.pomodoroLogBreaks || false,
                 longBreak: settings.pomodoroLongBreak !== false,
-                pauseAllowed: settings.pomodoroPauseAllowed !== false
+                pauseAllowed: settings.pomodoroPauseAllowed !== false,
+                autoResetDaily: settings.pomodoroAutoResetDaily !== false
             };
             
             // Restore session state if it exists
@@ -129,12 +134,27 @@ class PomodoroManager {
             const savedPhase = settings.pomodoroCurrentPhase || 'work';
             const savedStartTime = settings.pomodoroStartTime;
             const savedRemainingTime = settings.pomodoroRemainingTime;
+            const savedOriginalDuration = settings.pomodoroOriginalDuration;
+            
+            // Restore pause state
+            const wasPaused = settings.pomodoroIsPaused || false;
+            const pausedAt = settings.pomodoroPausedAt;
+            
+            // Restore current work activity
+            this.currentWorkActivity = settings.pomodoroCurrentWorkActivity || null;
+            
+            // Restore last reset date
+            this.lastResetDate = settings.pomodoroLastResetDate || null;
+            
+            // Check for daily auto-reset
+            this.checkDailyAutoReset();
             
             // If there was an active session, try to restore it
-            if (wasActive && wasRunning && savedStartTime && savedRemainingTime) {
-                this.restoreActiveSession(savedPhase, savedStartTime, savedRemainingTime);
-            } else if (wasActive && !wasRunning) {
-                // Pomodoro was enabled but not running
+            if (wasActive && savedStartTime && savedRemainingTime) {
+                // Restore session regardless of running state (could be in break or paused)
+                this.restoreActiveSession(savedPhase, savedStartTime, savedRemainingTime, savedOriginalDuration, wasPaused, pausedAt);
+            } else if (wasActive) {
+                // Pomodoro was enabled but no active session to restore
                 this.isActive = true;
             }
             
@@ -159,6 +179,7 @@ class PomodoroManager {
         const autoLog = document.getElementById('pomodoroAutoLog');
         const logBreaks = document.getElementById('pomodoroLogBreaks');
         const longBreak = document.getElementById('pomodoroLongBreak');
+        const autoResetDaily = document.getElementById('pomodoroAutoResetDaily');
         const statusDisplay = document.getElementById('pomodoroStatus');
         
         if (pomodoroEnabled) {
@@ -221,6 +242,10 @@ class PomodoroManager {
             longBreak.checked = this.settings.longBreak;
         }
         
+        if (autoResetDaily) {
+            autoResetDaily.checked = this.settings.autoResetDaily;
+        }
+        
         // Update main Pomodoro button in nav
         this.updatePomodoroButton();
         
@@ -262,7 +287,14 @@ class PomodoroManager {
         // Reset state but don't start immediately
         this.currentPhase = 'work';
         this.cycleCount = 0;
+        this.totalSessions = 0;
         this.isRunning = false;
+        this.isPaused = false;
+        this.pausedAt = null;
+        this.currentWorkActivity = null;
+        
+        // Save the reset state
+        this.saveSessionProgress();
         
         // Update display to show ready state
         this.updateStatusDisplay();
@@ -293,6 +325,10 @@ class PomodoroManager {
             this.activityTracker.settings.pomodoroCurrentPhase = null;
             this.activityTracker.settings.pomodoroStartTime = null;
             this.activityTracker.settings.pomodoroRemainingTime = null;
+            this.activityTracker.settings.pomodoroOriginalDuration = null;
+            this.activityTracker.settings.pomodoroIsPaused = false;
+            this.activityTracker.settings.pomodoroPausedAt = null;
+            this.activityTracker.settings.pomodoroCurrentWorkActivity = null;
             this.activityTracker.saveSettings();
         }
         
@@ -348,7 +384,7 @@ class PomodoroManager {
         // Update UI
         this.updateUI();
         
-        console.log(`🍅 Starting ${this.settings.workDuration} minute work period (Session ${this.cycleCount + 1})`);
+        console.log(`🍅 Starting ${this.settings.workDuration} minute work period (Session ${this.getCurrentSessionNumber()})`);
     }
     
     endWorkPeriod() {
@@ -623,6 +659,7 @@ class PomodoroManager {
         const autoLog = document.getElementById('pomodoroAutoLog');
         const logBreaks = document.getElementById('pomodoroLogBreaks');
         const longBreak = document.getElementById('pomodoroLongBreak');
+        const autoResetDaily = document.getElementById('pomodoroAutoResetDaily');
         
         if (workDuration) this.settings.workDuration = parseInt(workDuration.value);
         if (breakDuration) this.settings.breakDuration = parseInt(breakDuration.value);
@@ -637,6 +674,7 @@ class PomodoroManager {
         if (autoLog) this.settings.autoLog = autoLog.checked;
         if (logBreaks) this.settings.logBreaks = logBreaks.checked;
         if (longBreak) this.settings.longBreak = longBreak.checked;
+        if (autoResetDaily) this.settings.autoResetDaily = autoResetDaily.checked;
         
         // Save to activity tracker settings
         this.activityTracker.settings.pomodoroWorkDuration = this.settings.workDuration;
@@ -652,8 +690,27 @@ class PomodoroManager {
         this.activityTracker.settings.pomodoroAutoLog = this.settings.autoLog;
         this.activityTracker.settings.pomodoroLogBreaks = this.settings.logBreaks;
         this.activityTracker.settings.pomodoroLongBreak = this.settings.longBreak;
+        this.activityTracker.settings.pomodoroAutoResetDaily = this.settings.autoResetDaily;
         
         console.log('🍅 Pomodoro settings saved');
+    }
+    
+    /**
+     * Get the current session number
+     * @returns {number} Current session number (1-based)
+     */
+    getCurrentSessionNumber() {
+        // Current session is always cycleCount + 1 since cycleCount tracks completed sessions
+        return this.cycleCount + 1;
+    }
+    
+    /**
+     * Get the next session number
+     * @returns {number} Next session number (1-based)
+     */
+    getNextSessionNumber() {
+        // Next session depends on current phase
+        return this.currentPhase === 'work' ? this.getCurrentSessionNumber() : this.getCurrentSessionNumber() + 1;
     }
     
     getCurrentStatus() {
@@ -662,7 +719,7 @@ class PomodoroManager {
         
         const timeLeft = Math.ceil((this.remainingTime - (Date.now() - this.startTime)) / 60000);
         const phase = this.currentPhase === 'work' ? 'Working' : 'Break';
-        const sessionInfo = this.currentPhase === 'work' ? ` (Session ${this.cycleCount + 1})` : '';
+        const sessionInfo = this.currentPhase === 'work' ? ` (Session ${this.getCurrentSessionNumber()})` : '';
         return `${phase}${sessionInfo} - ${Math.max(0, timeLeft)}m left`;
     }
     
@@ -754,7 +811,12 @@ class PomodoroManager {
             return;
         }
         
-        const currentSession = this.currentPhase === 'work' ? this.cycleCount + 1 : this.cycleCount;
+        // Calculate how much time was spent
+        const timeSpent = this.originalDuration - this.remainingTime + (Date.now() - this.startTime);
+        const minutesSpent = Math.round(timeSpent / 60000);
+        
+        // Get current session number consistently
+        const currentSession = this.getCurrentSessionNumber();
         
         // Stop current timers
         if (this.timer) {
@@ -762,32 +824,106 @@ class PomodoroManager {
             this.timer = null;
         }
         this.stopTickSounds();
+        this.stopStatusUpdates();
         
-        // Log abandonment
-        if (this.settings.autoLog) {
+        // Show abandonment options if we've spent meaningful time (>2 minutes)
+        if (minutesSpent > 2 && this.currentPhase === 'work' && this.settings.autoLog) {
+            this.showAbandonmentSaveDialog(currentSession, minutesSpent);
+        } else {
+            // Just abandon without save option for short sessions
+            this.finalizeAbandonment(currentSession, false);
+        }
+    }
+    
+    /**
+     * Show dialog to save partial work when abandoning session
+     */
+    showAbandonmentSaveDialog(sessionNumber, minutesSpent) {
+        if (typeof showPomodoroAbandonDialog === 'function') {
+            // Set up the dialog with current session info
+            const dialogTitle = document.getElementById('pomodoroAbandonTitle');
+            const timeSpentElement = document.getElementById('pomodoroAbandonTimeSpent');
+            const activityName = document.getElementById('pomodoroAbandonActivityName');
+            const activityDescription = document.getElementById('pomodoroAbandonActivityDescription');
+            
+            if (dialogTitle) {
+                dialogTitle.textContent = `Session ${sessionNumber} Abandonment`;
+            }
+            if (timeSpentElement) {
+                timeSpentElement.textContent = `You worked for ${minutesSpent} minutes`;
+            }
+            if (activityName && this.currentWorkActivity) {
+                activityName.value = this.currentWorkActivity.name || '';
+            }
+            if (activityDescription && this.currentWorkActivity) {
+                activityDescription.value = this.currentWorkActivity.description || `Partial work on session ${sessionNumber} (${minutesSpent} minutes)`;
+            }
+            
+            showPomodoroAbandonDialog();
+        } else {
+            // Fallback if dialog function not available
+            this.finalizeAbandonment(sessionNumber, false);
+        }
+    }
+    
+    /**
+     * Handle saving partial work when abandoning
+     */
+    handleAbandonmentSave(saveWork) {
+        const currentSession = this.getCurrentSessionNumber();
+        
+        if (saveWork && this.settings.autoLog) {
+            const activityName = document.getElementById('pomodoroAbandonActivityName');
+            const activityDescription = document.getElementById('pomodoroAbandonActivityDescription');
+            
+            const activity = activityName ? activityName.value.trim() : '';
+            const description = activityDescription ? activityDescription.value.trim() : '';
+            
+            if (activity) {
+                this.logActivity(activity, description || `Partial Pomodoro session ${currentSession} work`);
+                showNotification(`🍅 Partial work saved: "${activity}"`, 'success');
+            }
+        }
+        
+        // Close the dialog
+        if (typeof closePomodoroAbandonDialog === 'function') {
+            closePomodoroAbandonDialog();
+        }
+        
+        // Finalize abandonment
+        this.finalizeAbandonment(currentSession, saveWork);
+    }
+    
+    /**
+     * Complete the abandonment process
+     */
+    finalizeAbandonment(sessionNumber, workSaved) {
+        // Log abandonment (separate from any saved work)
+        if (this.settings.autoLog && !workSaved) {
             this.logActivity(
-                `Pomodoro session ${currentSession} abandoned`,
-                `Session interrupted, restarting at session ${currentSession}`
+                `Pomodoro session ${sessionNumber} abandoned`,
+                `Session interrupted, restarting at session ${sessionNumber}`
             );
         }
         
-        // Reset to beginning of current session
-        if (this.currentPhase === 'work') {
-            // If we were in work phase, restart this work session
-            // Don't increment cycleCount
-        } else {
-            // If we were in break phase, go back to the work session
-            this.cycleCount = Math.max(0, this.cycleCount - 1);
-        }
-        
+        // Reset to beginning of current work session
+        // No need to adjust cycleCount as we're restarting the same session
         this.isRunning = false;
+        this.isPaused = false;
+        this.pausedAt = null;
         this.currentPhase = 'work';
+        
+        // Clear current work activity to force re-selection
+        this.currentWorkActivity = null;
         
         // Save progress
         this.saveSessionProgress();
         
         // Show notification
-        showNotification(`🍅 Session abandoned. Restarting at session ${currentSession}`, 'warning');
+        const message = workSaved ? 
+            `🍅 Session ${sessionNumber} abandoned with work saved. Restarting at session ${sessionNumber}` :
+            `🍅 Session ${sessionNumber} abandoned. Restarting at session ${sessionNumber}`;
+        showNotification(message, 'warning');
         
         // Update UI
         this.updateUI();
@@ -797,7 +933,7 @@ class PomodoroManager {
             this.startWorkPeriod();
         }, 2000);
         
-        console.log(`🍅 Session ${currentSession} abandoned, restarting`);
+        console.log(`🍅 Session ${sessionNumber} abandoned, restarting`);
     }
     
     /**
@@ -814,6 +950,17 @@ class PomodoroManager {
             this.activityTracker.settings.pomodoroCurrentPhase = this.currentPhase;
             this.activityTracker.settings.pomodoroStartTime = this.startTime;
             this.activityTracker.settings.pomodoroRemainingTime = this.remainingTime;
+            this.activityTracker.settings.pomodoroOriginalDuration = this.originalDuration;
+            
+            // Save pause state
+            this.activityTracker.settings.pomodoroIsPaused = this.isPaused;
+            this.activityTracker.settings.pomodoroPausedAt = this.pausedAt;
+            
+            // Save current work activity for session
+            this.activityTracker.settings.pomodoroCurrentWorkActivity = this.currentWorkActivity;
+            
+            // Save last reset date
+            this.activityTracker.settings.pomodoroLastResetDate = this.lastResetDate;
             
             // Save directly to localStorage to avoid circular dependency
             localStorage.setItem('activityTrackerSettings', JSON.stringify(this.activityTracker.settings));
@@ -865,7 +1012,7 @@ class PomodoroManager {
         }
         
         if (!this.isRunning) {
-            const nextSession = this.cycleCount + 1;
+            const nextSession = this.getCurrentSessionNumber();
             const nextBreakType = this.settings.longBreak && (nextSession % this.settings.longBreakInterval === 0) ? 'long break' : 'break';
             statusDisplay.textContent = `Ready to start session ${nextSession}`;
             statusDisplay.className = 'pomodoro-status ready';
@@ -895,7 +1042,7 @@ class PomodoroManager {
         const formattedTime = `${Math.max(0, minutes)}:${Math.max(0, seconds).toString().padStart(2, '0')}`;
         
         if (this.currentPhase === 'work') {
-            const currentSession = this.cycleCount + 1;
+            const currentSession = this.getCurrentSessionNumber();
             const statusText = this.isPaused ? `Work Session ${currentSession} (Paused)` : `Work Session ${currentSession}`;
             statusDisplay.textContent = statusText;
             statusDisplay.className = this.isPaused ? 'pomodoro-status paused' : 'pomodoro-status working';
@@ -940,7 +1087,7 @@ class PomodoroManager {
             pomodoroBtn.title = 'Start a new Pomodoro session';
         } else if (this.isRunning) {
             if (this.currentPhase === 'work') {
-                const currentSession = this.cycleCount + 1;
+                const currentSession = this.getCurrentSessionNumber();
                 pomodoroBtn.textContent = `🍅 Abandon Session ${currentSession}`;
                 pomodoroBtn.className = 'nav-btn pomodoro-btn active';
                 pomodoroBtn.title = 'Abandon current work session and restart';
@@ -950,7 +1097,7 @@ class PomodoroManager {
                 pomodoroBtn.title = 'Currently on break - click to abandon and restart';
             }
         } else {
-            const nextSession = this.cycleCount + 1;
+            const nextSession = this.getCurrentSessionNumber();
             pomodoroBtn.textContent = `🍅 Start Session ${nextSession}`;
             pomodoroBtn.className = 'nav-btn pomodoro-btn';
             pomodoroBtn.title = `Start work session ${nextSession}`;
@@ -1000,12 +1147,24 @@ class PomodoroManager {
     /**
      * Restore active session after page refresh
      */
-    restoreActiveSession(savedPhase, savedStartTime, savedRemainingTime) {
+    restoreActiveSession(savedPhase, savedStartTime, savedRemainingTime, savedOriginalDuration, wasPaused, pausedAt) {
         const now = Date.now();
-        const elapsedTime = now - savedStartTime;
-        const timeLeft = savedRemainingTime - elapsedTime;
         
-        console.log(`🍅 Restoring Pomodoro session: ${savedPhase}, ${Math.ceil(timeLeft/1000)}s remaining`);
+        console.log(`🍅 Restoring Pomodoro session: ${savedPhase}, paused: ${wasPaused}`);
+        
+        // Calculate remaining time based on whether session was paused
+        let timeLeft;
+        if (wasPaused && pausedAt) {
+            // If session was paused, use the paused state
+            const timeElapsedBeforePause = pausedAt - savedStartTime;
+            timeLeft = savedRemainingTime - timeElapsedBeforePause;
+        } else {
+            // Normal running calculation
+            const elapsedTime = now - savedStartTime;
+            timeLeft = savedRemainingTime - elapsedTime;
+        }
+        
+        console.log(`🍅 Time remaining calculation: ${Math.ceil(timeLeft/1000)}s`);
         
         // If session expired while page was closed, handle appropriately
         if (timeLeft <= 0) {
@@ -1029,31 +1188,78 @@ class PomodoroManager {
         } else {
             // Session is still active, restore it
             this.isActive = true;
-            this.isRunning = true;
             this.currentPhase = savedPhase;
-            this.startTime = now; // Reset start time to now
-            this.remainingTime = timeLeft;
+            this.originalDuration = savedOriginalDuration || savedRemainingTime;
             
-            // Restart the timer with remaining time
-            this.timer = setTimeout(() => {
+            if (wasPaused) {
+                // Restore paused session
+                this.isRunning = true;
+                this.isPaused = true;
+                this.pausedAt = pausedAt;
+                this.startTime = savedStartTime;
+                this.remainingTime = savedRemainingTime;
+                
+                const minutes = Math.ceil(timeLeft / 60000);
+                showNotification(`🍅 Paused Pomodoro session restored! ${minutes} minutes remaining in ${savedPhase} period.`, 'info');
+            } else {
+                // Restore running session
+                this.isRunning = true;
+                this.isPaused = false;
+                this.pausedAt = null;
+                this.startTime = now; // Reset start time to now
+                this.remainingTime = timeLeft;
+                
+                // Restart the timer with remaining time
+                this.timer = setTimeout(() => {
+                    if (this.currentPhase === 'work') {
+                        this.endWorkPeriod();
+                    } else {
+                        this.endBreakPeriod();
+                    }
+                }, timeLeft);
+                
+                // Restart tick sounds and status updates if needed
                 if (this.currentPhase === 'work') {
-                    this.endWorkPeriod();
-                } else {
-                    this.endBreakPeriod();
+                    this.startTickSounds();
                 }
-            }, timeLeft);
-            
-            // Restart tick sounds and status updates if needed
-            if (this.currentPhase === 'work') {
-                this.startTickSounds();
+                this.startStatusUpdates();
+                
+                const minutes = Math.ceil(timeLeft / 60000);
+                showNotification(`🍅 Pomodoro session restored! ${minutes} minutes remaining in ${savedPhase} period.`, 'success');
             }
-            this.startStatusUpdates();
-            
-            const minutes = Math.ceil(timeLeft / 60000);
-            showNotification(`🍅 Pomodoro session restored! ${minutes} minutes remaining in ${savedPhase} period.`, 'success');
         }
         
         this.updateUI();
+    }
+    
+    /**
+     * Check for daily auto-reset functionality
+     */
+    checkDailyAutoReset() {
+        if (!this.settings.autoResetDaily) return;
+        
+        const today = new Date().toDateString();
+        
+        // If we have a last reset date and it's different from today, reset
+        if (this.lastResetDate && this.lastResetDate !== today) {
+            console.log('🍅 Daily auto-reset triggered');
+            this.cycleCount = 0;
+            this.totalSessions = 0;
+            this.lastResetDate = today;
+            
+            if (this.settings.autoLog) {
+                this.logActivity('Daily Pomodoro reset', 'Session counter automatically reset for new day');
+            }
+            
+            this.saveSessionProgress();
+            this.updateUI();
+            
+            showNotification('🍅 Daily session reset applied', 'info');
+        } else if (!this.lastResetDate) {
+            // First time, just set the date
+            this.lastResetDate = today;
+            this.saveSessionProgress();
+        }
     }
     
     /**
@@ -1062,6 +1268,7 @@ class PomodoroManager {
     resetSessionCounter() {
         this.cycleCount = 0;
         this.totalSessions = 0;
+        this.lastResetDate = new Date().toDateString(); // Update reset date
         this.saveSessionProgress();
         this.updateUI();
         
@@ -1114,6 +1321,9 @@ class PomodoroManager {
             this.pendingWorkSession = false;
             this.actuallyStartWorkPeriod();
             
+            // Save the work activity to session state
+            this.saveSessionProgress();
+            
             console.log('🍅 Work session started with activity:', this.currentWorkActivity.name);
         }
     }
@@ -1159,6 +1369,9 @@ class PomodoroManager {
         this.stopTickSounds();
         this.stopStatusUpdates();
         
+        // Save pause state
+        this.saveSessionProgress();
+        
         // Update UI
         this.updateStatusDisplay();
         this.updatePomodoroButton();
@@ -1198,6 +1411,9 @@ class PomodoroManager {
             this.startTickSounds();
         }
         this.startStatusUpdates();
+        
+        // Save resumed state
+        this.saveSessionProgress();
         
         // Update UI
         this.updateStatusDisplay();

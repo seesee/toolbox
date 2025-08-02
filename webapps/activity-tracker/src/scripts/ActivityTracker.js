@@ -56,6 +56,8 @@ class ActivityTracker {
             notificationSoundType: "classic",
             darkModePreference: 'light', // 'light', 'dark', 'system'
             paginationSize: 20,
+            warnOnActivityDelete: true,
+            warnOnSessionReset: true,
             ...JSON.parse(localStorage.getItem('activitySettings') || '{}')
         };
 
@@ -65,6 +67,9 @@ class ActivityTracker {
         this.currentWeekStart = null;
         this.soundManager = null;
         this.pauseManager = null;
+        
+        // Initialize undo buffer for deletions (max 5 items)
+        this.deletedEntriesBuffer = JSON.parse(localStorage.getItem('deletedEntriesBuffer') || '[]');
 
         this.init();
     }
@@ -275,6 +280,8 @@ class ActivityTracker {
             'pomodoroAutoLog',
             'pomodoroLogBreaks',
             'pomodoroLongBreak',
+            'warnOnActivityDelete',
+            'warnOnSessionReset',
             'pomodoroPauseAllowed',
             'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
         ];
@@ -404,6 +411,11 @@ class ActivityTracker {
             const isTodo = isTodoModeActive();
             const dueDate = document.getElementById('dueDate')?.value || null;
 
+            // Extract hashtags from text and add pomodoro hashtags if active
+            const extractedTags = this.extractHashtags(activity + ' ' + (description || ''));
+            const pomodoroTags = this.generatePomodoroHashtags();
+            const allTags = [...extractedTags, ...pomodoroTags];
+            
             newEntry = {
                 id: generateId(),
                 activity,
@@ -411,7 +423,7 @@ class ActivityTracker {
                 timestamp: new Date(timestamp).toISOString(),
                 created: new Date().toISOString(),
                 isTodo: isTodo,
-                tags: this.extractHashtags(activity + ' ' + (description || '')),
+                tags: allTags,
                 dueDate: dueDate ? new Date(dueDate).toISOString() : null,
                 startedAt: isTodo ? new Date(timestamp).toISOString() : null
             };
@@ -445,12 +457,18 @@ class ActivityTracker {
         const activity = document.getElementById('editActivity').value;
         const description = document.getElementById('editDescription').value;
         const timestamp = document.getElementById('editTimestamp').value;
-        const isTodo = document.getElementById('editTodoCheckbox').checked;
+        const todoButton = document.getElementById('editTodoButton');
+        const isTodo = todoButton ? todoButton.dataset.isTodo === 'true' : false;
         const dueDate = document.getElementById('editDueDate').value;
 
         const entryIndex = this.entries.findIndex(entry => entry.id === id);
         if (entryIndex !== -1) {
             const existingEntry = this.entries[entryIndex];
+            
+            // Extract hashtags from text and add pomodoro hashtags if active
+            const extractedTags = this.extractHashtags(activity + ' ' + (description || ''));
+            const pomodoroTags = this.generatePomodoroHashtags();
+            const allTags = [...extractedTags, ...pomodoroTags];
             
             this.entries[entryIndex] = {
                 ...existingEntry,
@@ -458,7 +476,7 @@ class ActivityTracker {
                 description,
                 timestamp: new Date(timestamp).toISOString(),
                 isTodo,
-                tags: this.extractHashtags(activity + ' ' + (description || '')),
+                tags: allTags,
                 dueDate: dueDate ? new Date(dueDate).toISOString() : null,
                 // Preserve startedAt if it exists, or set it if becoming a todo
                 startedAt: isTodo ? (existingEntry.startedAt || new Date(timestamp).toISOString()) : existingEntry.startedAt
@@ -477,13 +495,113 @@ class ActivityTracker {
      * @param {string} id - Entry ID to delete
      */
     deleteEntry(id) {
-        if (confirm('Are you sure you want to delete this entry?')) {
-            this.entries = this.entries.filter(entry => entry.id !== id);
-            this.saveEntries();
-            this.displayEntries();
-            this.displayTodos();
-            showNotification('Entry deleted successfully!', 'success');
+        const entry = this.entries.find(e => e.id === id);
+        if (!entry) return;
+        
+        // Check warning settings
+        if (this.settings.warnOnActivityDelete) {
+            showConfirmationDialog(
+                'Delete Activity',
+                `Are you sure you want to delete "${entry.activity}"? This action can be undone.`,
+                (skipFuture) => {
+                    if (skipFuture) {
+                        this.settings.warnOnActivityDelete = false;
+                        this.saveSettings();
+                    }
+                    this.performDeletion(id);
+                },
+                {
+                    confirmText: 'Delete',
+                    buttonClass: 'btn-danger',
+                    allowSkip: true
+                }
+            );
+        } else {
+            this.performDeletion(id);
         }
+    }
+    
+    /**
+     * Perform the actual deletion after confirmation
+     */
+    performDeletion(id) {
+        const entry = this.entries.find(e => e.id === id);
+        if (!entry) return;
+        
+        // Add to undo buffer
+        this.addToUndoBuffer(entry);
+        
+        // Remove from entries
+        this.entries = this.entries.filter(e => e.id !== id);
+        this.saveEntries();
+        this.displayEntries();
+        this.displayTodos();
+        
+        showNotification('Entry deleted successfully! <button onclick="tracker.undoLastDeletion()" class="undo-btn">Undo</button>', 'success', 5000);
+    }
+    
+    /**
+     * Add deleted entry to undo buffer
+     */
+    addToUndoBuffer(entry) {
+        // Add deleted entry with timestamp
+        const deletedEntry = {
+            ...entry,
+            deletedAt: new Date().toISOString()
+        };
+        
+        this.deletedEntriesBuffer.unshift(deletedEntry);
+        
+        // Keep only last 5 deleted entries
+        if (this.deletedEntriesBuffer.length > 5) {
+            this.deletedEntriesBuffer = this.deletedEntriesBuffer.slice(0, 5);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('deletedEntriesBuffer', JSON.stringify(this.deletedEntriesBuffer));
+    }
+    
+    /**
+     * Undo the last deletion
+     */
+    undoLastDeletion() {
+        if (this.deletedEntriesBuffer.length === 0) {
+            showNotification('No deletions to undo', 'info');
+            return;
+        }
+        
+        const lastDeleted = this.deletedEntriesBuffer.shift();
+        delete lastDeleted.deletedAt; // Remove the deletion timestamp
+        
+        // Check if entry with same ID already exists
+        if (this.entries.find(e => e.id === lastDeleted.id)) {
+            // Generate new ID to avoid conflicts
+            lastDeleted.id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Add back to entries
+        this.entries.unshift(lastDeleted);
+        this.saveEntries();
+        this.displayEntries();
+        this.displayTodos();
+        
+        // Update undo buffer
+        localStorage.setItem('deletedEntriesBuffer', JSON.stringify(this.deletedEntriesBuffer));
+        
+        showNotification(`Restored "${lastDeleted.activity}"`, 'success');
+    }
+    
+    /**
+     * Get undo buffer for display purposes
+     */
+    getUndoBuffer() {
+        return this.deletedEntriesBuffer.map(entry => ({
+            id: entry.id,
+            activity: entry.activity,
+            description: entry.description,
+            timestamp: entry.timestamp,
+            deletedAt: entry.deletedAt
+        }));
     }
 
     /**
@@ -498,11 +616,42 @@ class ActivityTracker {
             document.getElementById('editDescription').value = entry.description || '';
             document.getElementById('editTimestamp').value = 
                 new Date(entry.timestamp).toISOString().slice(0, 16);
-            document.getElementById('editTodoCheckbox').checked = entry.isTodo || false;
+            
+            // Update todo button state
+            this.setEditTodoButtonState(entry.isTodo || false);
+            
             document.getElementById('editDueDate').value = 
                 entry.dueDate ? new Date(entry.dueDate).toISOString().slice(0, 16) : '';
             
             document.getElementById('editModal').style.display = 'block';
+        }
+    }
+    
+    /**
+     * Set the edit todo button state
+     */
+    setEditTodoButtonState(isTodo) {
+        const button = document.getElementById('editTodoButton');
+        const buttonText = document.getElementById('editTodoButtonText');
+        const editDueDateSection = document.getElementById('editDueDateSection');
+        
+        if (button && buttonText) {
+            button.dataset.isTodo = isTodo.toString();
+            if (isTodo) {
+                button.classList.add('active');
+                buttonText.textContent = 'Remove from Todos';
+                // Show due date section when in todo mode
+                if (editDueDateSection) {
+                    editDueDateSection.style.display = 'block';
+                }
+            } else {
+                button.classList.remove('active');
+                buttonText.textContent = 'Add as Todo';
+                // Hide due date section when not in todo mode
+                if (editDueDateSection) {
+                    editDueDateSection.style.display = 'none';
+                }
+            }
         }
     }
 
@@ -621,6 +770,8 @@ class ActivityTracker {
             darkModePreference: document.getElementById('darkModePreference').value,
             autoStartAlerts: document.getElementById('autoStartAlerts')?.value === 'true',
             paginationSize: parseInt(document.getElementById('paginationSize').value),
+            warnOnActivityDelete: document.getElementById('warnOnActivityDelete')?.value === 'true',
+            warnOnSessionReset: document.getElementById('warnOnSessionReset')?.value === 'true',
             workingDays: {
                 monday: document.getElementById('monday').checked,
                 tuesday: document.getElementById('tuesday').checked,
@@ -708,6 +859,8 @@ class ActivityTracker {
         document.getElementById('darkModePreference').value = this.settings.darkModePreference;
         document.getElementById('autoStartAlerts').value = this.settings.autoStartAlerts.toString();
         document.getElementById('paginationSize').value = this.settings.paginationSize;
+        document.getElementById('warnOnActivityDelete').value = this.settings.warnOnActivityDelete.toString();
+        document.getElementById('warnOnSessionReset').value = this.settings.warnOnSessionReset.toString();
         
         // Populate sound dropdowns with all available sounds
         this.populateSoundDropdowns();
@@ -2156,6 +2309,23 @@ class ActivityTracker {
             if (!hashtags.includes(tag)) {
                 hashtags.push(tag);
             }
+        }
+        
+        return hashtags;
+    }
+    
+    /**
+     * Generate pomodoro hashtags if a pomodoro session is active
+     */
+    generatePomodoroHashtags() {
+        const hashtags = [];
+        
+        if (this.pomodoroManager && this.pomodoroManager.isActive) {
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+            const sessionCount = this.pomodoroManager.totalSessions + 1; // +1 for current session
+            
+            hashtags.push(`pomodoro+${today}`);
+            hashtags.push(`pomodoro+${today}+${sessionCount}`);
         }
         
         return hashtags;

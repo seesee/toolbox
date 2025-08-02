@@ -780,6 +780,86 @@ class SoundManager {
             oscillator.stop(currentTime + delay + 3.0);
         });
         
+        // Add powerful bass/sub-bass foundation for extra impact
+        const bassFreqs = [
+            baseFreq / 4,       // C2 - Sub-bass octave (32.7 Hz)
+            baseFreq / 2,       // C3 - Bass octave (65.4 Hz)
+            baseFreq / 2 * 1.5, // G2 - Bass fifth (98.1 Hz)
+        ];
+        
+        bassFreqs.forEach((freq, index) => {
+            const bassOsc = this.audioContext.createOscillator();
+            const bassGain = this.audioContext.createGain();
+            const bassFilter = this.audioContext.createBiquadFilter();
+            
+            // Connect bass chain
+            bassOsc.connect(bassFilter);
+            bassFilter.connect(bassGain);
+            bassGain.connect(this.audioContext.destination);
+            
+            // Use different waveforms for rich bass texture
+            const waveforms = ['sawtooth', 'square', 'triangle'];
+            bassOsc.type = waveforms[index];
+            bassOsc.frequency.setValueAtTime(freq, currentTime);
+            
+            // Add subtle bass frequency modulation for warmth
+            bassOsc.frequency.exponentialRampToValueAtTime(freq * 1.05, currentTime + 1.0);
+            bassOsc.frequency.exponentialRampToValueAtTime(freq * 0.95, currentTime + 2.0);
+            bassOsc.frequency.exponentialRampToValueAtTime(freq, currentTime + 3.0);
+            
+            // Configure bass filter for punch and clarity
+            bassFilter.type = 'lowpass';
+            bassFilter.frequency.setValueAtTime(200 + (index * 100), currentTime);
+            bassFilter.frequency.exponentialRampToValueAtTime(300 + (index * 150), currentTime + 0.5);
+            bassFilter.frequency.exponentialRampToValueAtTime(150 + (index * 75), currentTime + 2.5);
+            bassFilter.Q.setValueAtTime(2, currentTime);
+            
+            // Bass envelope - punchy attack, sustained body
+            const bassDelay = index * 0.05; // Slight stagger for thickness
+            const bassVolume = index === 0 ? 0.15 : 0.08; // Sub-bass louder
+            
+            bassGain.gain.setValueAtTime(0, currentTime + bassDelay);
+            bassGain.gain.linearRampToValueAtTime(bassVolume, currentTime + bassDelay + 0.1); // Quick attack
+            bassGain.gain.exponentialRampToValueAtTime(bassVolume * 0.8, currentTime + bassDelay + 0.8);
+            bassGain.gain.linearRampToValueAtTime(bassVolume * 0.4, currentTime + bassDelay + 2.2);
+            bassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + bassDelay + 3.2);
+            
+            bassOsc.start(currentTime + bassDelay);
+            bassOsc.stop(currentTime + bassDelay + 3.2);
+        });
+        
+        // Add sub-bass rumble for extra depth
+        const subBassOsc = this.audioContext.createOscillator();
+        const subBassGain = this.audioContext.createGain();
+        const subBassFilter = this.audioContext.createBiquadFilter();
+        
+        subBassOsc.connect(subBassFilter);
+        subBassFilter.connect(subBassGain);
+        subBassGain.connect(this.audioContext.destination);
+        
+        // Very low frequency for felt impact
+        subBassOsc.type = 'sine';
+        subBassOsc.frequency.setValueAtTime(baseFreq / 8, currentTime); // C1 (16.35 Hz)
+        subBassOsc.frequency.exponentialRampToValueAtTime(baseFreq / 6, currentTime + 1.5);
+        subBassOsc.frequency.exponentialRampToValueAtTime(baseFreq / 8, currentTime + 3.0);
+        
+        // Sub-bass filter for controlled rumble
+        subBassFilter.type = 'lowpass';
+        subBassFilter.frequency.setValueAtTime(60, currentTime);
+        subBassFilter.frequency.exponentialRampToValueAtTime(80, currentTime + 1.0);
+        subBassFilter.frequency.exponentialRampToValueAtTime(40, currentTime + 2.5);
+        subBassFilter.Q.setValueAtTime(1.5, currentTime);
+        
+        // Sub-bass envelope - slow build for foundation
+        subBassGain.gain.setValueAtTime(0, currentTime);
+        subBassGain.gain.linearRampToValueAtTime(0.12, currentTime + 0.3); // Slower attack
+        subBassGain.gain.exponentialRampToValueAtTime(0.08, currentTime + 1.5);
+        subBassGain.gain.linearRampToValueAtTime(0.04, currentTime + 2.5);
+        subBassGain.gain.exponentialRampToValueAtTime(0.001, currentTime + 3.5);
+        
+        subBassOsc.start(currentTime);
+        subBassOsc.stop(currentTime + 3.5);
+        
         // Add magical shimmer with high-frequency sparkles
         for (let i = 0; i < 5; i++) {
             const shimmerOsc = this.audioContext.createOscillator();
@@ -834,7 +914,10 @@ class SoundManager {
             }
         }
         
-        console.log('✨ Failsafe sound: Magic activated! ✨');
+        // Also connect the sub-bass to reverb for extra depth
+        subBassGain.connect(delayNode);
+        
+        console.log('✨ Failsafe sound: Magic activated with epic bass! ✨');
     }
 
     // === POMODORO TICK SOUNDS ===
