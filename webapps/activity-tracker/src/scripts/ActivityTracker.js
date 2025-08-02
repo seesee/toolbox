@@ -1476,6 +1476,12 @@ class ActivityTracker {
      * Check if a notification should be sent
      */
     checkForNotification() {
+        // Check if Notification API is available
+        if (typeof Notification === 'undefined') {
+            console.log('Skipping notification check - Notification API not available');
+            return;
+        }
+
         // Check if notifications are disabled by user
         if (!this.settings.notificationsEnabled) {
             console.log('Skipping notification check - notifications disabled by user');
