@@ -1053,6 +1053,17 @@ class ActivityTracker {
      * @param {boolean} isAutoTest - Whether this is an automatic test
      */
     testNotification(isAutoTest = false) {
+        // First, check if Notification API is available at all
+        if (typeof Notification === 'undefined') {
+            if (!isAutoTest) {
+                showNotification('This browser does not support notifications.', 'error');
+            }
+            // Still play the sound to test the sound system
+            this.playNotificationSound();
+            this.updateDebugInfo();
+            return;
+        }
+
         console.log('Testing notification, permission:', Notification.permission);
         this.updateDebugInfo();
         
