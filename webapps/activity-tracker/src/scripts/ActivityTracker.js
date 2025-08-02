@@ -414,7 +414,7 @@ class ActivityTracker {
             // Extract hashtags from text and add pomodoro hashtags if active
             const extractedTags = this.extractHashtags(activity + ' ' + (description || ''));
             const pomodoroTags = this.generatePomodoroHashtags();
-            const allTags = [...extractedTags, ...pomodoroTags];
+            const allTags = [...new Set([...extractedTags, ...pomodoroTags])];
             
             newEntry = {
                 id: generateId(),
@@ -427,6 +427,10 @@ class ActivityTracker {
                 dueDate: dueDate ? new Date(dueDate).toISOString() : null,
                 startedAt: isTodo ? new Date(timestamp).toISOString() : null
             };
+        } else if (entry.source === 'pomodoro') {
+            const pomodoroTags = this.generatePomodoroHashtags();
+            const allTags = [...new Set([...(entry.tags || []), ...pomodoroTags])];
+            newEntry.tags = allTags;
         }
 
         this.entries.unshift(newEntry);

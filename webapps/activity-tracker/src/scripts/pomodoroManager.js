@@ -492,10 +492,11 @@ class PomodoroManager {
         // Log break activity (only if logBreaks is enabled)
         if (this.settings.logBreaks) {
             const isLongBreak = this.settings.longBreak && this.cycleCount > 0 && (this.cycleCount % this.settings.longBreakInterval === 0);
-            const breakType = isLongBreak ? 'long break' : 'break';
+            const breakType = isLongBreak ? 'long-break' : 'short-break';
             this.logActivity(
-                `Pomodoro ${breakType} completed`,
-                `Finished rest period, ready for next work session`
+                `Pomodoro ${isLongBreak ? 'Long Break' : 'Short Break'}`,
+                `Completed`,
+                ['pomodoro-break', `pomodoro-${breakType}`]
             );
         }
         
@@ -618,7 +619,7 @@ class PomodoroManager {
         });
     }
 
-    logActivity(activity, description) {
+    logActivity(activity, description, extraTags = []) {
         if (!this.activityTracker || !this.settings.autoLog) return;
         
         const timestamp = new Date().toISOString();
@@ -635,7 +636,8 @@ class PomodoroManager {
             description: description || '',
             timestamp: timestamp,
             created: new Date().toISOString(),
-            source: 'pomodoro'
+            source: 'pomodoro',
+            tags: extraTags
         };
         
         this.activityTracker.addEntry(entry);
@@ -880,7 +882,7 @@ class PomodoroManager {
             const description = activityDescription ? activityDescription.value.trim() : '';
             
             if (activity) {
-                this.logActivity(activity, description || `Partial Pomodoro session ${currentSession} work`);
+                this.logActivity(activity, description || `Partial Pomodoro session ${currentSession} work`, ['pomodoro-session-abandoned']);
                 showNotification(`🍅 Partial work saved: "${activity}"`, 'success');
             }
         }
@@ -900,10 +902,19 @@ class PomodoroManager {
     finalizeAbandonment(sessionNumber, workSaved) {
         // Log abandonment (separate from any saved work)
         if (this.settings.autoLog && !workSaved) {
-            this.logActivity(
-                `Pomodoro session ${sessionNumber} abandoned`,
-                `Session interrupted, restarting at session ${sessionNumber}`
-            );
+            if (this.currentWorkActivity && this.currentWorkActivity.name) {
+                this.logActivity(
+                    this.currentWorkActivity.name,
+                    this.currentWorkActivity.description || `Pomodoro session ${sessionNumber} abandoned`,
+                    ['pomodoro-session-abandoned']
+                );
+            } else {
+                this.logActivity(
+                    `Pomodoro session ${sessionNumber} abandoned`,
+                    `Session interrupted, restarting at session ${sessionNumber}`,
+                    ['pomodoro-session-abandoned']
+                );
+            }
         }
         
         // Reset to beginning of current work session
